@@ -1,0 +1,14 @@
+<br />
+<h3>产品知识</h3>
+<div id="search_div" class="list_panel">
+  <form action="javascript:void(0)" onsubmit="searchArticle(this)">
+    主要成分 <input type="text" name="component" value=""/>
+    <input type="text" name="search" value="" size="20" oninput="searchGoods(this)" onblur="searchGoods(this)" placehoder="产品名"/>
+    <select name="goods_id" id="goods_id">
+      <option value="0">请先输入要搜索的商品</option>
+    </select>
+    <input type="submit" value="搜索" class="b_submit"/>
+  </form>
+</div>
+<br />
+<div width="100%" id="resource" >{$knowlage_div}</div>

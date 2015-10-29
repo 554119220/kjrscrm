@@ -1,0 +1,41 @@
+<div style="overflow-y:scroll;">
+  <table border="0" cellpadding="0" cellspacing="0" class="wu_table_list rb_border wu_rb_border tr_hover" id="component_table"  style='width:28%;float:left;'>
+    <tr class="goods_fixed">
+      <th width="5%">序号</th>
+      <th width="10%">成分</th>
+      <th width="10%">操作</th>
+    </tr>
+    {foreach from=$cat_list item=v}
+    <tr>
+      <td>{$v.cat_id}</td>
+      <td style="text-align:left;padding-left:3px;">
+        <button value="{$v.cat_id}" onclick="editComponnet(this)">
+        {$v.cat_name}
+        </button>
+      </td>
+      <td>
+        <a class="btn_new" target="_blank" href="article.php?act=edit_article&cat_id={$v.cat_id}">编辑</a>
+        <a class="btn_new" target="_blank" href="article.php?act=view_article&cat_id={$v.cat_id}" >预览</a>
+      </td>
+    </tr>
+    {/foreach}
+  </table>
+  <table border="0" cellpadding="0" cellspacing="0" class="wu_table_list rb_border wu_rb_border tr_hover" id="goods_table"  style='float:left;width:50%;margin-left:6px;'>
+    <tr class="goods_fixed">
+      <th width="10%">编号</th>
+      <th width="25%">产品名</th>
+      <th width="12%">操作</th>
+    </tr>
+    {foreach from=$goods_list item=v}
+    <tr>
+      <td>{$v.goods_sn}</td>
+      <td style="text-align:left;padding-left:3px;">{$v.goods_name}</td>
+      <td>
+        <a class="btn_new" href="article.php?act=edit_goods_article&goods_sn={$v.goods_sn}&goods_name={$v.goods_name}" target="_blank">基本信息</a>
+        <a class="btn_new" href="article.php?act=edit_goods_article&goods_sn={$v.goods_sn}&goods_name={$v.goods_name}" target="_blank">详情</a>
+        <a class="btn_new" href="article.php?act=view_goods_detail&goods_sn={$v.goods_sn}&goods_name={$v.goods_name}" target="_blank">预览</a>
+      </td>
+    </tr>
+    {/foreach}
+  </table>
+</div>

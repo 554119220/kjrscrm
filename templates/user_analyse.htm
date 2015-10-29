@@ -1,0 +1,30 @@
+<br />
+<h3>顾客分析图表</h3>
+<fieldset class="search">
+  <form action="javascript:void(0)" name="form_analyse"> 
+    <select name="role_id">
+      {foreach from=$role_list item=v}
+      <option value="{$v.role_id}">{$v.role_name}</option>
+      {/foreach}
+    </select>
+    <select name="admin_id">
+      {foreach from=$admin_list item=v}
+      <option value="{$v.user_id}">{$v.user_name}</option>
+      {/foreach}
+    </select>
+    <select name="customer_type">
+      <option value="0">不限</option>
+      {html_options options=$customer_type}
+    </select>
+    筛选：<select name="sel_opt">
+      {html_options options=$sel_opt}
+    </select>
+    项目：<select name="item_opt">
+      {html_options options=$item_list}
+    </select>
+  </form>
+</fieldset>
+<div class="w860 tr">
+  <input type="button" name="name" value="确认" onclick="analyseUser()" class="input_submit"/>
+</div>
+<div id="analyse"></div>

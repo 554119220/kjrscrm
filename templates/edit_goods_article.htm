@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>编辑【{$goods_name}】的资料</title>
+    <link rel="stylesheet" type="text/css" href="./styles/article.css" />
+    <link rel="stylesheet" type="text/css" href="./styles/new.css" />
+  </head>
+  <body>
+    <div class="main" >
+      <div style="overflow:auto;">
+        <form action="javascript:void(0)" onsubmit="editGoodsDetail(this)">
+          <table border="0" cellpadding="0" cellspacing="0" class="wu_table_list wu_rb_border" width="100%">
+            <tr>
+              <th colspan="7" class="top">编辑{$goods_name}详情</th>
+            </tr>
+            <tr class="search">
+              <td>搜索成分
+                <input type="text" id="keyword" value="" placeholder="用、号分开" style="width:580px;"/>
+                <input type="button" value="搜索" class="b_submit" onclick="searchComponent()"/>
+              </td>
+            </tr>
+          </table>
+          <div class="checkfield">
+            {if $goods_component}
+            {foreach from=$goods_component item=v}
+            <label class="bookmark">{$v.cat_name}</label>
+            {/foreach}
+            {else}
+            还没有给产品添加成分信息
+            {/if}
+          </div>
+          <span class="title">成分列表
+            <label class="fr label-btn" onclick="showHideComponent(this)">显示</label>
+          </span>
+          <table border="0" cellpadding="0" cellspacing="0" class="wu_table_list wu_rb_border" id="goods_cat_relation" style='margin-left:6px;display:none;'>
+            {foreach from=$arr_list item=v}
+            <tr>
+              {foreach from=$v item=t}
+              <td style="text-align:left;{if $t.ck}background:#F7CC86;{/if}">
+                <label>
+                  <input type="checkbox" name="component_name[]" value="{$t.cat_id}" text="{$t.cat_name}"
+                   {if $t.ck}checked{/if}/> {$t.cat_name}
+                </label>
+              </td>
+              {/foreach}
+            </tr>
+            {/foreach}
+          </table>
+          <div>
+            <span class="title" for="talk_skill">产品卖点</span>
+            <textarea name="feature">{$feature} </textarea>
+          </div>
+          <br />
+          <input type="submit" value="提交" class="b_submit" style="float:right;" />
+        </form>
+      </div>
+    </div>
+    <div id="cont-nav" style="border-bottom:0px;"></div>
+    <div id="fade" class="black_overlay"></div>
+    <div id="msg" class="hide">
+      <h3></h3>
+      <p></p>
+      <input type="button" value="" id="msgBtn" class="hide" style="display:none">
+    </div>
+    <input type="hidden" id="goods_sn" value="{$goods_sn}"/>
+  </body>
+</html>
+{insert_scripts files="json2.js,goods.js,main.js"}
+{insert_scripts files="transport.js"}
+{insert_scripts files="ckeditor/ckeditor.js"}
+{insert_scripts files="../../thinkphp/Public/js/jquery-2.0.0.min.js"}
+<script language="javascript" type="text/javascript">
+  init();
+  var arrChk = $("input[name='component_name[]']");
+  function checkChk(){
+    var i = 1;
+    arrChk.each(function(){
+        if($(this).attr('checked')){
+        $(this).css('background','#F7CC86');
+        }
+        });
+  }
+
+function searchComponent(){
+  var component = $("#keyword").val();
+  if (component) {
+    component = component.split('、');
+    for (var i = 0; i < component.length; i++) {
+      arrChk.each(function(){
+          if ($.trim(component[i]) == $(this).attr('text')) {
+          $(this).attr('checked',true);
+          $(this).parent().parent().css('background','#F7CC86');
+          var obj = document.getElementById('goods_cat_relation');
+          obj.style.display = '';
+          }
+      });
+    }
+  }
+}
+
+arrChk.each(function(){
+    $(this).click(function(){
+      if ($(this).prop('checked')) {
+      $(this).parent().parent().css('background','#F7CC86');
+      }else{
+      $(this).parent().parent().css('background','transparent');
+      }
+      });
+    });
+
+function showHideComponent(myself){
+  var obj = $("#goods_cat_relation");
+  obj.toggle();
+  myself.innerHTML = obj.css('display') == 'none' ? '显示':'隐藏';
+}
+
+var goodsFeature = CKEDITOR.replace('feature');
+function editArticle() {
+  var talkSkillContent = talkSkill.getData();
+  var effectContent    = effect.getData();
+  var catId            = document.getElementById('cat_id').value;
+  var catName          = document.getElementById('cat_name').value;
+  Ajax.call('article.php?act=save_article','talk_skill='+talkSkillContent+'&effect='+effectContent+'&cat_id='+catId+'&cat_name='+catName,resp,'POST','JSON');
+}
+function resp(res){
+  document.body.innerHTML = res['main'];
+}
+
+</script>

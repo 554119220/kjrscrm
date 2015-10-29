@@ -1,0 +1,13 @@
+body{font:12px "sans-serif", "Arial", "Verdana";overflow-y:auto;padding-bottom:16px;}
+span.title{padding:6px;border:1px solid #eee;color:#fff;background:#267980;margin:5px 0px;display:block;}
+a:hover{color:#ccc;}
+th.top{background:#267980;color:#fff;padding:6px;}
+th,td{padding:3px 0px;}
+th.title{font-size:14px;font-weight:bold;}
+tr.search td{padding:6px 0px 6px 9px;background-color:papayawhip;}
+.main{margin-left:3px;border:1px solid #ccc;width:70%;margin:0 auto;}
+.checkfield{border:1px solid #ccc;padding:6px;}
+caption{padding:6px;}
+.fr{float:right;padding-right:6px;}
+label:hover{cursor:pointer;}
+label.bookmark{border:1px solid #ccc;padding:3px;margin-left:5px;background:#FFEFD5;}

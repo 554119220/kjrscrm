@@ -1,0 +1,29 @@
+<br />
+<h3>今天通话记录</h3>
+<br />
+<div>
+</div>
+<table border="0" cellpadding="0" cellspacing="0" class="wu_table_list wu_rb_border tr_hover" width="50%">
+  <tr>
+    <th width="5%">序号</th>
+    <th width="13%">主叫</th>
+    <th width="13%">被叫</th>
+    <th width="10%">状态</th>
+    <th width="13%">通话时间</th>
+  </tr>
+  {if $call_history}
+  {foreach from=$call_history item=v name=i}
+  <tr>
+    <td>{$smarty.foreach.i.iteration}</td>
+    <td>{$v.clid}</td>
+    <td>{$v.dst}</td>
+    <td>{if $v.disposition}已接听{else}未接听{/if}</td>
+    <td>{$v.calldate}</td>
+  </tr>
+  {/foreach}
+  {else}
+  <tr>
+    <td colspan="5">今天没有通话记录</td>
+  </tr>
+  {/if}
+</table>

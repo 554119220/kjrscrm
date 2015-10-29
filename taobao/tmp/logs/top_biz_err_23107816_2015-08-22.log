@@ -1,0 +1,1 @@
+2015-08-22 14:01:52	<?xml version="1.0" encoding="utf-8" ?><error_response><code>15</code><msg>Remote service error</msg><sub_code>CD01</sub_code><sub_msg>CD01#获取全局锁失败，可能有其它业务正在对该订单进行操作</sub_msg><request_id>16cetyz2yhlcs</request_id></error_response><!--top010179171032.s.et2-->

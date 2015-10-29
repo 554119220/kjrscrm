@@ -1,0 +1,2 @@
+2015-09-07 17:32:51	<?xml version="1.0" encoding="utf-8" ?><error_response><code>15</code><msg>Remote service error</msg><sub_code>isv.trade-not-exist</sub_code><sub_msg>订单不存在：1173109124377685</sub_msg><request_id>101yfmt7j5i21</request_id></error_response><!--top010178059112.n.et2-->
+2015-09-07 17:35:49	<?xml version="1.0" encoding="utf-8" ?><error_response><code>15</code><msg>Remote service error</msg><sub_code>B60</sub_code><sub_msg>运单号不符合规则或已经被使用</sub_msg><request_id>ztb8tlpx85uj</request_id></error_response><!--top010178045103.n.et2-->

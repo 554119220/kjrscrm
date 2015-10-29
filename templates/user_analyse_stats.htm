@@ -1,0 +1,46 @@
+<br />
+<div class="content-head">
+  <div class="finder-title mt10">{$curr_title}<font>{$num}</font></div>
+  <div class="gridlist-action" style="width:1170px; height:35px">
+    <div class="nav-search">
+      <form name="sale_date" style="display:inline" action="javascript:void(0)">
+        <!--通话日期：-->
+        <!--<input class="Wdate" name="start_time" type="text"value="{$start_time}" size="13px" onClick="WdatePicker({dateFmt:'yyyy-MM-dd',{$min_date}})">-->
+        <!--<input class="Wdate" name="end_time" type="text" value="{$end_time}" size="13px" onClick="WdatePicker({dateFmt:'yyyy-MM-dd',{$min_date}})">-->
+        <select name="role_id" onchange="userAnalyse(this.value)">
+          <option value="0">请选择</option>
+          {foreach  from=$role_list item=role}
+          <option value="{$role.role_id}" {if $role.role_id eq $role_id}selected{/if}>{$role.role_name}</option>
+          {/foreach}
+        </select>
+      </form>
+    </div>
+  </div>
+
+  {if $list}
+  <!-- 个人销量统计 -->
+  <div class="mt10">
+    <table border="0" id="person_style" cellpadding="0" cellspacing="0" class="all_table_list border c_b" width="70%">
+      <thead>
+        <tr id="sortByThis">
+          <th id="rank">排 名</th>
+          <th>客 服</th>
+          <th>顾客数量</th><th>有QQ</th><th>比例</th><th>有微信</th><th>比例</th>
+        </tr>
+      </thead>
+      <tbody>
+        {foreach from=$list item=val name=i}
+        <tr{if !$smarty.foreach.i.last} group="{$val.group_id}" role="{$val.role_id}" admin="{$val.admin_id}" role_code='{$val.role_code}'{/if}>
+          <th>{if !$smarty.foreach.i.last}{$smarty.foreach.i.iteration}{/if}</th>
+          <th>{$val.admin_name}</th>
+          <th title="">{if $val.total}{$val.total}{else}0{/if}</th>
+          <th title="">{if $val.has_qq}{$val.has_qq}{else}0{/if}</th>
+          <th title="">{if $val.qq_rate}{$val.qq_rate}{else}0{/if}%</th>
+          <th title="">{if $val.has_wechat}{$val.has_wechat}{else}0{/if}</th>
+          <th title="">{if $val.wechat_rate}{$val.wechat_rate}{else}0{/if}%</th>
+        {/foreach}
+      </tbody>
+    </table>
+  </div>
+  {/if}
+</div>

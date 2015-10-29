@@ -1,0 +1,75 @@
+<br />
+<h3>批量确认刷单</h3>
+<br />
+<div style="width:38%;" class="white_bg">
+  <form action="javascript:void(0)" onsubmit="dealFlushOrder(this)">
+    <table class="form_table" style="width:100%;">
+      <tr>
+        <th style="width:10%"></th>
+        <td>
+          订单编号和快递单号要严格按照：  订单编号--递单号  的格式填写
+          <br />示例： 10035314094--720003657638
+        </td>
+      </tr>
+      <tr>
+        <th><span style="width:12px;display:block;float:right;">
+          订单号和快递单号列
+        </span>
+        </th>
+        <td>
+          <textarea name="order_sn_list" style="width:236px;height:343px;resize:vertical;" placeholder="10035314094--720003657638"></textarea>
+        </td>
+      </tr>
+      <tr>
+        <th>快递:</th>
+        <td>
+          <select name="shipping_id" id="shipping_id">
+            {foreach from=$shipping_list item=v}
+            <option value="{$v.shipping_id}" {if $v.shipping_id eq 41}selected{/if}>{$v.shipping_name}</option>
+            {/foreach}
+            <option value="42">汇通</option>
+          </select>
+          <input type="submit" value="确认" class="input_submit"/>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <div>说明：此按钮只是将订单标记为【刷单】，并不做同步出库发货处理,只需填写订单编号并以“##”分隔，例10145144688##</div>
+          <input type="button" value="标记刷单" onclick="markFlushOrder(this.form)" class="input_submit" 
+          style="float:right;margin-top:-25px;"/>
+        </td>
+      </tr>
+    </table>
+  </form>
+  <hr>
+  <br />
+  <div id="error_div">  </div>
+</div>
+
+{if $all}
+<br />
+<h3>通过商品和价格标记刷单</h3>
+<div style="width:58%;" class="white_bg">
+  <form action="javascript:void(0)" onsubmit="justMarkFlushOrder(this)">
+    <table class="form_table" style="width:100%;">
+      <tr>
+        <td>
+          <select name="platform">
+            {html_options options=$platform_list}
+          </select>
+          <input type="number" name="price" value="" min="0" required placeholder="价格"/>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <input type="text" name="name" value="" oninput="searchGoods(this)" placeholder="商品名"/>
+          <select id="goods_id" name="goods_sn" style="width:220px;">
+            <option value="0">选择商品</option>
+          </select>
+          <input type="submit" name="name" value="标 记" class="input_submit"/>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+{/if}

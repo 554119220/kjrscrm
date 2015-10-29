@@ -1,0 +1,2 @@
+2015-09-21 17:35:13	<?xml version="1.0" encoding="utf-8" ?><error_response><code>15</code><msg>Remote service error</msg><sub_code>P06</sub_code><sub_msg>当前订单状态不支持修改</sub_msg><request_id>qm4syqo3oazu</request_id></error_response><!--top010176019174.et2-->
+2015-09-21 18:25:35	<?xml version="1.0" encoding="utf-8" ?><error_response><code>15</code><msg>Remote service error</msg><sub_code>isv.trade-not-exist</sub_code><sub_msg>订单不存在：1310982083179218</sub_msg><request_id>z2c0in9a600l</request_id></error_response><!--top010178001153.n.et2-->

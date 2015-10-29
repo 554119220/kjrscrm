@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>宅急送快递单打印</title>
+    <style type="text/css">
+        body {background:url(images/js.jpg) no-repeat; width:720px; height:437px; margin:130px 0 0 80px; padding:0; font-weight:bold;color:#000}
+        ul {margin:0;padding:0;  padding-left:20px}
+        li {list-style-type:none; line-height:30px; height:30px};
+    </style>
+    <style type="text/css" media="print">
+        .noprint {visibility:hidden; display:inline-block; position:absolute; top:500px}
+    </style>
+</head>
+<body>
+    <table>
+        <tbody>
+            <tr>
+                <!-- <td style="width:100px"> </td> -->
+                <td colspan="4" style="width:310px"> {if $order.secrecy eq 0}{$company_name}{/if} </td>
+                <td style="width:30px"> </td>
+                <td style="width:100px"> {$order.consignee} </td>
+                <td colspan="3" style="width:210px"> </td>
+            </tr>
+            <tr>
+                <!-- 寄件人 -->
+                <td colspan="4"> {$kjrs_region} </td>
+                <td> </td>
+                <!-- 收件人 -->
+                <td colspan="4"> {$order.addr} </td>
+            </tr>
+            <tr>
+                <!-- 寄件人 -->
+                <td colspan="4"> {$kjrs_address} </td>
+                <td> </td>
+                <!-- 收件人 -->
+                <td colspan="4"> {$order.address} </td>
+            </tr>
+            <tr>
+                <td colspan="9"> &nbsp; </td>
+            </tr>
+            <tr>
+                <!-- 寄件人 -->
+                <td colspan="2"> {$kjrs_tel} </td>
+                <td colspan="2"> </td>
+                <td> </td>
+                <!-- 收件人 -->
+                <td colspan="2"> {$order.tel} </td>
+                <td colspan="2" style="padding-left:80px"> {$order.mobile} </td>
+            </tr>
+            <tr>
+                <td colspan="9"> &nbsp; </td>
+            </tr>
+            <tr>
+                <td colspan="9"> &nbsp; </td>
+            </tr>
+            <!-- 托运货物信息 -->
+            <tr>
+                <td> <br>保健品 </td>
+                <td>    </td>
+                <td colspan="2">  </td>
+                <td colspan="5"> </td>
+            </tr>
+            <tr>
+                <td>  </td>
+                <td>  </td>
+                <td>  </td>
+                <td>  </td>
+                <td colspan="5"> </td>
+            </tr>
+            <tr>
+                <td colspan="5"> <!-- 红字注意事项 --> </td>
+                <td colspan="4">  </td>
+            </tr>
+            <tr>
+                <td colspan="9"> &nbsp; </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <br>
+                    <br>
+                    <br>
+                    <br>
+                    {$date.year}&nbsp;{$date.month}&nbsp;{$date.day}
+                </td>
+                <td colspan="2">
+
+                </td>
+                <!-- 付款方式  -->
+                <td> </td>
+                <td colspan="4" style="padding-left:140px"><br><br>{$order.goods_amount} <br> {$order.big5}</td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <br>
+                    <br>
+                    ２４１８２０
+                </td>
+                <td colspan="2"> </td>
+                <td> </td>
+                <td colspan="4">
+                    <br>
+                    <br>
+                    {if $shipping_code eq 'sto_express'}
+                    货到付款 {$order.order_sn}
+                    {/if}
+                    {$notice}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="position:absolute; left:120px; top:80px; font-weight:bold">6929593</div>
+</body>
+</html>

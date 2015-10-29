@@ -1,0 +1,37 @@
+<br />
+<h3>生成试卷</h3>
+<br />
+
+<div style="width:68%" class="white_bg">
+  <form name="examination_form" action="oa_manager.php?act=create_examination" method="POST"> 
+    <table class="form_table" style="width:100%;">
+      <tr>
+        <th>填空题:</th>
+        {foreach from=$type_list key=k item=v}
+        <td>
+          {$v} ：<input type="number" title="fill_question" min="0" name="fill_question[{$k}]" value="0" class="w50"/> 道 
+        </td>
+        {/foreach}
+        <td>
+          <input type="number" name="fill_num" min="1" value="60" class="w50" autofocus/>
+          <input type="button" value="随机" class="b_submit" onclick="averageQuestion('fill_question')"/>
+        </td>
+      </tr>
+      <tr>
+        <th>简答题:</th>
+        {foreach from=$type_list key=k item=v}
+        <td>
+          {$v} ：<input type="number" title="short_answer" min="0" class="w50" name="short_answer[{$k}]" value="0"/> 道 
+        </td>
+        {/foreach}
+        <td> <input type="number" name="sha_num" min="1" value="60" class="w50" />
+          <input type="button" value="随机" class="b_submit" onclick="averageQuestion('short_answer')"/>
+        </td>
+      </tr>
+      <tr>
+        <th>生成:</th> <td> <input type="number" name="page_num" min="1" value="1" class="w50" />份试卷 </td>
+        <td><input type="submit" class="b_submit" value="生成试卷"/></td>
+      </tr>
+    </table>
+  </form>
+</div>
