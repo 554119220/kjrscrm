@@ -98,7 +98,8 @@
         <tr>
           <th>微信：</th>
           <td>
-            <button value="users.php?act=edit&info=wechat&id={$user.user_id}&type=text" title="修改QQ" onclick="sendEditInfo(this)">{$user.wechat}</button>
+            {$user.wechat}
+            <button value="users.php?act=edit&info=wechat&id={$user.user_id}&type=text" title="修改QQ" onclick="sendEditInfo(this)"></button>
             </td>
             <th>旺旺：</th>
             <td>

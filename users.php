@@ -111,7 +111,7 @@ if ($_REQUEST['act'] == 'intention') {
     $smarty->assign('page_set',      $user_list['page_set']);
     $smarty->assign('page',          $user_list['page']);
     $smarty->assign('act',           $_REQUEST['act']);
-    $smarty->assign('tag',           $_REQUEST['tag'] ? $_REQUEST['tag'] :2);
+    //$smarty->assign('tag',           $_REQUEST['tag'] ? $_REQUEST['tag'] :2);
     $smarty->assign('type',          $_REQUEST['type']);
     $smarty->assign('sort_user_id',  '<img src="images/sort_desc.gif">');
 
@@ -151,7 +151,7 @@ if ($_REQUEST['act'] == 'intention') {
 elseif ($_REQUEST['act'] == 'users_list') {
     /* 检查权限 */
     //admin_priv('users_list');
-    $res = array ('switch_tag' => true, 'id' => intval($_REQUEST['tag']));
+    //$res = array ('switch_tag' => true, 'id' => intval($_REQUEST['tag']));
 
     if($_SESSION['admin_id'] == 78) {
         $_REQUEST['type'] = '13';
@@ -193,12 +193,9 @@ elseif ($_REQUEST['act'] == 'users_list') {
     $smarty->assign('page_size',    $user_list['page_size']);
     $smarty->assign('page_start',   $user_list['start']);
     $smarty->assign('page_end',     $user_list['end']);
-    $smarty->assign('full_page',    1);
     $smarty->assign('page_set',     $user_list['page_set']);
     $smarty->assign('page',         $user_list['page']);
     $smarty->assign('act',          $_REQUEST['act']);
-    $smarty->assign('tag',          $_REQUEST['tag'] ? $_REQUEST['tag'] : 0);
-    $smarty->assign('type',         $_REQUEST['type'] ? $_REQUEST['type'] : 0);
 
     $smarty->assign('num', sprintf('（共%d条）', $user_list['record_count']));
     $smarty->assign('sort_user_id', '<img src="images/sort_desc.gif">');
@@ -222,18 +219,19 @@ elseif ($_REQUEST['act'] == 'users_list') {
         }
     }
 
+    $smarty->assign('content', 'users_list');
     if (isset($_REQUEST['a'])) {
-        $smarty->assign('content', 'users_list');
         $res['main'] = $smarty->fetch('list_tpl.htm');
         $res['page'] = $smarty->fetch('page.htm');
         $res['a'] = $_REQUEST['a'];
     } else {
+        $smarty->assign('user_list_div',$smarty->fetch('list_tpl.htm'));
+        $smarty->assign('pageDiv',$smarty->fetch('page.htm'));
         $res['main'] = $smarty->fetch('users_list.htm');
     }
 
-    $res['left'] = sub_menu_list($file);
-    if ($res['left'] === false) unset($res['left']);
-
+    //$res['left'] = sub_menu_list($file);
+    //if ($res['left'] === false) unset($res['left']);
     die($json->encode($res));
 }
 
@@ -572,7 +570,6 @@ elseif ($_REQUEST['act'] == 'first_trace')
       */
 
     $smarty->assign('user_list', $res_three);
-    $smarty->assign('full_page', 1);
     $smarty->assign('tag',          $_REQUEST['tag'] ? $_REQUEST['tag'] :0);
 
     // 是否显示转顾客
@@ -580,8 +577,10 @@ elseif ($_REQUEST['act'] == 'first_trace')
         $smarty->assign('reassign_user', 1);
     }
 
-    assign_query_info();
+    //assign_query_info();
     $res['main'] = $smarty->fetch('first_trace.htm');
+    $res['page'] = $smarty->fetch('page.htm');
+    $res['a'] = $_REQUEST['a'];
 
     die($json->encode($res));
 }
@@ -685,16 +684,9 @@ elseif ($_REQUEST['act'] == 'repeat')
         }
     }
 
-    // 是否显示转顾客
-    if (admin_priv('reassign_user', '', false)) {
-        $smarty->assign('reassign_user', 1);
-    }
-
     $res['main'] = $smarty->fetch('repeat_list.htm');
-
-    $res['left'] = sub_menu_list($file);
-    if ($res['left'] === false) unset($res['left']);
-
+    $res['page'] = $smarty->fetch('page.htm');
+    $res['a'] = $_REQUEST['a'];
     die($json->encode($res));
 }
 
@@ -3028,14 +3020,13 @@ elseif ($_REQUEST['act'] == 'forecast')
     $forecast_list = forecast_list();
     $smarty->assign('orders', $forecast_list['forecast_list']);
 
-    // 分页设置
+    $smarty->assign('page_link',    $forecast_list['condition']);
     $smarty->assign('filter',       $forecast_list['filter']);
     $smarty->assign('record_count', $forecast_list['record_count']);
     $smarty->assign('page_count',   $forecast_list['page_count']);
     $smarty->assign('page_size',    $forecast_list['page_size']);
     $smarty->assign('page_start',   $forecast_list['start']);
     $smarty->assign('page_end',     $forecast_list['end']);
-    $smarty->assign('full_page',    1);
     $smarty->assign('page_set',     $forecast_list['page_set']);
     $smarty->assign('page',         $forecast_list['page']);
     $smarty->assign('act',          $_REQUEST['act']);
@@ -3046,6 +3037,8 @@ elseif ($_REQUEST['act'] == 'forecast')
     }
 
     $res['main'] = $smarty->fetch('forecast_list.htm');
+    $res['page'] = $smarty->fetch('page.htm');
+    $res['a'] = $_REQUEST['a'];
 
     die($json->encode($res));
 }
@@ -6000,8 +5993,7 @@ function get_before_case()
 /**
  * 增值服务列表
  */
-function forecast_list ()
-{
+function forecast_list () {
     $now_date    = strtotime(date('Y-m-d 00:00', time()));
     $now_time    = time();
     $future_days = $now_date +24*3600*3;
@@ -6026,13 +6018,11 @@ function forecast_list ()
     }
 
     $forecast = $GLOBALS['db']->getAll($sql_select.$sql_where.' GROUP BY g.order_id ORDER BY over_time ASC');
-    if (empty($forecast)){
-        return false;
-    }
-
-    foreach ($forecast as &$val){
-        $val['receive_time'] = date('Y-m-d', $val['receive_time']);
-        $val['over_time'] = date('Y-m-d', $val['over_time']);
+    if (!empty($forecast)){
+        foreach ($forecast as &$val){
+            $val['receive_time'] = date('Y-m-d', $val['receive_time']);
+            $val['over_time'] = date('Y-m-d', $val['over_time']);
+        }
     }
 
     $arr = array (
@@ -6047,7 +6037,6 @@ function forecast_list ()
         'start'         => ($filter['page'] - 1)*$filter['page_size'] +1,
         'end'           => $filter['page']*$filter['page_size'],
     );
-
     return $arr;
 }
 

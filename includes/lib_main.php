@@ -1432,7 +1432,7 @@ function get_admin_tmp_list ($role = 0)
 
 function return_role_by_all(){
     if ($_SESSION['admin_id'] == 493) {
-        return KEFU;
+        return KEFU.',38';
     }elseif($_SESSION['admin_id'] == 359){
         return KEFU2;
     }else

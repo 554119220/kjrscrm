@@ -1,10 +1,5 @@
 ﻿/* 基本样式 */
-body {margin:0px; padding:0px; color:#192E32; font:12px "sans-serif", "Arial", "Verdana";
-  background: url(../images/bgcolor.png) no-repeat;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-}
+body {margin:0px; padding:0px; color:#192E32; font:12px "sans-serif", "Arial", "Verdana"}
 th {font:12px "sans-serif", "Arial", "Verdana"; font-weight:bold}
 li {list-style:none}
 form {margin:0px; padding:0px}

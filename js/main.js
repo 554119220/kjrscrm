@@ -1074,9 +1074,10 @@ function searchOrder (obj)
   }
 
   var pattern = new RegExp(/act=(\w+)&?/);
-  action  = pattern.exec(obj.value);
+  var url = obj.getAttribute('value');
+  action  = pattern.exec(url);
   action  = action[1];
-  Ajax.call(obj.value+data, '', searchOrderResponse, 'GET', 'JSON');
+  Ajax.call(url+data, '', searchOrderResponse, 'GET', 'JSON');
 }
 
 /**

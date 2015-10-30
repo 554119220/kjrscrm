@@ -1407,3 +1407,10 @@ function onekeyClassifyUser(obj){
   }else return;
 }
 
+//顾客列表中的标签切换
+function labSearchOrder(obj){
+  $("li.wu-current").removeClass('wu-current');
+  obj.className = 'wu-current';
+  $('#sub_btn').val(obj.getAttribute('value')); 
+  searchOrder(obj);
+}
