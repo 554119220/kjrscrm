@@ -58,7 +58,7 @@ if ($_REQUEST['act'] == 'menu') {
 if ($_REQUEST['act'] == 'intention') {
     /* 检查权限 */
     //admin_priv('intention');
-    $res = array ('switch_tag' => true, 'id' => 4);
+    //$res = array ('switch_tag' => true, 'id' => 4);
 
     $sql = "SELECT rank_id, rank_name, min_points FROM ".$ecs->table('user_rank')." ORDER BY min_points ASC ";
     $rs = $db->query($sql);
@@ -5066,7 +5066,12 @@ function user_list() {
 
         //有无微信
         if ($filter['sel_opt'] && $filter['contact_opt']) {
-            $contact_field = $filter['contact_opt'] == 1 ? 'u.qq' : 'u.wechat';
+            switch($filter['contact_opt']){
+            case 1 : $contact_field = 'u.qq';break;
+            case 2 : $contact_field = 'u.wechat';break;
+            case 3 : $contact_field = 'u.aliww';break;
+            }
+            //$contact_field = $filter['contact_opt'] == 1 ? 'u.qq' : 'u.wechat';
             $operator = $filter['sel_opt'] == 1 ? '=' : '<>';
             $ex_where .= " AND $contact_field$operator'' ";
         }
@@ -5228,8 +5233,8 @@ function user_list() {
         }
 
         $sql = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,e.eff_name,c.bind_time,u.user_name,u.sex,'.
-            'IF(u.birthday="2012-01-01",u.age_group,(YEAR(NOW())-YEAR(u.birthday))) birthday,u.is_validated,u.user_money,'.
-            'u.add_time,u.remarks,u.service_time,u.assign_time FROM '.$GLOBALS['ecs']->table('users').' u LEFT JOIN '.
+            'u.is_validated,u.add_time,u.remarks,u.service_time,u.assign_time,u.qq,u.aliww FROM '
+            .$GLOBALS['ecs']->table('users').' u LEFT JOIN '.
             $GLOBALS['ecs']->table('memship_number').' c ON c.user_id=u.user_id LEFT JOIN '.$GLOBALS['ecs']->table('effects').
             ' e ON e.eff_id=u.eff_id';
 

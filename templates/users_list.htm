@@ -1,11 +1,9 @@
-<div class="mt10" style="width:95%">
+<div class="mt10" style="width:98%">
   <div class="content-head">
     <div class="finder-title">顾客列表</div>
     <div style="display:block;clear:both">
       <ul class="wu-tab-menu">
-        <li class="wu-current" value="users.php?act=forecast&a=true" onclick="labSearchOrder(this)">增值服务</li>
-        <li value="users.php?act=first_trace&a=true" onclick="labSearchOrder(this)">第一回访</li>
-        <li value="users.php?act=repeat&a=true" onclick="labSearchOrder(this)">重复购买</li>
+        <li class="wu-current" value="users.php?act=users_list&a=true" onclick="labSearchOrder(this)">增值服务</li>
         <li value="users.php?act=users_list&type=1&a=true" onclick="labSearchOrder(this)">优质顾客</li>
         <li value="users.php?act=users_list&type=2&a=true" onclick="labSearchOrder(this)">一般顾客</li>
         <li value="users.php?act=users_list&type=22&a=true" onclick="labSearchOrder(this)">潜力顾客</li>
@@ -14,6 +12,8 @@
         <li value="users.php?act=users_list&type=21&a=true" onclick="labSearchOrder(this)">DM顾客</li>
         {/if}
         <li value="users.php?act=users_list&type=23&a=true" onclick="labSearchOrder(this)">随心所欲</li>
+        <li value="users.php?act=first_trace&a=true" onclick="labSearchOrder(this)">第一回访</li>
+        <li value="users.php?act=repeat&a=true" onclick="labSearchOrder(this)">重复购买</li>
       </ul>
       <div class="add_user"><a href="/thinkphp/index.php/Home/Usersassign/addUsers">添加新顾客</a></div>
     </div>
@@ -28,6 +28,28 @@
         </select>
         <input class="Wdate" id="start_time" type="text" value="" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})">
         至<input class="Wdate"  id="end_time" type="text" value="" onClick="WdatePicker({dateFmt:'yyyy-MM-dd'})">
+        <select id="sel_opt">
+          <option value="0">不限</option>
+          <option value="1">无</option>
+          <option value="2">有</option>
+        </select>
+        <select id="contact_opt">
+          <option value="1">QQ</option>
+          <option value="2">微信</option>
+          <option value="3">旺旺</option>
+        </select>
+        <select name="sort_rule">
+          <option value="0">排序选项</option>
+          <option value="1">购买次数</option>
+          <option value="2">购买金额</option>
+          <option value="3">成交次数</option>
+          <option value="4">服务次数</option>
+        </select>
+        <select name="sort_rule">
+          <option value="0">排序</option>
+          <option value="1">升序</option>
+          <option value="2">降序</option>
+        </select>
         <select id="keyfields" onblur="changeKeywordsArae(this)">
           <option value="user_name">姓名</option>
           <option value="mobile_phone">手机号码</option>
@@ -50,27 +72,7 @@
         <span id="keywordsArea">
           <input type="text" value="{$kw}" id="keywords"/>
         </span>
-        <select id="sel_opt">
-          <option value="0">不限</option>
-          <option value="1">无</option>
-          <option value="2">有</option>
-        </select>
-        <select id="contact_opt">
-          <option value="1">QQ</option>
-          <option value="2">微信</option>
-        </select>
-        <select name="sort_rule">
-          <option value="0">排序选项</option>
-          <option value="1">购买次数</option>
-          <option value="2">购买金额</option>
-          <option value="3">成交次数</option>
-          <option value="4">服务次数</option>
-        </select>
-        <select name="sort_rule">
-          <option value="0">排序</option>
-          <option value="1">升序</option>
-          <option value="2">降序</option>
-        </select>
+
         <button id="sub_btn" value="{$file}.php?act={$act}&tag={$tag}&type={$type}" onclick="searchOrder(this)" class="b_submit">搜索</button>
       </div>
     </div>

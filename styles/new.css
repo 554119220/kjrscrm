@@ -407,5 +407,5 @@ tr.locktop{position:relative; top:expression((this.offsetParent.scrollTop>this.p
 fieldset.search{border:1px solid #ccc;margin-bottom:8px;width:841px;border-radius:0px;}
 div[id="analyse"] {height:400px;width:860px;border:1px solid #ccc;margin-top:6px;}
 .wu-tab-menu li{float:left;color:#192E32;display:block;font-size:13px;padding:5px;border-bottom:3px solid #1968A0;cursor:pointer;}
-.wu-tab-menu li:hover{border-bottom-color:#D4BA3C;color:#1968a0;}
-li.wu-current{border-bottom-color:#D4BA3C;color:#1968a0;}
+.wu-tab-menu li:hover{border-bottom-color:#D01C35;color:#1968a0;}
+li.wu-current{border-bottom-color:#D01C35;color:#1968a0;}
