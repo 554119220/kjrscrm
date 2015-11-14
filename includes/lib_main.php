@@ -1866,3 +1866,8 @@ function get_depart_role($role_id,$type='string'){
 
     return $list;
 }
+
+function get_deal_method(){
+    $sql = 'SELECT mothod_id,mothod_name FROM '.$GLOBALS['ecs']->table('deal_mothod')." WHERE available=1";
+    return $GLOBALS['db']->getAll($sql);
+}

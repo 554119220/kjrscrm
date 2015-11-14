@@ -21,6 +21,7 @@ a:active {color:#EB8A3D; text-decoration:underline}
 .w800{width:800px}
 .w600{width:600px}
 .w650{width:650px}
+.w130{width:130px}
 .w50{width:50px}
 .w300{width:300px}
 .w400{width:400px}
@@ -28,6 +29,8 @@ a:active {color:#EB8A3D; text-decoration:underline}
 .tr{text-align:right;}
 .bold {font-weight:bolder}
 .pl12{padding-left:12px;}
+.pt5{padding-top:5px;}
+.ml6{margin-left:6px;}
 .tc{text-align:center}
 .tl{text-align:left}
 /* 显示与隐藏 */

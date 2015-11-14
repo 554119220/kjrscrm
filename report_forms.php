@@ -64,7 +64,7 @@ elseif($_REQUEST['act'] == 'role_order_sales' ){
     $res['switch_tag'] = true;
     $res['id'] = isset($_REQUEST['platform']) ? $_REQUEST['platform'] : 0;
 
-    $status = ' AND order_status IN (1,5) AND shipping_status<>3 ';
+    $status = ' AND order_status IN (1,5) AND shipping_status<>3 AND order_type<>10 ';
     $refund_where = '';
     $trans_role_list = '';
 
@@ -125,7 +125,7 @@ elseif ($_REQUEST['act'] == 'order_sales') {
     $res['switch_tag'] = true;
     $res['id'] = isset($_REQUEST['platform']) ? $_REQUEST['platform'] : 0;
 
-    $status = ' AND order_status IN (1,5) AND shipping_status<>3 ';
+    $status = ' AND order_status IN (1,5) AND shipping_status<>3 AND order_type<>10 ';
     $refund_where = '';
     $trans_role_list = '';
 
@@ -240,92 +240,92 @@ elseif ($_REQUEST['act'] == 'goods_num') {
 }
 //产品销量明细排行
 elseif($_REQUEST['act'] == 'goods_sale_rank'){
-   $sel_item   = is_numeric($_REQUEST['sel_item']) ? intval($_REQUEST['sel_item']) : 2;
-   $goods_sn   = mysql_real_escape_string($_REQUEST['goods_sn']);
-   $start_time = strtotime($_REQUEST['start_time']);
-   $end_time   = strtotime($_REQUEST['end_time']);
-   $platform   = intval($_REQUEST['platform']);
-   $depart_id  = intval($_REQUEST['depart_id']);
+    $sel_item   = is_numeric($_REQUEST['sel_item']) ? intval($_REQUEST['sel_item']) : 2;
+    $goods_sn   = mysql_real_escape_string($_REQUEST['goods_sn']);
+    $start_time = strtotime($_REQUEST['start_time']);
+    $end_time   = strtotime($_REQUEST['end_time']);
+    $platform   = intval($_REQUEST['platform']);
+    $depart_id  = intval($_REQUEST['depart_id']);
 
-   //不包含待发货
-   $where = " WHERE oi.order_id=og.order_id AND oi.order_status IN(5,1) AND oi.shipping_status IN(1,2,4) AND oi.add_time BETWEEN $start_time AND $end_time AND oi.order_type IN (2,3,4,6,100) AND og.goods_sn='$goods_sn' ";
-   if ($platform) {
-       $where .= " AND oi.platform=$platform ";
-   }
+    //不包含待发货
+    $where = " WHERE oi.order_id=og.order_id AND oi.order_status IN(5,1) AND oi.shipping_status IN(1,2,4) AND oi.add_time BETWEEN $start_time AND $end_time AND oi.order_type IN (2,3,4,6,100) AND og.goods_sn='$goods_sn' ";
+    if ($platform) {
+        $where .= " AND oi.platform=$platform ";
+    }
 
-   if ($depart_id) {
-       $platform = get_role_by_depart($depart_id,true);
-       $where .= " AND oi.platform IN($platform) ";
-   }
+    if ($depart_id) {
+        $platform = get_role_by_depart($depart_id,true);
+        $where .= " AND oi.platform IN($platform) ";
+    }
 
-   //总的销售额
-   $sql_count = 'SELECT SUM(og.goods_number*og.goods_price) FROM '.$GLOBALS['ecs']->table('order_goods').' og,'
-       .$GLOBALS['ecs']->table('order_info').' oi '.$where;
-   $total = $GLOBALS['db']->getOne($sql_count);
-   if ($total) {
-       // @sel_item 1 部门 2 小组 3 员工
-       if ($sel_item == 3) {
-           $table = 'admin_user';
-           $field = ',t.user_name name';
-           $where .= ' AND t.user_id=oi.admin_id ';
-           $group_by = 'oi.admin_id, ';
-       }else{
-           $table = 'role';
-           $field = ',t.role_name name';
-           if ($sel_item == 1) {
-               $field .= ",t.depart_id";
-           }
-           $where .= ' AND t.role_id=oi.platform ';
-           $group_by = 'oi.platform,';
-       }
+    //总的销售额
+    $sql_count = 'SELECT SUM(og.goods_number*og.goods_price) FROM '.$GLOBALS['ecs']->table('order_goods').' og,'
+        .$GLOBALS['ecs']->table('order_info').' oi '.$where;
+    $total = $GLOBALS['db']->getOne($sql_count);
+    if ($total) {
+        // @sel_item 1 部门 2 小组 3 员工
+        if ($sel_item == 3) {
+            $table = 'admin_user';
+            $field = ',t.user_name name';
+            $where .= ' AND t.user_id=oi.admin_id ';
+            $group_by = 'oi.admin_id, ';
+        }else{
+            $table = 'role';
+            $field = ',t.role_name name';
+            if ($sel_item == 1) {
+                $field .= ",t.depart_id";
+            }
+            $where .= ' AND t.role_id=oi.platform ';
+            $group_by = 'oi.platform,';
+        }
 
-       $sql = 'SELECT og.goods_name,SUM(og.goods_number) goods_num,count(oi.order_id) order_num,'.
-           'SUM(og.goods_number*og.goods_price) turnover %s FROM '.$GLOBALS['ecs']->table('order_goods').' og, '.
-           $GLOBALS['ecs']->table('order_info').' oi, '.$GLOBALS['ecs']->table($table)
-           ." t $where GROUP BY %s og.goods_sn ORDER BY goods_num DESC";
-       $rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field,$group_by));
-       if ($rank_status) {
-           $res['goods_name'] = $rank_status[0]['goods_name'];
-           foreach ($rank_status as &$v) {
-               $v['ave'] = bcdiv($v['turnover'],$v['goods_num'],2);
-               $v['sale_rate'] = bcdiv($v['turnover'],$total,3)*100;
-           }
-           //部门
-           if ($sel_item == 1) {
-               unset($v);
-               $depart_list = get_department();
-               foreach ($depart_list as $ky=>&$v) {
-                   $v['name'] = $v['depart_name'];
-                   foreach ($rank_status as $k=>$r) {
-                       if ($v['depart_id'] == $r['depart_id']) {
-                           $v['goods_num'] += $r['goods_num'];
-                           $v['order_num'] += $r['order_num'];
-                           $v['turnover'] += $r['turnover'];
-                       }
-                   } 
-                   if ($v['goods_num'] > 0 ) {
-                       $v['turnover'] = sprintf("%.2f",$v['turnover']);
-                       $v['ave'] = bcdiv($v['turnover']/$v['goods_num'],2);
-                       $v['sale_rate'] = bcdiv($v['turnover']/$total,3)*100;
-                       $sort[] = $v['turnover'];
-                   }else{
-                       unset($depart_list[$ky]);
-                   }
-               }
-               if ($depart_list) {
-                   array_multisort($sort,SORT_DESC,$depart_list);
-                   $rank_status = $depart_list;
-               }
-           }
-       }
-   }
+        $sql = 'SELECT og.goods_name,SUM(og.goods_number) goods_num,count(oi.order_id) order_num,'.
+            'SUM(og.goods_number*og.goods_price) turnover %s FROM '.$GLOBALS['ecs']->table('order_goods').' og, '.
+            $GLOBALS['ecs']->table('order_info').' oi, '.$GLOBALS['ecs']->table($table)
+            ." t $where GROUP BY %s og.goods_sn ORDER BY goods_num DESC";
+        $rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field,$group_by));
+        if ($rank_status) {
+            $res['goods_name'] = $rank_status[0]['goods_name'];
+            foreach ($rank_status as &$v) {
+                $v['ave'] = bcdiv($v['turnover'],$v['goods_num'],2);
+                $v['sale_rate'] = bcdiv($v['turnover'],$total,3)*100;
+            }
+            //部门
+            if ($sel_item == 1) {
+                unset($v);
+                $depart_list = get_department();
+                foreach ($depart_list as $ky=>&$v) {
+                    $v['name'] = $v['depart_name'];
+                    foreach ($rank_status as $k=>$r) {
+                        if ($v['depart_id'] == $r['depart_id']) {
+                            $v['goods_num'] += $r['goods_num'];
+                            $v['order_num'] += $r['order_num'];
+                            $v['turnover'] += $r['turnover'];
+                        }
+                    } 
+                    if ($v['goods_num'] > 0 ) {
+                        $v['turnover'] = sprintf("%.2f",$v['turnover']);
+                        $v['ave'] = bcdiv($v['turnover'],$v['goods_num'],2);
+                        $v['sale_rate'] = bcdiv($v['turnover'],$total,3)*100;
+                        $sort[] = $v['turnover'];
+                    }else{
+                        unset($depart_list[$ky]);
+                    }
+                }
+                if ($depart_list) {
+                    array_multisort($sort,SORT_DESC,$depart_list);
+                    $rank_status = $depart_list;
+                }
+            }
+        }
+    }
 
-   $smarty->assign('sel_item',$sel_item);
-   $smarty->assign('sel_item_list',array(1=>'部门','小组','员工'));
-   $smarty->assign('rank_status',$rank_status);
-   $res['goods_sn'] = $goods_sn;
-   $res['main'] = $smarty->fetch('goods_sale_rank.htm');
-   die($json->encode($res));
+    $smarty->assign('sel_item',$sel_item);
+    $smarty->assign('sel_item_list',array(1=>'部门','小组','员工'));
+    $smarty->assign('rank_status',$rank_status);
+    $res['goods_sn'] = $goods_sn;
+    $res['main'] = $smarty->fetch('goods_sale_rank.htm');
+    die($json->encode($res));
 }
 
 /* 销售统计 */
@@ -757,10 +757,10 @@ elseif ($_REQUEST['act'] == 'stats_member') {
     $stats_res = stats_member();
 
     $total = array('final_amount'=>0,'order_num'=>0);
-    foreach ($stats_res as $val) {
-        $total['final_amount'] = bcadd($total['final_amount'],$val['final_amount'],2);
-        $total['order_num'] += $val['order_num'];
-    }
+    //foreach ($stats_res as $val) {
+    //    $total['final_amount'] = bcadd($total['final_amount'],$val['final_amount'],2);
+    //    $total['order_num'] += $val['order_num'];
+    //}
 
     $config = report_statistics_limit(1); // 报表统计范围
     if ($config['statistics_date_limit'] > 0 && $config['offset_month'] > 0) {
@@ -771,7 +771,7 @@ elseif ($_REQUEST['act'] == 'stats_member') {
         $smarty->assign('max_date', $max_date);
     }
 
-    $smarty->assign('total', $total);
+    //$smarty->assign('total', $total);
     $smarty->assign('stats_res', $stats_res);
     $res['main'] = $smarty->fetch('stats_member.htm');
 
@@ -1144,7 +1144,7 @@ elseif ($_REQUEST['act'] == 'sale_detail') {
     $pay_list = array();
     foreach ($result as $val){
         $pay_id[] = $val['pay_id'];
-        $pay_list[$val['pay_id']] = str_replace('（', '<br>（', $val['pay_name']);
+        $pay_list[$val['pay_id']] = str_replace('（', '（', $val['pay_name']);
     }
     $pay_id = implode(',', $pay_id);
     // 总销量
@@ -1341,7 +1341,11 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
     if (!admin_priv('everyone_sales', '',false) && !admin_priv('personal_trans-part_stats', '', false)) {
         $role_id = $_SESSION['role_id'];
     } elseif (!admin_priv('all', '', false) && admin_priv('personal_trans-part_stats', '', false)) {
-        $role_id = implode(',', trans_part_list());
+        if ($_SESSION['admin_id'] == 64) {
+            $role_id = KEFU.','.KEFU2;
+        }else{
+            $role_id = implode(',', trans_part_list());
+        }
     } else {
         $role_id = OFFLINE_SALE;
     }
@@ -1372,12 +1376,16 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
     if ($_REQUEST['r_start'] && $_REQUEST['r_end']) {
         $month_start = strtotime($_REQUEST['r_start'].' 00:00:00');
         $month_end   = strtotime($_REQUEST['r_end'].' 23:59:59');
+        //本月01-15日添加的订单，退货算入下个月退货统计
+        //$a_time_start = strtotime(date('Y-m-01'.' 00:00:00',$month_start));
+        //$a_time_end = strtotime(date('Y-m-01'.' 23:59:59',$month_end));
+        //$r_where = " AND i.add_time NOT BETWEEN $a_time_start AND $a_time_end";
     }
 
     $sql_select = 'SELECT COUNT(*) order_num,SUM(i.final_amount) final_amount,i.admin_name,i.admin_id FROM '.
         $GLOBALS['ecs']->table('order_info').' i LEFT JOIN '.$GLOBALS['ecs']->table('returns_order').
         " r ON r.order_id=i.order_id WHERE r.return_time BETWEEN $month_start AND $month_end AND i.admin_id IN ($admin_list) ".
-        " AND i.order_status IN (5,1) AND i.order_type IN (4,5,6) GROUP BY i.admin_id";
+        " AND i.order_status IN (5,1) AND i.order_type IN (4,5,6) $r_where GROUP BY i.admin_id";
     $return = $GLOBALS['db']->getAll($sql_select);
 
     $total = array ('final_amount'=>0,'order_num'=>0);
@@ -1395,6 +1403,7 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
         // 合并退货订单数据到  $res 数组
         foreach ($return as $v) {
             if ($v['admin_id'] == $val['admin_id']) {
+                $val['final_amount'] = bcsub($val['final_amount'],$v['final_amount'],2);
                 $val['return_amount'] = $v['final_amount'];
                 $val['return_count']  = $v['order_num'];
             }
@@ -1470,7 +1479,7 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
         }
         unset($val);
         $admin_list = implode(',', $admin_list);
-        $condition    = " AND admin_id IN ($admin_list) AND order_type IN (4,5,6) GROUP BY admin_id ";
+        $condition    = " AND admin_id IN ($admin_list) AND order_type IN (4,5,6,9) GROUP BY admin_id ";
         $yesterday    = $today -24*3600;                            // 昨天
         $before_ytday = $yesterday -24*3600;                        // 前天
         $month_start  = strtotime(date('Y-m-01 00:00:00', time())); // 本月初
@@ -2110,7 +2119,6 @@ elseif('order_success_stats' == $_REQUEST['act']){
     $smarty->assign('curr_title', '订单签收率');
     $smarty->assign('role_id', $_REQUEST['role_id']);
     $smarty->assign('role_list', get_role_customer(' AND role_id IN(33,34,35,36,37)'));
-    $res['main'] = $smarty->fetch('connect_stats.htm');
     $res['main'] = $smarty->fetch('order_success_stats.htm');
     die($json->encode($res));
 }
@@ -2198,6 +2206,16 @@ elseif ('user_analyse_report' == $_REQUEST['act']){
 elseif('act_user_analyse' == $_REQUEST['act']){
     $analyse_result = analyse_user('contact');
     die($json->encode($analyse_result));
+}
+//成交方式
+elseif($_REQUEST['act'] == 'deal_method_report'){
+   $res['main'] = $smarty->fetch('deal_method_report.htm'); 
+    die($json->encode($res));
+}
+
+elseif($_REQUEST['act'] == 'add_contact_report'){
+   $res['main'] = $smarty->fetch('add_contact_report.htm'); 
+   die($json->encode($res));
 }
 /*------------------------------------------------------ */
 //--排行统计需要的函数
@@ -3400,27 +3418,51 @@ function stats_member()
         $where .= " AND o.add_time BETWEEN {$filter['start_time']} AND {$filter['end_time']} ";
     }
 
-    // 统计来自各个平台的会员部销量
+    // 统计来自各个平台的二部销量
     $sql_select = 'SELECT SUM(o.final_amount) final_amount,COUNT(*) order_num,r.role_name,o.team FROM '.
         $GLOBALS['ecs']->table('order_info').' o,'.$GLOBALS['ecs']->table('role')." r $where AND order_status".
-        ' IN (1,5) AND r.role_id=o.team AND o.platform IN ('.MEMBER_SALE.') AND shipping_status<>3 GROUP BY o.team';
+        ' IN (1,5) AND r.role_id=o.team AND o.platform IN ('.KEFU2.') AND o.team<>o.platform AND shipping_status<>3 GROUP BY o.team';
     $res = $GLOBALS['db']->getAll($sql_select);
-    // 统计各个平台的所有销量
-    $sql_select = 'SELECT SUM(final_amount) total_amount, COUNT(*) total, team FROM '.$GLOBALS['ecs']->table('order_info').
-        " o $where AND order_status IN (1,5) AND shipping_status<>3 GROUP BY team";
-    $each_role = $GLOBALS['db']->getAll($sql_select);
+
+    $sql_select = "SELECT SUM(final_amount) total_amount, COUNT(*) total, %s FROM ".$GLOBALS['ecs']->table('order_info').
+        " o $where AND order_status IN (1,5)  %s AND shipping_status<>3 GROUP BY %s";
+    // 统计各个线上平台的所有销量
+    $each_role = $GLOBALS['db']->getAll(sprintf($sql_select,'team',' AND team IN('.ONLINE_STORE.')','team'));
+    //$offline_each_role = $GLOBALS['db']->getAll(sprintf($sql_select,'platform team',' AND platform IN('.KEFU2.')','platform'));
+    //$each_role = array_merge($online_each_role,$offline_each_role);
 
     $each = array ();
+    $total = array(
+        'role_name'    => '总计',
+        'order_sum'    => 0,
+        'final_amount' => 0,
+        'total'        => 0,
+        'total_amount' => 0,
+        'order_ratio'  => 0,
+        'amount_ratio' => 0
+    );
     foreach ($each_role as $val) {
         $each[$val['team']] = $val;
     }
     unset($val);
 
     foreach ($res as &$val) {
-        $val = array_merge($val, $each[$val['team']]);
-        $val['order_ratio']  = sprintf('%.2f%%', bcdiv($val['order_num'], $each[$val['team']]['total'], 4)*100);
-        $val['amount_ratio'] = sprintf('%.2f%%', bcdiv($val['final_amount'], $each[$val['team']]['total_amount'], 4)*100);
+        if ($each[$val['team']]) {
+            $val = array_merge($val, $each[$val['team']]);
+            if ($each[$val['team']]['total']) {
+                $val['order_ratio']  = sprintf('%.2f%%', bcdiv($val['order_num'], $each[$val['team']]['total'], 4)*100);
+                $val['amount_ratio'] = sprintf('%.2f%%', bcdiv($val['final_amount'], $each[$val['team']]['total_amount'], 4)*100);
+            }
+            $total['order_num'] += $val['order_num'];
+            $total['final_amount'] += $val['final_amount'];
+            $total['total'] += $val['total'];
+            $total['total_amount'] += $val['total_amount'];
+        }
     }
+
+    $total['order_ratio']  = sprintf('%.2f%%', bcdiv($total['order_num'], $total['total'], 4)*100);
+    $total['amount_ratio'] = sprintf('%.2f%%', bcdiv($total['final_amount'], $total['total_amount'], 4)*100);
+    array_push($res,$total);
     return $res;
 }
 
@@ -4113,10 +4155,13 @@ function stats_personal_sales ($start, $end, $condition) {
  * 统计当月的退货数量
  */
 function stats_returns_sales ($start, $end, $admin_list) {
+     //不包含本月1-15日添加并在此期间退货的订单
+    //$a_start_time = strtotime(date('Y-m-01 00:00:00',$start));
+    //$a_end_time = strtotime(date('Y-m-15 23:59:59',$end));
     $sql_select = 'SELECT COUNT(*) num,SUM(i.final_amount) final_amount,i.admin_name ,i.admin_id,i.add_time order_time FROM '.
         $GLOBALS['ecs']->table('order_info').' i LEFT JOIN '.$GLOBALS['ecs']->table('returns_order').
         " r ON r.order_id=i.order_id WHERE r.return_time BETWEEN $start AND $end AND i.admin_id IN ($admin_list)".
-        ' AND i.order_type IN (4,5,6) GROUP BY i.admin_id';
+        " AND i.order_type IN (4,5,6) GROUP BY i.admin_id";
     return $GLOBALS['db']->getAll($sql_select);
 }
 
@@ -4906,7 +4951,7 @@ function analyse_user_contact(){
     $arr['has_wechat'] = $GLOBALS['db']->getAll($sql." AND wechat<>'' $append ".$group_by);
     //$arr['no_wechat'] = $GLOBALS['db']->getAll($sql." AND wechat='' $append ".$group_by);
     foreach ($arr as &$v) {
-       $v = optimize_array($v); 
+        $v = optimize_array($v); 
     }
     unset($v);
     $total = array(

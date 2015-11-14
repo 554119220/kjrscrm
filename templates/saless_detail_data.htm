@@ -1,27 +1,28 @@
-<table cellspacing="0" cellpadding="0" style="width:920px">
+<table cellspacing="0" cellpadding="0" style="width:920px" class="wu_table_list wu_rb_border tr_hover">
     <tr>
-        <th style="border:1px solid #7B98C9">总销量：</th><td style="border:1px solid #7B98C9">{$final_total.total}</td>
-        <th style="border:1px solid #7B98C9">在线支付：</th><td style="border:1px solid #7B98C9">{$final_total.pay}</td>
-        <th style="border:1px solid #7B98C9">货到付款：</th><td style="border:1px solid #7B98C9">{$final_total.shipping}</td>
+        <th width="15%">总销量：</th><th width="15%">{$final_total.total}</th>
+        <th width="15%">在线支付：</th><th width="15%">{$final_total.pay}</th>
+        <th width="15%">货到付款：</th><th width="15%">{$final_total.shipping}</th>
     </tr>
     <tr>
-        <th style="border:1px solid #7B98C9">总单数：</th><td style="border:1px solid #7B98C9">{$final_number.total}</td>
-        <th style="border:1px solid #7B98C9">在线支付：</th><td style="border:1px solid #7B98C9">{$final_number.pay}</td>
-        <th style="border:1px solid #7B98C9">货到付款：</th><td style="border:1px solid #7B98C9">{$final_number.shipping}</td>
+        <th>总单数：</th><th>{$final_number.total}</th>
+        <th>在线支付：</th><th>{$final_number.pay}</th>
+        <th>货到付款：</th><th>{$final_number.shipping}</th>
     </tr>
 </table>
-<table class="tableList" cellspacing="0" cellpadding="0">
+<br />
+<table class="wu_table_list wu_rb_border tr_hover" cellspacing="0" cellpadding="0" width="50%">
     <thead>
         <th>支付方式</th>
         <th>金额</th>
         <th>数量</th>
-        <th>支付方式</th>
+        <th width="30%">支付方式</th>
         <th>金额</th>
         <th>数量</th>
     </thead>
     <tr>
         {foreach from=$pay_list name=i key=key item=val}
-        <td class="stats-name">{$val}</td>
+        <td>{$val}</td>
         <td>{$pay_final[$key]}</td>
         <td>{$pay_number[$key]}</td>
         {if $smarty.foreach.i.iteration%2 neq 0 and $smarty.foreach.i.last}
@@ -36,7 +37,8 @@
         {/foreach}
     </tr>
 </table>
-<table class="tableList" cellspacing="0" cellpadding="0">
+<br />
+<table class="wu_table_list wu_rb_border tr_hover" cellspacing="0" cellpadding="0" width="50%">
     <thead>
         <th>配送方式</th>
         <th>金额</th>
@@ -48,7 +50,7 @@
     <tbody>
         <tr>
             {foreach from=$shipping_list name=i key=key item=val}
-            <td class="stats-name">{$val}</td>
+            <td>{$val}</td>
             <td>{$shipping_final[$key]}</td>
             <td>{$shipping_number[$key]}</td>
             {if $smarty.foreach.i.iteration%2 neq 0 and $smarty.foreach.i.last}

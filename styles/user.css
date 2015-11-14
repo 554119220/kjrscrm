@@ -199,3 +199,5 @@ details{cursor:pointer;}
 .white_bg .form_table {background:transparent;}
 .form_table th{ width:130px; text-align:right; font-weight:normal;}
 .data_center input[type='number']{width:60px;}
+#general table td{text-align:left;padding-left:12px;}
+input.down_line{border:0px;border-bottom: 1px solid #ccc;font-weight:bolder;background:none;}

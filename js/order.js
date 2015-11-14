@@ -137,3 +137,59 @@ function justMarkFlushOrder(obj){
     Ajax.call('order.php?act=mark_flush_order','&platform='+platform+'&goods_sn='+goodsSn+'&price='+price,showMsg,'POST','JSON');
   }else return false;
 }
+
+//取货表单
+function switchOrderType(obj){
+  if (obj.value && obj.value == 10) {
+    var userId = $("#ID").val(); 
+    Ajax.call('order.php?act=store_order','user_id='+userId,pickUpOrderForm,'GET','JSON');
+  }else{
+    $("#gerneral_order").show(); 
+    $("#store_order_goods_form").hide();
+  }
+}
+
+function pickUpOrderForm(res){
+  $("#gerneral_order").hide(); 
+  $("#store_order_goods_form").html(res.main);
+  $("#store_order_goods_form").show();
+}
+
+//取货商品表单
+function storeGoodsForm(orderId){
+  if ($("[name='"+orderId+"']").length) {
+    $("[name='"+orderId+"']").remove();
+  }else{
+    $.get(
+        'order.php?act=store_order_goods&order_id='+orderId,
+        function(res){
+          $("#store_order_goods").append(res.main);
+        },'JSON');
+  }
+}
+
+function calculateAmount(){
+  var goodsPrice = 0;
+  $("#store_order_goods [type='number']").each(function(){
+    goodsPrice = parseInt($(this).val()) * parseInt($(this).attr('goods_price'));
+  });
+  $("[name='goods_amount']").val(goodsPrice);
+  $("[name='order_amount']").val(goodsPrice);
+}
+
+//存货订单明细
+function getStoreOrderDetail(orderId,obj){
+  if (orderId) {
+    $.get(
+        'order.php?act=get_store_order_detail&order_id='+orderId,
+        function(res){
+          var index = parseInt(obj.parent().parent().first().index());
+          var table = document.getElementById("store_order_list");
+          var tr = table.insertRow(index);
+          var td = tr.insertCell();
+          td.setAttribute('colspan',9);
+          td.innerHTML = res;
+          //$("#take_log").html(res);
+        },'JSON');
+  }
+}

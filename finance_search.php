@@ -52,12 +52,18 @@ elseif ($act == 'search')
 
     if (strpos($keyword, '-') === false) {
         if($condition == 'tracking_sn' || $condition == 'order_sn') {
-            $where    = " WHERE $condition='$keyword' ";
-            $user_old = get_user_id('order_info',$where,$keyword);
-
-            if (!$user_old) {
-                $user_new = get_user_id('ordersyn_info',$where,$keyword);
+            if ($condition == 'order_sn') {
+                $where = " WHERE (order_sn='$keyword' OR platform_order_sn='$keyword') ";
+                $user_old = get_user_id('order_info',$where,$keyword);
+                $new_where    = " WHERE $condition='$keyword' ";
+            }else{
+                $where    = " WHERE $condition='$keyword' ";
+                $user_old = get_user_id('order_info',$where,$keyword);
             }
+
+            //if (!$user_old) {
+                $user_new = get_user_id('ordersyn_info',$new_where,$keyword);
+            //}
         } else if ($condition == 'card_number') {
             $where    = " WHERE c.$condition=$keyword";
             $user_old = get_user_id('memship_number',$where,$keyword);

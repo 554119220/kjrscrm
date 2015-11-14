@@ -1,0 +1,52 @@
+{if !$list}
+<fieldset>
+  <legend algin="left">取货订单商品</legend>
+  {/if}
+  <div>
+    <table class="wu_table_list rb_border tr_hover" width="80%" cellpadding="0" cellspacing="0" id="store_order_list">
+      <tr>
+        <th width="3%"></th> 
+        {if $list} <th width="10%">顾客</th> {/if}
+        <th width="15%">存货时间</th> 
+        <th width="15%">编号</th> 
+        <th width="10%">金额</th> 
+        <th width="10%">添加人</th> 
+        <th width="10%">购买平台</th> 
+        <th width="8%">状态</th> 
+        <th width="10%">操作</th> 
+      </tr>
+      {foreach from=$order_list item=o}
+      <tr>
+        <td> <input type="checkbox" name="order_id[]" value="{o.order_id}" /> </td>
+        {if $list} <td>{$o.buyer}</td> {/if}
+        <td>{$o.short_order_time}</td>
+        <td>{$o.order_sn}</td>
+        <td>{$o.final_amount}</td>
+        <td>{$o.admin_name}</td>
+        <td>{$o.platform}</td>
+        <td>{if $o.quantity eq 0}已提完{else}还有存货{/if}</td>
+        <td> 
+          {if $list}
+          <label class="btn_new" onclick="getStoreOrderDetail({$o.order_id},$(this))">详情</label>
+          {else}
+          <label class="btn_new" onclick="storeGoodsForm({$o.order_id})">提货</label>
+          {/if}
+        </td>
+      </tr>
+      {foreachelse}
+      <tr>
+        <th colspan="8">没有存货记录</th>
+      </tr>
+      {/foreach}
+    </table>
+  </div>
+  <form id="store_order_goods" action="javascript:void(0)" onsubmit="addNewOrder()"></form>
+  {if !$list}
+  <div class="tl pt5">
+    运费：<input type="text" name="take_shipping_fee" id="take_shipping_fee" value="0" class="down_line wd50"/>
+    <input type="submit" value="提交订单" class="input_submit" form="store_order_goods"/>
+  </div>
+</fieldset>
+{/if}
+<br>
+<div id="take_log"></div>

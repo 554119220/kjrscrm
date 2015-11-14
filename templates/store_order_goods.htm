@@ -1,0 +1,27 @@
+<table width="80%" class="wu_table_list rb_border tr_hover" cellspacing="0" cellpadding="0" name="{$order_id}">
+  <caption>订单编号 {$order_id}</caption>
+  <tr>
+    <th>商品编号</th>
+    <th>商品名</th>
+    <th>商品数量</th>
+    <th>存货单价</th>
+    <th>可提数量</th>
+    <th>提货数量</th>
+  </tr>
+ {foreach from=$goods_list item=v}
+ <tr>
+   <td>{$v.goods_sn}</td>
+   <td>{$v.goods_name}</td>
+   <td>{$v.goods_number}</td>
+   <td>{$v.goods_price}</td>
+   <td>{$v.max_take}</td>
+   <td>
+     {if $v.max_take gt 0}
+     <input type="number" class="w50" rec_id="{$v.rec_id}" value="1" min="1" max="{$v.max_take}" goods_sn={$v.goods_sn} goods_price="{$v.goods_price}" order_id={$v.order_id}/>
+     {else}
+     0
+     {/if}
+   </td>
+ </tr>
+ {/foreach} 
+</table>

@@ -731,11 +731,10 @@ elseif ($_REQUEST['act'] == 'user_detail') {
         $family = array('family_name'=>$family_users[0]['family_name'],'family_total'=>count($family_users));
         $smarty->assign('family',$family);
 
-        for($i = 0; $i < count($family_users); $i++)
-        {
-            $sql_select = 'SELECT COUNT(*) FROM '.$GLOBALS['ecs']->table('other_examination_test').
-                " WHERE user_id={$family_users[$i]['user_id']}";
-            $family_users[$i]['healthy_file'] = $GLOBALS['db']->getOne($sql_select);
+        for($i = 0; $i < count($family_users); $i++) {
+            //$sql_select = 'SELECT COUNT(*) FROM '.$GLOBALS['ecs']->table('other_examination_test').
+            //    " WHERE user_id={$family_users[$i]['user_id']}";
+            //$family_users[$i]['healthy_file'] = $GLOBALS['db']->getOne($sql_select);
             $family_users[$i]['input_time'] = date('Y-m-d',$family_users[$i]['input_time']);
         }
 
@@ -852,7 +851,7 @@ elseif ($_REQUEST['act'] == 'user_detail') {
         $sql_select .= ' WHERE available=1 ORDER BY sort DESC';
         $smarty->assign('delivery_plus', 1);
     } else {
-        $sql_select .= ' WHERE available=1 AND type_id<100 ORDER BY sort DESC';
+        $sql_select .= ' WHERE available=1 AND type_id<100 ORDER BY sort ASC';
     }
 
     $order_type = $GLOBALS['db']->getAll($sql_select);
@@ -922,11 +921,7 @@ elseif ($_REQUEST['act'] == 'user_detail') {
     $healthy_lifestyle = $smarty->fetch('healthy_file_part.htm');
     $smarty->assign('healthy_lifestyle',$healthy_lifestyle);
     $smarty->assign('service_time', date('Y-m-d H:i'));
-
-    $smarty->assign('order_source',   order_source_list());
-    $sql= 'SELECT ext FROM '.$GLOBALS['ecs']->table('admin_user')." WHERE user_id={$_SESSION['admin_id']}";
-    $ext = $GLOBALS['db']->getOne($sql);
-    $smarty->assign('ext',$ext);
+    $smarty->assign('deal_method',get_deal_method());
 
     $res['info'] = $smarty->fetch('users_detail.htm');
     die($json->encode($res));
@@ -5232,11 +5227,14 @@ function user_list() {
             }
         }
 
-        $sql = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,e.eff_name,c.bind_time,u.user_name,u.sex,'.
-            'u.is_validated,u.add_time,u.remarks,u.service_time,u.assign_time,u.qq,u.aliww FROM '
-            .$GLOBALS['ecs']->table('users').' u LEFT JOIN '.
-            $GLOBALS['ecs']->table('memship_number').' c ON c.user_id=u.user_id LEFT JOIN '.$GLOBALS['ecs']->table('effects').
-            ' e ON e.eff_id=u.eff_id';
+        //$sql = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,e.eff_name,c.bind_time,u.user_name,u.sex,'.
+        //    'u.is_validated,u.add_time,u.remarks,u.service_time,u.assign_time FROM '
+        //    .$GLOBALS['ecs']->table('users').' u LEFT JOIN '.
+        //    $GLOBALS['ecs']->table('memship_number').' c ON c.user_id=u.user_id LEFT JOIN '.$GLOBALS['ecs']->table('effects').
+        //    ' e ON e.eff_id=u.eff_id';
+        $sql = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,u.user_name,u.sex,'.
+            'u.is_validated,u.add_time,u.remarks,u.service_time,u.assign_time FROM '
+            .$GLOBALS['ecs']->table('users').' u ';
 
         //判断一个月内转移的顾客
         $_REQUEST['transfer_time'] && $filter['transfer_time'] = $_REQUEST['transfer_time'];
@@ -5299,10 +5297,9 @@ function user_list() {
             $where = " u.admin_id={$_SESSION['admin_id']}";
         }
 
-        $sql_select = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,c.card_number,c.bind_time,u.user_name,u.sex,'.
-            'IF(u.birthday="2012-01-01",u.age_group,(YEAR(NOW())-YEAR(u.birthday))) birthday,u.is_validated,u.add_time,'.
-            'u.remarks,u.service_time FROM '.$GLOBALS['ecs']->table('users').' u LEFT JOIN '.$GLOBALS['ecs']->table('memship_number').
-            ' c ON c.user_id=u.user_id LEFT JOIN '.$GLOBALS['ecs']->table('effects').' e ON e.eff_id=u.eff_id LEFT JOIN '.
+        $sql_select = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,u.user_name,u.sex,'.
+            'u.is_validated,u.add_time,'.
+            'u.remarks,u.service_time FROM '.$GLOBALS['ecs']->table('users').' u LEFT JOIN '.
             $GLOBALS['ecs']->table('user_contact')." uc ON u.user_id=uc.user_id WHERE $where AND u.customer_type IN ({$filter['type']})".
             ' AND uc.contact_name="%s" AND uc.contact_value="%s"';
         switch ($filter['keyfields']) {
@@ -5828,9 +5825,10 @@ function access_purchase_records ($id)
         $where = " AND o.shipping_status<>3 ";
     }
     // Get user to buy records 获取顾客购买记录
-    $sql_select = 'SELECT o.order_id,o.platform_order_sn,o.order_sn p_order_sn,o.consignee,o.order_status,o.shipping_status,o.add_time,'.
-        'o.shipping_name,o.pay_name,o.final_amount,o.tracking_sn express_number,o.admin_name operator,o.receive_time,o.shipping_code, '.
-        ' r.role_describe platform FROM '.$GLOBALS['ecs']->table('order_info').' o,'.$GLOBALS['ecs']->table('admin_user').' a, '.
+    $sql_select = 'SELECT o.order_id,o.platform_order_sn,o.order_sn p_order_sn,o.consignee,o.order_status,o.shipping_status,o.add_time,o.order_type,'.
+        "o.shipping_name,o.pay_name,IF(o.order_type=10,'0.00',o.final_amount) final_amount,o.tracking_sn express_number,o.admin_name operator,o.receive_time,o.shipping_code, ".
+        ' r.role_describe platform FROM '.$GLOBALS['ecs']->table('order_info')
+        .' o,'.$GLOBALS['ecs']->table('admin_user').' a, '.
         $GLOBALS['ecs']->table('role').' r WHERE  o.add_admin_id=a.user_id AND '.
         " r.role_id=o.team AND o.user_id=$id $where GROUP BY o.order_id ORDER BY o.add_time ASC ";
 
@@ -5879,6 +5877,9 @@ function access_purchase_records ($id)
         case "54" : $val['finaly_order_status'] = '<font color="#FF000">已退货</font>';  $val['tr'] = 'style="background:#FFF7FB !important"';break;
         case "13" : $val['finaly_order_status'] = '<font color="#00FF00">已取消</font>'; $val['tr'] = 'style="background:##F0F0F0 !important"'; break;
         case "10" : $val['finaly_order_status'] = '<font>待发货</font>'; $val['tr'] = 'style="background:#D1E9E9 !important"'; break;
+        }
+        if ($val['order_type'] == 10) {
+            $val['finaly_order_status'] .= '<font> | 取货单</font>';
         }
 
     }

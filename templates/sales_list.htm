@@ -7,7 +7,7 @@
         <th>排 名</th>
         <th>客 服</th>
         <th>订单数量</th>
-        <th>订单金额</th>
+        <th>订单金额(不含当月退货)</th>
         <th>客单价</th>
         <th>当月退货数量</th>
         <th>当月退货金额</th>
@@ -20,10 +20,11 @@
     <th title="排名">{$smarty.foreach.i.iteration}</th>
     <th>{$val.admin_name}</th>
     <th title="订单数量">{$val.order_num}</th>
-    <th title="销售金额">{$val.final_amount}</th>
+    <th title="销售金额(不含退货)">{$val.final_amount}</th>
     <th title="客单价">{$val.average}</th>
     <th title="退货单数">{if $val.return_count}{$val.return_count}{else}0{/if}</th>
     <th title="退货金额">{if $val.return_amount}{$val.return_amount}{else}0{/if}</th>
+    <!--<th title="上月下单当月退货">{if $val.return_amount}{$val.return_amount}{else}0{/if}</th>-->
     <th title="目标销量">{$val.target}</th>
 </tr>
 {/foreach}
@@ -31,10 +32,11 @@
     <th> </th>
     <th>总 计</th>
     <th title="订单数量">{$total.order_num}</th>
-    <th title="销售金额">{$total.final_amount}</th>
+    <th title="销售金额(不含退货)">{$total.final_amount}</th>
     <th id="pct" title="客单价">{$total.average}</th>
     <th title="退货金额">{if $total.return_count}{$total.return_count}{else}0{/if}</th>
     <th title="退货销量">{if $total.return_amount}{$total.return_amount}{else}0{/if}</th>
+    <!--<th title="上月下单当月退货">{if $total.return_amount}{$total.return_amount}{else}0{/if}</th>-->
     <th title="目标销量">{$total.target}</th>
 </tr>
 </tbody>

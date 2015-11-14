@@ -1414,3 +1414,14 @@ function labSearchOrder(obj){
   $('#sub_btn').val(obj.getAttribute('value')); 
   searchOrder(obj);
 }
+
+//顾客详情中的顾客分析
+function userdetailAnalyse(obj){
+  switchSubTab(obj);
+  var userId = $("#ID").val();
+  Ajax.call('users.php?act=analyse_user','user_id='+userId,userdetailAnalyseResp,'GET','JSON');
+}
+
+function userdetailAnalyseResp(res){
+  
+}

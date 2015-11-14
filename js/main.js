@@ -1342,7 +1342,6 @@ function addNewOrder()
 {
   // 顾客ID
   var id = document.getElementById('ID').value;
-
   var orderInfo = document.forms['order_info'];
   var goodsList = document.forms['goodsList'];
   var tableObj  = document.getElementById('goods_list');
@@ -1356,11 +1355,13 @@ function addNewOrder()
   var address     = orderInfo.elements['address'].value;
   var pay_id      = orderInfo.elements['pay_id'].value;
   var shipping_id = orderInfo.elements['shipping_id'].value;
+  var shipping_fee = document.getElementById('shipping_fee').value;
   var remarks     = orderInfo.elements['remarks'].value;
   var admin_id    = orderInfo.elements['admin_id'].value;
   //var platform  = orderInfo.elements['platform'].value;
   var team        = orderInfo.elements['team'].value;
   var order_type  = orderInfo.elements['order_type'].value;
+  var deal_mothod = orderInfo.elements['deal_mothod'].value;
 
   var platform_order_sn = orderInfo.elements['platform_order_sn'].value; // 订单编号
 
@@ -1397,6 +1398,10 @@ function addNewOrder()
     return false;
   }
 
+  if (document.getElementById('take_shipping_fee')) {
+    shipping_fee = document.getElementById('take_shipping_fee').value;
+  }
+
   /*
      if (platform == 0)
      {
@@ -1424,7 +1429,7 @@ function addNewOrder()
     }
   }
 
-  if (tableObj.rows.length <= 2) {
+  if (tableObj.rows.length <= 2 && order_type !=10) {
     res['message'] = '请先添加商品，再提交订单！';
     showMsg(res);
     return false;
@@ -1460,7 +1465,8 @@ function addNewOrder()
     "team":team,
     "order_type":order_type,
     "goods_amount":goods_amount,
-    "remarks":remarks
+    "remarks":remarks,
+    "deal_mohtod":deal_mothod
   };
 
   for (var i = orderInfo.elements['order_source'].length -1; i > 0; i--) {
@@ -1470,21 +1476,40 @@ function addNewOrder()
   }
 
   var goods = {};
-  for (var i = 2; i < tableObj.rows.length; i++) {
-    if (tableObj.rows.length > 3) {
-      goods[i-2] = {
-        "goods_sn"     : goodsList.elements['list_id[]'][i-2].value,
-        "goods_price"  : goodsList.elements['list_price[]'][i-2].value,
-        "goods_number" : goodsList.elements['list_number[]'][i-2].value,
-        "is_gift"      : goodsList.elements['list_gift[]'][i-2].value,
-      };
-    } else {
-      goods[i-2] = {
-        "goods_sn"     : goodsList.elements['list_id[]'].value,
-        "goods_price"  : goodsList.elements['list_price[]'].value,
-        "goods_number" : goodsList.elements['list_number[]'].value,
-        "is_gift"      : goodsList.elements['list_gift[]'].value,
-      };
+  if (order_type == 10) {
+    //提货订单
+    var j = 0;
+    var objList = $("#store_order_goods table");
+    objList.each(function(){
+      var goodsObj = $(this).find("[type='number']").each(function(){
+        goods[j] = {
+          'rec_id'     : $(this).attr('rec_id'),
+          'order_id'     : $(this).attr('order_id'),
+          'goods_number' : $(this).val(),
+          'goods_price'  : $(this).attr('goods_price'),
+          'goods_sn'     : $(this).attr('goods_sn'),
+          'is_gift'      : 0
+        };
+        j++;
+      });
+    });
+  }else{
+    for (var i = 2; i < tableObj.rows.length; i++) {
+      if (tableObj.rows.length > 3) {
+        goods[i-2] = {
+          "goods_sn"     : goodsList.elements['list_id[]'][i-2].value,
+          "goods_price"  : goodsList.elements['list_price[]'][i-2].value,
+          "goods_number" : goodsList.elements['list_number[]'][i-2].value,
+          "is_gift"      : goodsList.elements['list_gift[]'][i-2].value,
+        };
+      } else {
+        goods[i-2] = {
+          "goods_sn"     : goodsList.elements['list_id[]'].value,
+          "goods_price"  : goodsList.elements['list_price[]'].value,
+          "goods_number" : goodsList.elements['list_number[]'].value,
+          "is_gift"      : goodsList.elements['list_gift[]'].value,
+        };
+      }
     }
   }
 

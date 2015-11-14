@@ -962,16 +962,20 @@ elseif ($_REQUEST['act'] == 'order_del') {
         die($json->encode($res));
     }
 
-    $sql_select = 'SELECT shipping_status FROM '.$GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
-    $shipping_status = $GLOBALS['db']->getOne($sql_select);
-    if ($shipping_status == 1) {
+    $sql_select = 'SELECT shipping_status,order_type FROM '.$GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
+    $r = $GLOBALS['db']->getRow($sql_select);
+    //恢复存货
+    if (10 == $r['order_type']) {
+        recoveryOrderStore($order_id);
+    }
+    if ($r['shipping_status'] == 1) {
         // 恢复库存数量
         $result = restore_storage($order_id);
         if ($result) {
             $res['message'] = '取消订单时出错，请检查订单后再试！';
             die($json->encode($res));
         }
-    } elseif ($shipping_status > 1) {
+    } elseif ($r['shipping_status'] > 1) {
         $res['message'] = '当前订单不允许取消！';
         die($json->encode($res));
     }
@@ -1001,13 +1005,13 @@ elseif ($_REQUEST['act'] == 'order_del') {
     $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('order_info').
         " SET shipping_status=3,close_reason='$close_reason' WHERE order_id=$order_id";
     if ($GLOBALS['db']->query($sql_update)) {
+        //取货订单恢复存货
         $res['code'] = 1;
         $res['message'] = '订单取消成功！';
     } else {
         $res['code'] = 0;
         $res['message'] = '订单不符合取消条件！';
     }
-
     die($json->encode($res));
 }
 
@@ -1320,16 +1324,6 @@ elseif ($_REQUEST['act'] == 'add_new_order') {
         die($json->encode($res));
     }
 
-    $goods_list = $order_info['goods_list'];
-    unset($order_info['goods_list']);
-
-    $enough_storage = enough_storage($goods_list);
-    if (!$enough_storage) {
-        $res['message'] = sprintf('商品%s缺货%d件/瓶', $enough_storage['goods_name'], $enough_storage['shortage']);
-        $res['timeout'] = 2000;
-        die($json->encode($res));
-    }
-
     $order_info['order_sn'] = date('ymdHis', time()).mt_rand(00,99);
     $user_id = intval($order_info['user_id']);
     if ($order_info['order_type'] == 99) {
@@ -1360,6 +1354,29 @@ elseif ($_REQUEST['act'] == 'add_new_order') {
     } else {
         $order_info['platform_order_sn'] = NULL;
     }
+
+    $goods_list = $order_info['goods_list'];
+    unset($order_info['goods_list']);
+
+    $take_goods =  $goods_list;
+    if ($order_info['order_type'] == 10) {
+        $order_info['goods_amount'] = 0;
+        foreach ($goods_list as $k=>$v) {
+            unset($goods_list[$k]['rec_id']);
+            unset($goods_list[$k]['order_id']);
+            $order_info['goods_amount'] = bcadd($order_info['goods_amount'],($v['goods_price']*$v['goods_number']),2);
+        }
+        $order_info['final_amount'] = bcadd($order_info['final_amount'],$order_info['goods_amount'],2);
+        $order_info['parent_id'] = $parent_id;
+    }
+
+    $enough_storage = $order_info['order_type'] == 9 ? 1 : enough_storage($goods_list);
+    if (!$enough_storage) {
+        $res['message'] = sprintf('商品%s缺货%d件/瓶', $enough_storage['goods_name'], $enough_storage['shortage']);
+        $res['timeout'] = 2000;
+        die($json->encode($res));
+    }
+
     foreach ($goods_list as $val) {
         $value = array_values($val);
         if (is_numeric($val['goods_sn'])) {
@@ -1372,8 +1389,9 @@ elseif ($_REQUEST['act'] == 'add_new_order') {
     // 计算订单总金额
     $order_info['final_amount'] = bcadd($order_info['goods_amount'], $order_info['shipping_fee'], 2);
 
-    $order_info['order_status'] = 1;
-    $order_info['pay_status']   = 1;
+    $order_info['order_status'] = $order_info['order_type'] == 9 ? 5 : 1;
+    $order_info['shipping_status'] = $order_info['order_type'] == 9 ? 2 : 0;
+    $order_info['pay_status']   = $order_info['order_type'] == 9 ? 2 : 1;
     $order_info['add_time']     = time();
     $order_info['confirm_time'] = time();
     $order_info['add_admin_id'] = $_SESSION['admin_id'];
@@ -1412,8 +1430,16 @@ elseif ($_REQUEST['act'] == 'add_new_order') {
     }
 
     $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('order_goods').$goods_fields.$goods_values;
-    if ($GLOBALS['db']->query($sql_insert))
-    {
+    if ($GLOBALS['db']->query($sql_insert)) {
+        if ($order_info['order_type'] == 9) {
+            foreach ($take_goods as $g) {
+                $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('order_store_goods')
+                    ."(order_id,goods_sn,quantity,store)VALUES("
+                    ."$order_id,'{$g['goods_sn']}',{$g['goods_number']},{$g['goods_number']})";
+                $GLOBALS['db']->query($sql_insert);
+            }
+        }
+
         foreach ($goods_list as $val)
         {
             if (is_numeric($val['goods_sn']))
@@ -1445,7 +1471,12 @@ elseif ($_REQUEST['act'] == 'add_new_order') {
         $GLOBALS['db']->query($sql_update);
 
         //将顾客按购买商品分类
-        assignUserToData($order_id);
+        if ($order_info['order_type'] != 10) {
+            assignUserToData($order_id);
+        }else{
+            //减存货数
+            reduceOrderStore($take_goods,$order_id);
+        }
         /*
         // 处理库存
         $handle_message = '';
@@ -2161,6 +2192,29 @@ admin_priv('order_view');
             $smarty->assign('notice', false);
         }
 
+        if ($order['order_type'] == 10) {
+            $order_list = storeOrderList(" AND o.user_id={$order['user_id']}");
+            foreach ($order_list as $l) {
+                $order_id_list[] = $l['order_id'];
+            }
+            $where = ' AND o.order_id IN('.implode(',',$order_id_list).') ';
+            $detail = storeOrderDetail($where);
+            $take_log = storeOrderMoreDetail(" AND o.user_id={$order['user_id']}");
+            foreach ($order_list as $o) {
+                foreach ($detail as &$d) {
+                    if ($o['order_id'] == $d['order_id']) {
+                        //$o['goods_list'][] = $d;
+                        $d['add_time'] = $o['short_order_time'];
+                    }
+                }
+            }
+            $smarty->assign('take_log',$take_log);
+            $smarty->assign('detail',$detail);
+            $title = '康健人生健康商城提货单';
+        }else{
+            $title = '康健人生健康商城发货单';
+        }
+        $smarty->assign('title',$title);
         $smarty->display('order_print.htm');
     }
 
@@ -3189,143 +3243,6 @@ elseif ($_REQUEST['act'] == 'rand_order') {
     die($json->encode($res));
 }
 
-//存货订单管理
-elseif ($_REQUEST['act'] == 'inventory_order_list')
-{
-    /* 分页大小 */
-    $filter['page'] = empty($_REQUEST['page']) || (intval($_REQUEST['page'])<=0) ? 1 : intval($_REQUEST['page']);
-    if (isset($_REQUEST['page_size']) && intval($_REQUEST['page_size']) > 0)
-    {
-        $filter['page_size'] = intval($_REQUEST['page_size']);
-    }
-    else
-    {
-        $filter['page_size'] = 20;
-    }
-
-    $sql_select = 'SELECT COUNT(*) FROM '
-        .$GLOBALS['ecs']->table('inventory_order')
-        .' AS iv LEFT JOIN '.$GLOBALS['ecs']->table('users')
-        .' AS u ON iv.user_id=u.user_id '
-        .' GROUP BY iv.user_id';
-
-    $filter['record_count'] = $GLOBALS['db']->getOne($sql_select);
-    $filter['page_count'] = $filter['record_count']>0 ? ceil($filter['record_count']/$filter['page_size']) : 1;
-
-    // 设置分页
-    $page_set = array (1,2,3,4,5,6,7);
-    if ($filter['page'] > 4)
-    {
-        foreach ($page_set as &$val)
-        {
-            $val += $filter['page'] -4;
-        }
-    }
-
-    if (end($page_set) > $filter['page_count'])
-    {
-        $page_set = array ();
-        for ($i = 7; $i >= 0; $i--)
-        {
-            if ($filter['page_count'] - $i > 0)
-            {
-                $page_set[] = $filter['page_count'] - $i;
-            }
-        }
-    }
-
-    $filter = array (
-        'filter'        => $filter,
-        'page_count'    => $filter['page_count'],
-        'record_count'  => $filter['record_count'],
-        'page_size'     => $filter['page_size'],
-        'page'          => $filter['page'],
-        'page_set'      => $page_set,
-        'condition'     => $condition,
-        'start'         => ($filter['page'] - 1)*$filter['page_size'] +1,
-        'end'           => $filter['page']*$filter['page_size'],
-        'act'           => 'inventory_order_list',
-    );
-
-    //拥有存货订单的顾客
-    $sql_select = 'SELECT iv.user_id,u.user_name,u.mobile_phone,u.admin_name FROM '
-        .$GLOBALS['ecs']->table('inventory_order')
-        .' AS iv LEFT JOIN '.$GLOBALS['ecs']->table('users')
-        .' AS u ON iv.user_id=u.user_id '
-        .' GROUP BY iv.user_id'
-        .' LIMIT '.($filter['page'] - 1)*$filter['page_size'].','.$filter['page_size'];
-
-    $user_list = $GLOBALS['db']->getAll($sql_select);
-
-    //获取存货订单
-    foreach($user_list AS $val)
-    {
-        $sql_select = 'SELECT * FROM '.$GLOBALS['ecs']->table('inventory_order')
-            .' WHERE user_id='.$val['user_id'];
-
-        $inventory_order = $GLOBALS['db']->getAll($sql_select);
-        $val['inventory_order'] = $inventory_order;
-    }
-
-    $smarty->assign('inventory_order',$inventory_order);
-    $smarty->assign('filter',$filter);
-
-    $res['main'] = $smarty->fetch('inventory_order_list.htm');
-
-    die($json->encode($res));
-}
-
-//搜索存货订单
-elseif ($_REQUEST['act'] == 'sch_inventory')
-{
-    $user_name = mysql_real_escape_string(trim($_REQUEST['user_name']));
-    $phone = mysql_real_escape_string(trim($_REQUEST['phone']));
-    $store_time = mysql_real_escape_string(trim($_REQUEST['store_time']));
-    $order_sn = mysql_real_escape_string(trim($_REQUEST['order_sn']));
-
-    $where = ' WHERE 1';
-    $condition = '';
-
-    if($user_name != '')
-    {
-        $where .= " AND user_name LIKE '%$user_name%' ";
-        $condition .= "&user_name=$user_name";
-    }
-
-    if($phone != '')
-    {
-        $where .= " AND phone LIKE '%$phone%' ";
-        $condition .= "&phone=$phone";
-    }
-
-    if($store_time != '')
-    {
-        $where .= " AND store_time=$store_time ";
-        $condition .= "&store_time=$store_time";
-    }
-
-    if($order_sn != '')
-    {
-        $where .= " AND order_sn=$order_sn ";
-        $condition .= "&order_sn=$order_sn";
-    }
-
-    $filter['page'] = empty($_REQUEST['page']) || (intval($_REQUEST['page'])<=0) ? 1 : intval($_REQUEST['page']);
-    if (isset($_REQUEST['page_size']) && intval($_REQUEST['page_size']) > 0)
-    {
-        $filter['page_size'] = intval($_REQUEST['page_size']);
-    } else {
-        $filter['page_size'] = 20;
-    }
-
-    $sql_select = 'SELECT COUNT(*) FROM '.$GLOBALS['ecs']->table('users');
-
-    $res['response_action'] = 'search_service';
-    $res['main'] = $smarty->fetch('sch_inventory_order.htm');
-
-    die($json->encode($res));
-}
-
 /* 批量打印发货单 */
 elseif ($_REQUEST['act'] == 'batch_print') {
     if (!admin_priv('batch_print', '', false)) {
@@ -3348,6 +3265,7 @@ elseif ($_REQUEST['act'] == 'batch_print') {
 
     if (empty($order_result)) {
         $msg = array('req_msg'=>true, 'timeout'=>2000, 'message'=>'请先选择需要批量打印的订单！');
+
         die($json->encode($msg));
     }
 
@@ -3773,6 +3691,52 @@ elseif('mark_flush_order' == $_REQUEST['act']){
     die($json->encode($res));
 }
 
+//取货订单表单
+elseif($_REQUEST['act'] == 'store_order'){
+    $user_id = intval($_REQUEST['user_id']);
+    if ($user_id) {
+        $where = " AND user_id=$user_id";
+        $order_list = storeOrderList($where);
+        $smarty->assign('order_list',$order_list);
+    }
+    $res['main'] = $smarty->fetch('store_order_form.htm');   
+    die($json->encode($res));
+}
+
+//选择取货商品
+elseif($_REQUEST['act'] == 'store_order_goods'){
+    //确认订单减存货
+    $order_id=intval($_REQUEST['order_id']);
+    $goods_list = storeOrderDetail(" AND o.order_id=$order_id ");
+    $smarty->assign('goods_list',$goods_list);
+    $smarty->assign('order_id',$order_id);
+    $res['main'] = $smarty->fetch('store_order_goods.htm');
+    die($json->encode($res));
+}
+
+//存货订单列表
+elseif($_REQUEST['act'] == 'store_order_list'){
+    $result = order_list();
+    $order_list = storeOrderList($where);
+    $smarty->assign('order_list',$order_list);
+    $smarty->assign('list',true);
+    $smarty->assign('filter',$result['filter']);   
+    $smarty->assign('order_div',$smarty->fetch('store_order_form.htm'));   
+    $res['main'] = $smarty->fetch('store_order_list.htm');   
+    die($json->encode($res));
+}
+//存货订单明细
+elseif($_REQUEST['act'] == 'get_store_order_detail'){
+    $order_id = intval($_REQUEST['order_id']); 
+    $detail = storeOrderDetail(" AND o.order_id=$order_id");
+    //$sql = 'SELECT rec_id FROM '.$GLOBALS['ecs']->table('order_info').' o LEFT JOIN" WHERE"
+    //$take_log = storeOrderMoreDetail(" AND o.order_id=$order_id ");
+    $smarty->assign('detail',$detail);
+    $smarty->assign('take_log',$take_log);
+    $res = $smarty->fetch('store_order_detail.htm');
+    die($json->encode($res));
+}
+
 //协助完成订单操作 , 在添加订单的时候判断并执行
 function assist_order($admin_id,$order_id,$final_amount){
     $assist_admin_id = intval($_REQUEST['assist_admin_id']);
@@ -4001,6 +3965,11 @@ function order_list()
         $temp_fields = " ,o.order_lock, IF(lock_timeout<$now_time,'锁定','已锁定') lock_status";
         $sort_by = ' o.add_time ASC ';
         break;
+    case 'store_order_list':
+        $table_order = 'order_info';
+        $table_user = 'users';
+        $where = ' AND o.order_type=9';
+        $sort_by = 'o.add_time DESC';
     }
 
     // 如果是中老年事业部，只列出本部门订单
@@ -4315,7 +4284,7 @@ function order_list()
         }
 
         // 订单类型
-        if ($val['order_type'] != 4 && $val['order_type'])
+        if (!in_array($val['order_type'],array(4,9)) && $val['order_type'])
         {
             $val['admin_name'] = $type_list[$val['order_type']];
         }
@@ -5298,8 +5267,8 @@ function shipping_synchro($order_id)
     $logistics = $GLOBALS['db']->getRow($sql);
 
     // 同步发货（淘宝）
-    if ($order_info['shipping_time'] && in_array($order_info['team'], array(6,21,22,26))) {
-        $platform_path = array (6 => 'taobao', 21 => 'taobao01', 22 => 'taobao02', 26 => 'taobao03');
+    if ($order_info['shipping_time'] && in_array($order_info['team'], array(6,21,22,26,53))) {
+        $platform_path = array (6 => 'taobao', 21 => 'taobao01', 22 => 'taobao02', 26 => 'taobao03',53=>'taobao04');
         require(dirname(__FILE__)."/taobao/order_synchro.php");
         require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/sk.php");
         $auth = require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/config.php");
@@ -6141,7 +6110,7 @@ function assign_user($order_id) {
 
     $sql = 'SELECT customer_type FROM'.$GLOBALS['ecs']->table('users')." WHERE user_id={$order_amount['user_id']}";
     $customer_type = $GLOBALS['db']->getOne($sql);
-    if (!in_array($customer_type,array(21,6))) {
+    if (!in_array($customer_type,array(21,6)) && 0 < $order_amount['final_amount']) {
         if ($order_amount['final_amount'] < 800) {
             $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users')." SET admin_id=520 WHERE user_id={$order_amount['user_id']} ".
                 ' AND role_id NOT IN ('.OFFLINE_SALE.',8,23) LIMIT 1';
@@ -6154,7 +6123,10 @@ function assign_user($order_id) {
         file_put_contents('../batch_user.log',date('Y-m-d H:i:s').$_SESSION['admin_name'].'确认收货转1'.PHP_EOL.$sql_update.PHP_EOL,FILE_APPEND);
     }
 
-    $GLOBALS['db']->query($sql_update);
+    if($sql_update){
+        $GLOBALS['db']->query($sql_update);
+    }
+
     if ($GLOBALS['db']->affected_rows() > 0) {
         $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users').' u,'.$GLOBALS['ecs']->table('admin_user').
             " a SET u.order_time={$order_amount['add_time']},u.admin_name=a.user_name,u.role_id=a.role_id,".
@@ -6475,4 +6447,61 @@ function flush_order_vertify($order_sn){
         $GLOBALS['db']->query($sql_insert);
         return true;
     }else return false;
+}
+
+//减存货
+function reduceOrderStore($goods_list,$order_id){ 
+    if ($goods_list) {
+        $sql_upd = 'UPDATE '.$GLOBALS['ecs']->table('order_store_goods')." SET quantity=quantity-%.2f "
+            ." WHERE rec_id=%d LIMIT 1";
+        $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('order_store_goods')
+            ."(goods_sn,quantity,order_id,operator_type,take_order_id,take_rec_id)VALUES("
+            ."%s,%d,%d,1,$order_id,%d)";
+        foreach ($goods_list as $v) {
+            $GLOBALS['db']->query(sprintf($sql_upd,$v['goods_number'],$v['rec_id']));
+            $GLOBALS['db']->query(sprintf($sql_insert,$v['goods_sn'],$v['goods_number'],$v['order_id'],$v['rec_id']));
+        }
+    }
+    return true;
+}
+
+//恢复存货订单
+function recoveryOrderStore($order_id){
+    $sql_select = 'SELECT quantity,take_rec_id FROM '.$GLOBALS['ecs']->table('order_store_goods')
+        ." WHERE take_order_id=$order_id";
+    $res = $GLOBALS['db']->getAll($sql_select);
+    foreach ($res as $v) {
+        $sql_upd = 'UPDATE '.$GLOBALS['ecs']->table('order_store_goods')." SET quantity=quantity+{$v['quantity']}"
+            ." WHERE take_rec_id={$v['take_rec_id']} AND operator_type=0";
+        $GLOBALS['db']->query($sql_upd);
+    }
+    return true;
+}
+
+//存货订单列表
+function storeOrderList($condition=''){
+    $where = " WHERE o.platform=r.role_id AND o.order_id=g.order_id AND o.order_type=9 AND g.operator_type=0 $condition";
+    $sql = "SELECT SUM(quantity) quantity,o.consignee buyer,o.order_id,o.order_sn,o.admin_name,o.final_amount,FROM_UNIXTIME(o.add_time,'%Y-%m-%d %H:%i') short_order_time 
+        ,r.role_name platform FROM "
+        .$GLOBALS['ecs']->table('order_info').' o,'.$GLOBALS['ecs']->table('role').' r,'
+        .$GLOBALS['ecs']->table('order_store_goods').' g '.$where." GROUP BY o.order_id";
+    return $GLOBALS['db']->getAll($sql);
+}
+
+//存货商品明细
+function storeOrderDetail($where){
+    $sql = 'SELECT o.order_id,o.goods_id,o.goods_sn,o.goods_name,o.goods_number,o.goods_price,g.quantity max_take,g.rec_id FROM '
+        .$GLOBALS['ecs']->table('order_store_goods').' g '
+        .' INNER JOIN '.$GLOBALS['ecs']->table('order_goods')
+        ." o ON o.order_id=g.order_id AND o.goods_sn=g.goods_sn AND g.store=o.goods_number WHERE 1 $where AND g.operator_type=0 GROUP BY g.rec_id";
+    return $GLOBALS['db']->getAll($sql);   
+}
+
+//存货订单详细情况，和提货记录
+function storeOrderMoreDetail($where){
+    $sql = "SELECT FROM_UNIXTIME(o.add_time,'%Y-%m-%d') add_time,g.goods_name,g.goods_number,g.goods_sn FROM "
+        .$GLOBALS['ecs']->table('order_info').' o LEFT JOIN '.$GLOBALS['ecs']->table('order_goods')
+        .' g ON o.order_id=g.order_id '
+        ." WHERE o.order_type=10 AND o.order_status IN(5,1) AND o.shipping_status<>3 $where ORDER BY o.add_time DESC";
+    return $GLOBALS['db']->getAll($sql);
 }

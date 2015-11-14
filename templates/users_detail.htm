@@ -6,10 +6,11 @@
       <div class="detail_tab" style="margin:0">
         <ul>
           <li type="general" class="o_select" onclick="switchSubTab(this)"><span>基本资料</span></li>
-          <li type="contact" onclick="switchSubTab(this)"><span>详细信息</span></li>
-          <li type="new_service" onclick="switchSubTab(this)"><span>跟进结果</span></li>
           <li type="purchase" onclick="switchSubTab(this)"><span>购买记录</span></li>
+          <li type="new_service" onclick="switchSubTab(this)"><span>跟进结果</span></li>
           <li type="new_order" onclick="switchSubTab(this)"><span>添加订单</span></li>
+          <li type="analyse" onclick="userdetailAnalyse(this)"><span>顾客分析</span></li>
+          <li type="contact" onclick="switchSubTab(this)"><span>详细信息</span></li>
           <li type="healthy_archive" onclick="switchSubTab(this)"><span>健康档案</span></li>
           <!--<li type="user_account_manager" onclick="switchSubTab(this)"><span>资金管理</span></li>-->
           <li type="user_family" onclick="switchSubTab(this)"><span>亲朋好友</span></li>
@@ -20,20 +21,19 @@
     </div>
   </div>
   <!--导航样式 end-->
-
   <div class="box_center user_list_info">
     <!-- 顾客基本信息 -->
     <div id="general" class="show">
       <table cellspacing="0" cellpadding="0" border="0">
         <tr>
-          <th align="right"><font color="red">*</font>姓名 ：</th>
-          <td width="120">{$user.user_name}<button value="users.php?act=edit&info=user_name&id={$user.user_id}&type=text" title="修改姓名" onclick="sendEditInfo(this)"></button></td>
-          <th align="right"><font color="red">*</font>性别：</th>
-          <td width="120">{if $user.sex eq 1}男{elseif $user.sex eq 2}女{elseif $user.sex eq 0}不详{/if}<button value="users.php?act=edit&info=sex&id={$user.user_id}&type=radio" title="修改性别" onclick="sendEditInfo(this)"></button></td>
-          <th align="right">电话：</th>
+          <th><font color="red">*</font>姓名 ：</th>
+          <td width="20%">{$user.user_name}<button value="users.php?act=edit&info=user_name&id={$user.user_id}&type=text" title="修改姓名" onclick="sendEditInfo(this)"></button></td>
+          <th><font color="red">*</font>性别：</th>
+          <td width="20%">{if $user.sex eq 1}男{elseif $user.sex eq 2}女{elseif $user.sex eq 0}不详{/if}<button value="users.php?act=edit&info=sex&id={$user.user_id}&type=radio" title="修改性别" onclick="sendEditInfo(this)"></button></td>
+          <th>电话：</th>
           <td>
             {if $user.home_phone || $contact_list.tel}
-            <select id="contact_tel">
+            <select id="contact_tel" class="w130">
             {if $user.home_phone}
             <option value="0">{$user.home_phone}</option>
             {/if}
@@ -43,18 +43,17 @@
             </select>
             <img onclick="quickCall({$user.user_id},{$ext},'contact_tel')" src="images/call.jpg" value="" class="quick-call" title="点击拨号">
             {/if}
-            <!--<button value="users.php?act=edit&info=home_phone&id={$user.user_id}&type=text" title="修改固话" onclick="sendEditInfo(this)"></button>-->
           </td>
         </tr>
         <tr>
           <th>顾客类型：</th>
           <td>{$user.customer_type}<button value="users.php?act=edit&info=customer_type&id={$user.user_id}&type=select" title="修改顾客类型" onclick="sendEditInfo(this)"></button></td>
-          <th align="right">产品需求：</th>
+          <th>产品需求：</th>
           <td>{$user.eff_name}<button value="users.php?act=edit&info=eff_id&id={$user.user_id}&type=select" title="修改需求" onclick="sendEditInfo(this)"></button></td>
-          <th align="right">手机：</th>
-          <td style="wdith:350px">
+          <th>手机：</th>
+          <td>
              {if $user.mobile_phone || $contact_list.mobile}
-           <select id="contact_mobile">
+           <select id="contact_mobile" class="w130">
               {if $user.mobile_phone}
               <option value="0">{$user.mobile_phone}</option>
               {/if}
@@ -64,7 +63,6 @@
             </select>
             <img onclick="quickCall({$user.user_id},{$ext},'contact_mobile')" src="images/call.jpg" class="quick-call" title="点击拨号">
             {/if}
-            <!--<button value="users.php?act=edit&info=mobile_phone&id={$user.user_id}&type=text" title="修改手机" onclick="sendEditInfo(this)"></button>-->
           </td>
         </tr>
         <tr>
@@ -83,11 +81,6 @@
              <input type="button" value="保存" class="btn_new" onclick="calculateBMI()"/>
             </td>
         </tr>
-        <!--<tr>-->
-          <!--th> 销售平台 ：</th>
-        <td>{$user.platform}<button value="users.php?act=edit&info=role_id&id={$user.user_id}&type=select" title="修改平台" onclick="sendEditInfo(this)"></button>
-          </td-->
-          <!--</tr>-->
         <tr>
           <th>地址：</th>
           <td colspan="5" class="tl pd12">
@@ -118,11 +111,6 @@
               <button value="users.php?act=edit&info=qq&id={$user.user_id}&type=text" title="修改QQ" onclick="sendEditInfo(this)"></button>
             </td>
           </tr>
-          <!--tr>
-          <th>备注：</th>
-          <td colspan="5">{$user.remarks}<button value="users.php?act=edit&info=remarks&id={$user.user_id}&type=text" title="修改备注" onclick="sendEditInfo(this)"></button></td>
-
-          </tr-->
         </table>
         <div class="user-handover">
           <!--只有ALL才有转顾客权限-->
@@ -175,17 +163,17 @@
               </tr>
               <tr rowspan="2">
                 <th width="10%">跟进结果：</th>
-                <td valign="top" colspan="4" width="50%">
-                  <textarea name="logbook" type="textarea" onblur="cheLogbook(this.value)" rows="5" cols="55" style="resize:none;padding:5px;margin:3px"></textarea>
-                  <span id="logbook" style="color:red;valign:top"></span>
+                <td colspan="4" width="50%">
+                  <textarea name="logbook" type="textarea" onblur="cheLogbook(this.value)" rows="5" cols="55" style="resize:none;padding:5px;"></textarea>
+                  <span id="logbook"></span>
                 </td>
-                <td style="text-align:left;" width="12%">
-                  <select name="show_sev"  style="display:none">
+                <td width="12%">
+                  <select name="show_sev"  class="hide">
                     <option value="1">显示</option>
                     <option value="0">不显示</option>
                   </select>
-                  <input name="sub" class="b_submit blacklist" type="button" onclick="submitService(this)" value="提      交"/><br/></br>
-                  <input type="button" value="预约跟进" onclick="addAppointment(this)" class="b_submit blacklist"/>
+                  <input name="sub" class="b_submit blacklist" type="button" onclick="submitService(this)" value="提      交"/>
+                  <input type="button" value="预约跟进" onclick="addAppointment(this)" class="b_submit blacklist" style="margin-top: 16px;"/>
                 </td>
                 <td style="vertical-align:top;padding-left:5px;border-left:1px solid #ccc;line-height:16px;" id="BMIres">
                   BMI 测试结果
@@ -450,27 +438,26 @@
                   <summary>{$g.goods_name}  {$g.goods_number}×￥{$g.goods_price}</summary>
                   {foreach from=$g.goods_list item=o}
                   <p>
-                  <a title="商品详细信息" target="_blank" href="article.php?act=goods_article_all&goods_sn={$o.goods_sn}"><strong>{$o.goods_name}</strong></a>
-                  <!--{if $g.knowlage_url}-->
-                  <!--<a title="商品详细信息" target="_blank" href="{$g.knowlage_url}"><strong>{$o.goods_name}</strong></a>-->
-                  <!--{else}-->
-                  <!--<strong>{$o.goods_name}</strong>-->
-                  <!--{/if}-->
-                  <wbr>（数量：{$o.goods_number}）
-                  {$g.office_url}
-                  </p>
-                  {/foreach}
-                  </details>
-                  {else}
-                  <p>
-                  <a title="商品详细信息" target="_blank" href="article.php?act=goods_article_all&goods_sn={$g.goods_sn}"><strong>{$g.goods_name}</strong></a>
-                  <!--{if $g.knowlage_url}-->
-                  <!--<a title="商品详细信息" target="_blank" href="{$g.knowlage_url}">-->
-                    <!--  <strong>{$g.goods_name}</strong>-->
-                    <!--</a>-->
-                  <!--{else}-->
-                  <!--  <strong>{$g.goods_name}</strong>-->
-                  <!--{/if}-->
+                {if $g.knowlage_url}
+                <a title="商品详细信息" target="_blank" href="{$g.knowlage_url}"><strong>{$o.goods_name}
+                </strong></a>
+                {else}
+                <strong>{$o.goods_name}</strong>
+                {/if}
+                <wbr>（数量：{$o.goods_number}）
+                {$g.office_url}
+                </p>
+                {/foreach}
+                </details>
+                {else}
+                <p>
+                {if $g.knowlage_url}
+                <a title="商品详细信息" target="_blank" href="{$g.knowlage_url}">
+                  <strong>{$g.goods_name}</strong>
+                </a>
+                {else}
+                  <strong>{$g.goods_name}</strong>
+                {/if}
                   {$g.goods_number}×￥{$g.goods_price}
                   {$g.office_url}
                   </p>
@@ -592,7 +579,7 @@
                   </select>
                 </td>
                 <td>
-                  <select name="order_type">
+                  <select name="order_type" onchange="switchOrderType(this)">
                     <option value="">订单类型</option>
                     {foreach from=$order_type item=val}
                     <option value="{$val.type_id}" {if $val.type_id eq 4}selected{/if}>{$val.type_name}</option>
@@ -626,31 +613,45 @@
               </tr>
               <tr>
                 <th>收货地址：</th>
-                <td colspan="5">
+                <td>
                   <select name="province" id="selProvinces" onchange="region.changed(this,2,'selCities')">
                     <option value="0">{$lang.select_please}</option>
                     {foreach from=$province_list item=province}
                     <option value="{$province.region_id}" {if $province.region_id eq $user.province_id}selected{/if}>{$province.region_name}</option>
                     {/foreach}
                   </select>
+                </td>
+                <td>
                   <select name="city" id="selCities" onchange="region.changed(this,3,'selDistricts')">
                     <option value="0">{$lang.select_please}</option>
                     {foreach from=$city_list item=city}
                     <option value="{$city.region_id}" {if $city.region_id eq $user.city_id}selected{/if}>{$city.region_name}</option>
                     {/foreach}
                   </select>
+                </td>
+                <td>
                   <select name="district" id="selDistricts">
                     <option value="0">{$lang.select_please}</option>
                     {foreach from=$district_list item=district}
                     <option value="{$district.region_id}"{if $district.region_id eq $user.district_id} selected{/if}>{$district.region_name}</option>
                     {/foreach}
                   </select>
+                </td>
+                  <td>
                   <input type="text" name="address" value="{$user.address}" size="45" placeholder='详细地址'/>
                 </td>
               </tr>
               <tr>
-                <th> </th>
-                <td colspan="5">
+                <th>成交方式：</th>
+                <td>
+                  <select name="deal_method">
+                    {foreach from=$deal_method item=v}
+                    <option value="{$v.method_id}">{$v.mothod_name}</option>
+                    {/foreach}
+                  </select>
+                </td>
+                <th>来源：</th>
+                <td colspan="3">
                   {foreach from=$order_source item=val}
                   <label style="display:inline"><input type="radio" value="{$val.source_id}" name="order_source"/>{$val.source_name}
                     {/foreach}
@@ -659,7 +660,7 @@
               </table>
             </form>
           </fieldset>
-          <fieldset>
+          <fieldset id="gerneral_order">
             <legend align="top">商品</legend>
             <div class="o_goods_search">
               <form action="javascript:void(0)" name="theForm" onsubmit="return addNewGoods();">
@@ -685,7 +686,7 @@
                     <th>商品总额</th>
                     <td>
                       <input type="text" name="goods_amount" value="0" id="goods_amount" onchange="calcOrderAmount()"
-                      style="border:0px;border-bottom: 1px solid #ccc;font-weight:bolder;background:none;"/>
+                      class="down_line"/>
                     </td>
                     <th>订单总价</th><td id="order_amount"></td>
                   </tr>
@@ -702,6 +703,7 @@
               <div class="f_r"><input type="submit" name="submit" value="提交订单" class="input_submit" onclick="addNewOrder()"/></div>
             </div>
           </fieldset>
+          <div id="store_order_goods_form" class="hide"></div>
           <fieldset>
             <legend align="top">注意事项：</legend>
             <ul class="warning">
@@ -709,7 +711,6 @@
               <li>（2）内部员工买货，一律请到主管处下单，有违反者，按每次100元进行罚款。</li>
               <li>（3）有违反以上两条规定的员工所在部门，组长按20元/次，主管按50元/次连带罚款。</li>
             </ul>
-
           </fieldset>
         </div>
 
@@ -1041,6 +1042,7 @@
         <br />
         {/if}
       </div>
+      <div class="hide" id="analyse"></div>
 
       <input type="hidden" value="users.php" id="URI"/>
       <input type="hidden" value="user_id" id="field"/>
