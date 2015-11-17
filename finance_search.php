@@ -57,7 +57,7 @@ elseif ($act == 'search')
                 $user_old = get_user_id('order_info',$where,$keyword);
                 $new_where    = " WHERE $condition='$keyword' ";
             }else{
-                $where    = " WHERE $condition='$keyword' ";
+                $where    = $new_where =  " WHERE $condition='$keyword' ";
                 $user_old = get_user_id('order_info',$where,$keyword);
             }
 

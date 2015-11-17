@@ -1361,7 +1361,7 @@ function addNewOrder()
   //var platform  = orderInfo.elements['platform'].value;
   var team        = orderInfo.elements['team'].value;
   var order_type  = orderInfo.elements['order_type'].value;
-  var deal_mothod = orderInfo.elements['deal_mothod'].value;
+  var deal_method = orderInfo.elements['deal_method'].value;
 
   var platform_order_sn = orderInfo.elements['platform_order_sn'].value; // 订单编号
 
@@ -1421,6 +1421,11 @@ function addNewOrder()
     res['message'] = '非中老年、会员部订单须提供购买平台的订单编号';
     showMsg(res);
     return false;
+  }else{
+    if(!deal_method){
+      res['message'] = '请选择成交方式';
+      showMsg(res);
+    } 
   }
 
   if (!order_type) {
@@ -1428,6 +1433,7 @@ function addNewOrder()
       order_type = 3;
     }
   }
+
 
   if (tableObj.rows.length <= 2 && order_type !=10) {
     res['message'] = '请先添加商品，再提交订单！';
@@ -1466,7 +1472,7 @@ function addNewOrder()
     "order_type":order_type,
     "goods_amount":goods_amount,
     "remarks":remarks,
-    "deal_mohtod":deal_mothod
+    "deal_method":deal_method
   };
 
   for (var i = orderInfo.elements['order_source'].length -1; i > 0; i--) {

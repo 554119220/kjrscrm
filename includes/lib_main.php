@@ -1080,7 +1080,7 @@ function resort($total)
  **/
 function get_admin ($role_id = 0) {
     $role = "";
-    if (is_int($role_id)) {
+    if (is_int($role_id) && $role_id>0) {
         $role = " role_id=$role_id AND stats=1 ";
     } elseif ($role_id == 'session') {
         if (!admin_priv('all', '', false)) {
@@ -1868,6 +1868,6 @@ function get_depart_role($role_id,$type='string'){
 }
 
 function get_deal_method(){
-    $sql = 'SELECT mothod_id,mothod_name FROM '.$GLOBALS['ecs']->table('deal_mothod')." WHERE available=1";
+    $sql = 'SELECT method_id,method_name FROM '.$GLOBALS['ecs']->table('deal_method')." WHERE available=1";
     return $GLOBALS['db']->getAll($sql);
 }

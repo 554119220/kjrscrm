@@ -2118,7 +2118,7 @@ elseif('order_success_stats' == $_REQUEST['act']){
     $smarty->assign('final', $final);
     $smarty->assign('curr_title', '订单签收率');
     $smarty->assign('role_id', $_REQUEST['role_id']);
-    $smarty->assign('role_list', get_role_customer(' AND role_id IN(33,34,35,36,37)'));
+    $smarty->assign('role_list', get_role_customer(' AND role_id IN('.KEFU.','.KEFU2.')'));
     $res['main'] = $smarty->fetch('order_success_stats.htm');
     die($json->encode($res));
 }
@@ -2134,11 +2134,12 @@ elseif('user_service_stats' == $_REQUEST['act']){
 
     $sql = 'SELECT COUNT(*) total,admin_id FROM '.$GLOBALS['ecs']->table('users');
     $where = " WHERE customer_type NOT IN(5,6,21) AND assign_time BETWEEN $start_time AND $end_time ";
+    $role_str = KEFU.','.KEFU2;
     if ($role_id) {
         $where .= " AND role_id=$role_id ";
         $role_list = array($role_id);
     }else{
-        $role_list = array(33,34,35,36,37,38);
+        $role_list = explode(',',$role_str);
     }
     $admin_list = admin_list_by_role($role_list);
     $assigned = $GLOBALS['db']->getAll($sql.$where.' GROUP BY admin_id');    //分配顾客数量
@@ -2174,7 +2175,7 @@ elseif('user_service_stats' == $_REQUEST['act']){
     $smarty->assign('list',$admin_list);
     $smarty->assign('curr_title', '新顾客跟进率');
     $smarty->assign('role_id', $_REQUEST['role_id']);
-    $smarty->assign('role_list', get_role_customer(' AND role_id IN(33,34,35,36,37)'));
+    $smarty->assign('role_list', get_role_customer(" AND role_id IN($role_str)"));
     $res['main'] = $smarty->fetch('user_service_stats.htm');
     die($json->encode($res));
 }
@@ -2194,11 +2195,12 @@ elseif ('user_analyse_report' == $_REQUEST['act']){
     $role_list = get_role_list('',true,' AND role_id IN('.SALE.')');
     $sel_opt   = array('不限','有','无');
     $item_list = array('所有','QQ','微信');
-    $smarty->assign('admin_list',get_admin_tmp_list()); 
-    $smarty->assign('customer_type',get_customer_type('',true));
-    $smarty->assign('sel_opt',$sel_opt);
-    $smarty->assign('item_list',$item_list);
-    $smarty->assign('role_list',$role_list);
+
+    $smarty->assign('admin_list',     get_admin_tmp_list());
+    $smarty->assign('customer_type',  get_customer_type('',true));
+    $smarty->assign('sel_opt',        $sel_opt);
+    $smarty->assign('item_list',      $item_list);
+    $smarty->assign('role_list',      $role_list);
     $res['main'] = $smarty->fetch('user_analyse.htm');
     die($json->encode($res));
 }
@@ -2209,13 +2211,49 @@ elseif('act_user_analyse' == $_REQUEST['act']){
 }
 //成交方式
 elseif($_REQUEST['act'] == 'deal_method_report'){
-   $res['main'] = $smarty->fetch('deal_method_report.htm'); 
+    $smarty->assign('curr_title','成交方式统计');
+    $smarty->assign('deal_method',get_deal_method());
+    $res['main'] = $smarty->fetch('deal_method_report.htm'); 
     die($json->encode($res));
 }
 
+//QQ,微信添加统计
 elseif($_REQUEST['act'] == 'add_contact_report'){
-   $res['main'] = $smarty->fetch('add_contact_report.htm'); 
-   die($json->encode($res));
+    $report_time = report_time_list();
+    $role_id    = isset($_REQUEST['role_id']) && $_REQUEST['role_id'] ? intval($_REQUEST['role_id']) : KEFU.','.KEFU2 ;
+    $admin_list = admin_for_report(" AND role_id IN($role_id)");
+    $yesterday  = add_contact_report($report_time['yesterday_start_time'],$report_time['yesterday_end_time']);
+    $today      = add_contact_report($report_time['today_start_time'],$report_time['today_start_time']);
+    $month      = add_contact_report($report_time['month_start_time'],$report_time['month_end_time']);
+    $last_month = add_contact_report($report_time['last_month_start_time'],$report_time['last_month_end_time']);
+
+    $total = array(
+        'admin_name' => '总计',
+    );
+    $keys = array('yesterday','today','month','last_month');
+    if (isset($_REQUEST['start_time']) && !empty($_REQUEST['start_time']) && !empty($_REQUEST['end_time'])) {
+        $start_time = strtotime($_REQUEST['start_time'].' 00:00:00');
+        $end_time   = strtotime($_REQUEST['end_time'].' 23:59:59');
+        $customer   = add_contact_report($start_time,$end_time);
+        $smarty->assign('search',true);
+        $keys[] = 'customer';
+    }
+    foreach ($admin_list as &$v) {
+        foreach ($keys as $k) {
+            if (!empty($$k)) {
+                $ar = $$k;
+                $v[$k] = $ar[$v['admin_id']];
+                $total[$k]['qq'] += $ar[$v['admin_id']]['qq'];
+                $total[$k]['wechat'] += $ar[$v['admin_id']]['wechat'];
+            }
+        }
+    }
+    array_push($admin_list,$total);
+    $smarty->assign('admin_list',$admin_list);
+    $smarty->assign('role_list', get_role_customer(' AND role_id IN('.KEFU.','.KEFU2.')'));
+    $smarty->assign('curr_title','QQ，微信添加统计');
+    $res['main'] = $smarty->fetch('add_contact_report.htm');
+    die($json->encode($res));
 }
 /*------------------------------------------------------ */
 //--排行统计需要的函数
@@ -4653,6 +4691,7 @@ function report_time_list(){
         'last_month_end_time'   => strtotime(date('Y-m-t 23:59:59',  strtotime('-1 month'))),
     );
 }
+
 //电话接通率
 function call_final_report($today,$yesterday,$month,$pre_month){
     $final = array();
@@ -4761,18 +4800,18 @@ function return_admin(){
 function final_order_success($month,$last_month,$customer){
     foreach ($month as $id=>$val) {
         $final[$val['admin_id']] = array(
-            'admin_id'             => $val['admin_id'],
-            'admin_name'           => $val['user_name'],
-            'month_total'          => $val['total'],
-            'month_amount'          => $val['amount'],
-            'month_success_total'  => $val['success_total'],
-            'month_success_amount' => $val['success_amount'],
-            'month_success_rate'   => $val['success_rate'],
-            'month_amount_rate'   => $val['amount_rate'],
-            'last_month_total'     => $last_month[$val['admin_id']]['total'],
-            'last_month_amount'     => $last_month[$val['admin_id']]['amount'],
-            'last_month_success_total'   => $last_month[$val['admin_id']]['success_total'],
-            'last_month_success_amount'  => $last_month[$val['admin_id']]['success_amount'],
+            'admin_id'                  => $val['admin_id'],
+            'admin_name'                => $val['user_name'],
+            'month_total'               => $val['total'],
+            'month_amount'              => $val['amount'],
+            'month_success_total'       => $val['success_total'],
+            'month_success_amount'      => $val['success_amount'],
+            'month_success_rate'        => $val['success_rate'],
+            'month_amount_rate'         => $val['amount_rate'],
+            'last_month_total'          => $last_month[$val['admin_id']]['total'],
+            'last_month_amount'         => $last_month[$val['admin_id']]['amount'],
+            'last_month_success_total'  => $last_month[$val['admin_id']]['success_total'],
+            'last_month_success_amount' => $last_month[$val['admin_id']]['success_amount'],
             'last_month_amount_rate'    => $last_month[$val['admin_id']]['amount_rate'],
 
         );
@@ -4980,8 +5019,6 @@ function analyse_user_contact(){
 
     $total['qq_rate'] = sprintf("%.2f",$total['has_qq']/$total['total'])*100;
     $total['wechat_rate'] = sprintf("%.2f",$total['has_wechat']/$total['total'])*100;
-
-
     array_push($list,$total);
     return $list;
 }
@@ -4992,4 +5029,31 @@ function optimize_array($arr){
     }
     unset($v);
     return $res;
+}
+
+//添加QQ，微信统计
+function add_contact_report($start,$end){
+    $where = ' WHERE 1 ';
+    $role_id = isset($_REQUEST['role_id']) && !empty($_REQUEST['role_id']) ? intval($_REQUEST['role_id']) : KEFU.','.KEFU2 ;
+    $where .= " AND u.role_id IN($role_id)";
+    $sql = 'SELECT COUNT(*) total,c.add_admin,c.contact_name FROM '.$GLOBALS['ecs']->table('user_contact')
+        .' c LEFT JOIN '.$GLOBALS['ecs']->table('users').' u ON u.user_id=c.user_id '.
+        " $where AND c.add_time BETWEEN $start AND $end AND c.contact_name IN('qq','wechat') AND c.add_time>0 GROUP BY c.add_admin,c.contact_name ORDER BY total DESC";
+
+    $res = $GLOBALS['db']->getAll($sql);
+    if ($res) {
+        $list = array();
+        foreach ($res as $v) {
+         $list[$v['add_admin']][$v['contact_name']] = $v['total'];  
+        }
+        unset($v);
+        $res = $list;
+    }
+    return $res;
+}
+
+function admin_for_report($where){
+    $sql = 'SELECT user_id admin_id,user_name admin_name,group_id,role_id FROM '.$GLOBALS['ecs']->table('admin_user')
+        ." WHERE status>0 AND stats>0 $where";
+    return $GLOBALS['db']->getAll($sql);
 }

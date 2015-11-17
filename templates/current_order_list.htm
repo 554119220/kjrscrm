@@ -12,7 +12,8 @@
       </ul>
     </div>
   </div>
-  <div class="gridlist-action c_b" style="width:975px">
+
+  <div class="gridlist-action c_b">
     <div>
       <script language="javascript" type="text/javascript" src="My97DatePicker/WdatePicker.js"></script>
       下单日期：<input class="Wdate" id="start_time" type="text" value="{$start_time}" onClick="WdatePicker()">
@@ -48,123 +49,98 @@
       {/if}
     </div>
   </div>
+
   <!-- 查询订单 -->
   <div class="finder-header-wrapper">
-    <table width="150px" height="100%" cellpadding="0" cellspacing="0" class="wu_table_list wu_rb_border fl">
-      <colgroup>
-        <col width="60px">
-        {if $shipping_act}<col width="149px">{/if}
-      </colgroup>
+    <table width="180px" height="100%" id="left_table" cellpadding="0" cellspacing="0" class="wu_table_list wu_rb_border fl rb_border">
       <tr>
-        <th>用户名</th>
+        <th>用户名</td>
         {if $shipping_act}
-        <th>{if $act eq 'current_order'}打单{else}快递跟进{/if}</th>
+        <th>{if $act eq 'current_order'}打单{else}快递跟进{/if}</td>
         {/if}
-      </tr>
-      {foreach from=$order_list item=val}
-      <tr bgcolor="#FFFFFF" id="tr_1_{$val.order_id}">
-        <td width="63px" align="center">
-          {if $val.is_black eq 1}
-          <img src="images/black_member.png" class="png_btn" alt="黑名单顾客" title="黑名单顾客"/>
-          {/if}
-          {$val.buyer}
-        </td>
-        {if $shipping_act}
-        <td align="center" width="149px">
-          <span class="h_f">
-            {if $act eq 'current_order'}
-            <a href="order.php?act=info&print=1&print_A4=1&order_id={$val.order_id}" target="_blank">
-              <img src="images/mail_active.png" alt="发货单A4" title="发货单A4"></a>
-            <a href="order.php?act=info&print=1&order_id={$val.order_id}" target="_blank">
-              <img src="images/tree_folder.gif" alt="发货单" title="发货单"></a>
-            <a href="order.php?act=expressprint&order_id={$val.order_id}" target="_blank">
-              <img class="border" src="images/kd_order.jpg" alt="快递单" title="快递单"></a>
-            <a href="order.php?act=order_receipt&order_id={$val.order_id}" target="_blank">
-              <img class="border" src="images/receipt.png" alt="快递单" title="快递单"></a>
-            {elseif $act eq 'finished_order'}
-            <button onclick="showPrompt('info',{$val.order_id})" >
-              <img src="images/tree_folder.gif" alt="发货单" title="发货单">
-            </button>
-            <button onclick="showPrompt('express',{$val.order_id})">
-              <img class="border" src="images/kd_order.jpg" alt="快递单" title="快递单">
-            </button>
-            {else}
-            <img src="images/{if $val.shipping_status eq 2}1{else}0{/if}.gif" alt="{if $val.shipping_status eq 2}已收货{else}未收到{/if}" id="shipping_{$val.order_id}" onclick="receiptGoods({$val.order_id})"/>
+        {foreach from=$order_list item=val}
+        <tr id="tr_1_{$val.order_id}">
+          <td>
+            {if $val.is_black eq 1}
+            <img src="images/black_member.png" class="png_btn" alt="黑名单顾客" title="黑名单顾客"/>
             {/if}
-          </span>
-        </td>
-        {/if}
-      </tr>
-      {/foreach}
-    </table>
-    <table height="100%" cellpadding="0" cellspacing="0" class="wu_table_list wu_rb_border fl" id="right_table" >
-      <tr bgcolor="#eee" height="27px">
-        <th width="112px">操作</th>
-        <th width="123px">运单号</th>
-        <th width="123px">会员卡号</th>
-        <th width="153px">发货必看</th>
-        <th width="77px">总金额</th>
-        <th width="70px">谁的单</th>
-        <th width="70px">谁添加</th>
-        <th width="115px">下单时间</th>
-      </tr>
-      {foreach from=$order_list item=val}
-      <tr bgcolor="#FFFFFF" id="tr_2_{$val.order_id}" class="tr_list" height="25px">
-        <td width="120px" class="{if $val.pay_id eq 3}bg_pay{/if} b_r" align="right">
-          {if $shipping_act}<span class="{if $val.review}fav_start-y{else}fav_start-x{/if}" id="review_{$val.order_id}"{if $access} onclick="review({$val.order_id})"{/if}></span>{/if}
-          <font>【{$val.role_describe}】</font><a class="mt1" href="order.php?act=order_detail&id={$val.order_id}&{$act}=1" title="订单详情" ><img src="images/add.gif" alt="查看" title="查看" align="absmiddle"></a>
-        </td>
-        <td width="135px" class="b_r" align="center"{if $shipping_act} ondblclick="replaceToInput(this, {$val.order_id})"{/if}>{if $val.tracking_sn}{if $act eq 'history_order' || $act eq 'finished_order'}<a href="logistics_info.php?id={$val.order_id}" target="_blank">{$val.tracking_sn}</a>{else}{$val.tracking_sn}{/if}{else}{$val.shipping_name}{/if}</td>
-        <td width="130px" class="b_r" align="center"{if ! $val.card_number && $add_memcard} ondblclick="replaceHTML(this, {$val.order_id}, 'card_number')"{/if}>{$val.card_number}</td>
-        <td width="170px" class="b_r" align="center" title="{$val.remarks}" ondblclick="showMsg({req_msg:true,timeout:5000,message:'{$val.remarks}'})">{$val.remarks|truncate:10}</td>
-        <td width="77px" align="center" class="b_r">{$val.formated_total_fee}</td>
-        <td width="75px" align="center" class="b_r" title="{$val.admin_name}">{$val.admin_name|truncate:4}</td>
-        <td width="75px" align="center" class="b_r" title="{$val.add_admin}">{$val.add_admin|truncate:4}</td>
-        <td width="120px" align="center" class="b_r">{$val.short_order_time}</td>
-      </tr>
-      {/foreach}
-    </table>
-  </div>
-
-  <!-- 分页 -->
-  <div class="bottom_tip">
-    <div class="tip_left">
-      <p>共{$record_count}条记录,当前页:{$page_start}-{$page_end}条，每页<input type="text" name="page_size" value="" size="4" onkeyup="sendPageValue(this)"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
-    </div>
-    <div class="tip_center">
-      <span><a href="order.php?act={$act}{$page_link}&page=1&page_size={$page_size}" id="page_link"><<</a></span>
-      {foreach from=$page_set item=v}
-      <span{if $v eq $page} class="cur"{/if}>{if $v eq $page}{$v}{else}<a href="order.php?act={$act}{$page_link}&page={$v}&page_size={$page_size}">{$v}</a>{/if}</span>
-      {/foreach}
-      <span><a href="order.php?act={$act}{$page_link}&page={$page_count}&page_size={$page_size}">>></a></span>
-    </div>
-    <div class="tip_right">跳转到第
-      <input type="text" name="page" size="4" onkeyup="sendPageValue(this)">&nbsp;页
-    </div>
-  </div>
-  <!--div class="aui_state_focus aui_state_lock" style="display: block; position: absolute; z-index: 1992; width: 718px; left: 324px; top: 0px;">
-
-  <div class="aui_outer">
-    <table class="aui_border">
-      <tbody>
-        <tr>
-          <td class="aui_c">
-            <div class="aui_inner">
-              <table class="aui_dialog">
-                <tr><td></td></tr>
-                <tr>
-                  <td class="aui_main" style="width: 700px; height: 500px;">
-
-                  </td>
-                </tr>
-              </table>
-            </div>
+            {$val.buyer}
           </td>
+          {if $shipping_act}
+          <td>
+            <span class="h_f">
+              {if $act eq 'current_order'}
+              <a href="order.php?act=info&print=1&print_A4=1&order_id={$val.order_id}" target="_blank">
+                <img src="images/mail_active.png" alt="发货单A4" title="发货单A4"></a>
+              <a href="order.php?act=info&print=1&order_id={$val.order_id}" target="_blank">
+                <img src="images/tree_folder.gif" alt="发货单" title="发货单"></a>
+              <a href="order.php?act=expressprint&order_id={$val.order_id}" target="_blank">
+                <img class="border" src="images/kd_order.jpg" alt="快递单" title="快递单"></a>
+              <a href="order.php?act=order_receipt&order_id={$val.order_id}" target="_blank">
+                <img class="border" src="images/receipt.png" alt="快递单" title="快递单"></a>
+              {elseif $act eq 'finished_order'}
+              <button onclick="showPrompt('info',{$val.order_id})" >
+                <img src="images/tree_folder.gif" alt="发货单" title="发货单">
+              </button>
+              <button onclick="showPrompt('express',{$val.order_id})">
+                <img class="border" src="images/kd_order.jpg" alt="快递单" title="快递单">
+              </button>
+              {else}
+              <img src="images/{if $val.shipping_status eq 2}1{else}0{/if}.gif" alt="{if $val.shipping_status eq 2}已收货{else}未收到{/if}" id="shipping_{$val.order_id}" onclick="receiptGoods({$val.order_id})"/>
+              {/if}
+            </span>
+          </td>
+          {/if}
         </tr>
-      </tbody>
+        {/foreach}
+      </table>
+      <table cellpadding="0" cellspacing="0" id="right_table" class="wu_table_list fl wu_rb_border rb_border" >
+        <tr>
+          <th width="112px">操作</th>
+          <th width="123px">运单号</th>
+          <th width="123px">会员卡号</th>
+          <th width="153px">发货必看</th>
+          <th width="77px">总金额</th>
+          <th width="70px">谁的单</th>
+          <th width="70px">谁添加</th>
+          <th width="115px">下单时间</th>
+        </tr>
+        {foreach from=$order_list item=val}
+        <tr id="tr_2_{$val.order_id}" height="25px">
+          <td width="120px" class="{if $val.pay_id eq 3}bg_pay{/if} b_r">
+            {if $shipping_act}<span class="{if $val.review}fav_start-y{else}fav_start-x{/if}" id="review_{$val.order_id}"{if $access} onclick="review({$val.order_id})"{/if}></span>{/if}
+            <font>【{$val.role_describe}】</font><a class="mt1" href="order.php?act=order_detail&id={$val.order_id}&{$act}=1" title="订单详情" ><img src="images/add.gif" alt="查看" title="查看" align="absmiddle"></a>
+          </td>
+          <td width="135px" {if $shipping_act} ondblclick="replaceToInput(this, {$val.order_id})"{/if}>{if $val.tracking_sn}{if $act eq 'history_order' || $act eq 'finished_order'}<a href="logistics_info.php?id={$val.order_id}" target="_blank">{$val.tracking_sn}</a>{else}{$val.tracking_sn}{/if}{else}{$val.shipping_name}{/if}</td>
+          <td width="130px" align="center"{if ! $val.card_number && $add_memcard} ondblclick="replaceHTML(this, {$val.order_id}, 'card_number')"{/if}>{$val.card_number}</td>
+          <td width="170px" align="center" title="{$val.remarks}" ondblclick="showMsg({req_msg:true,timeout:5000,message:'{$val.remarks}'})">{$val.remarks|truncate:10}</td>
+          <td width="77px" >{$val.formated_total_fee}</td>
+          <td width="75px" title="{$val.admin_name}">{$val.admin_name|truncate:4}</td>
+          <td width="75px" title="{$val.add_admin}">{$val.add_admin|truncate:4}</td>
+          <td width="120px">{$val.short_order_time}</td>
+        </tr>
+        {/foreach}
+      </table>
     </table>
+    <!-- 右上-END -->
+  </div> 
+</td>
+</tr>
+</div>
+
+<!-- 分页 -->
+<div class="bottom_tip">
+  <div class="tip_left">
+    <p>共{$record_count}条记录,当前页:{$page_start}-{$page_end}条，每页<input type="text" name="page_size" value="" size="4" onkeyup="sendPageValue(this)"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+  </div>
+  <div class="tip_center">
+    <span><a href="order.php?act={$act}{$page_link}&page=1&page_size={$page_size}" id="page_link"><<</a></span>
+    {foreach from=$page_set item=v}
+    <span{if $v eq $page} class="cur"{/if}>{if $v eq $page}{$v}{else}<a href="order.php?act={$act}{$page_link}&page={$v}&page_size={$page_size}">{$v}</a>{/if}</span>
+    {/foreach}
+    <span><a href="order.php?act={$act}{$page_link}&page={$page_count}&page_size={$page_size}">>></a></span>
+  </div>
+  <div class="tip_right">跳转到第
+    <input type="text" name="page" size="4" onkeyup="sendPageValue(this)">&nbsp;页
   </div>
 </div>
--->
-<!--div style="width: 100%; height: 100%; position: fixed; z-index: 1991; top: 0px; left: 0px;background-color: rgb(0, 0, 0); opacity: 0.7; background-position: initial initial; background-repeat: initial initial; ">
-</div-->

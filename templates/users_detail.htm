@@ -91,8 +91,14 @@
         <tr>
           <th>微信：</th>
           <td>
-            {$user.wechat}
-            <button value="users.php?act=edit&info=wechat&id={$user.user_id}&type=text" title="修改QQ" onclick="sendEditInfo(this)"></button>
+            {if $contact_list.wechat}
+            <select name="wechat">
+            {foreach from=$contact_list.wechat item=v}
+            <option value="{$v.contact_value}">{$v.contact_value}</option>
+            {/foreach}
+            </select>
+            <!--<button value="users.php?act=edit&info=wechat&id={$user.user_id}&type=text" title="修改QQ" onclick="sendEditInfo(this)"></button>-->
+            {/if}
             </td>
             <th>旺旺：</th>
             <td>
@@ -102,13 +108,21 @@
             </td>
             <th>QQ：</th>
             <td>
-              {if $user.qq neq ''}
-              <a href="tencent://message/?uin=554119220{$user.qq}" title="" name="msg">
-                <img alt="{$user.qq}" src="http://wpa.qq.com/pa?p=1:{$user.qq}:17">
-              </a>
-              {$user.qq}
+              {if $contact_list.qq}
+              <select name="qq">
+                {foreach from=$contact_list.qq item=v}
+                <option value="{$v.contact_value}">{$v.contact_value}</option>
+                {/foreach}
+              </select>
+              <!--<button value="users.php?act=edit&info=wechat&id={$user.user_id}&type=text" title="修改QQ" onclick="sendEditInfo(this)"></button>-->
               {/if}
-              <button value="users.php?act=edit&info=qq&id={$user.user_id}&type=text" title="修改QQ" onclick="sendEditInfo(this)"></button>
+              <!--{if $user.qq neq ''}-->
+              <!--<a href="tencent://message/?uin=554119220{$user.qq}" title="" name="msg">-->
+              <!--  <img alt="{$user.qq}" src="http://wpa.qq.com/pa?p=1:{$user.qq}:17">-->
+              <!--</a>-->
+              <!--{$user.qq}-->
+              <!--{/if}-->
+              <!--<button value="users.php?act=edit&info=qq&id={$user.user_id}&type=text" title="修改QQ" onclick="sendEditInfo(this)"></button>-->
             </td>
           </tr>
         </table>
@@ -187,8 +201,7 @@
         <form name="contactInfo" onsubmit="return saveContactInfo()">
           <table border="0" style="float:left">
             <tbody>
-              <th> </th>
-              <td>
+              <td class="pl12 tl" colspan="6">
                 <select name="contact_name" onchange="replaceToAddr(this)">
                   <option value="mobile">手机</option>
                   <option value="tel">电话</option>
@@ -201,9 +214,9 @@
                   <option value="1mall">一号店ID</option>
                   <option value="dangdang">当当ID</option>
                 </select>
+                <input type="text" name="contact_value" size="15" value="">
+                <input type="submit" class="b_submit" value="添 加">
               </td>
-              <td colspan="4"><input type="text" name="contact_value" size="15" value=""></td>
-              <td><input type="submit" class="b_submit" value="添 加"></td>
             </tbody>
             <tbody>
               <tr id="mobileRow"{if !$contact_list.mobile} class="hide"{/if}>
@@ -646,7 +659,7 @@
                 <td>
                   <select name="deal_method">
                     {foreach from=$deal_method item=v}
-                    <option value="{$v.method_id}">{$v.mothod_name}</option>
+                    <option value="{$v.method_id}">{$v.method_name}</option>
                     {/foreach}
                   </select>
                 </td>

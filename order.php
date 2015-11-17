@@ -405,6 +405,7 @@ elseif ($_REQUEST['act'] == 'flush_order')
     }
     die($json->encode($res));
 }
+
 /* 列出同步到的订单  老顾客订单 */
 elseif ($_REQUEST['act'] == 'history_users_order') {
     $res = array ();
