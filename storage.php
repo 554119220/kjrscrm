@@ -862,8 +862,9 @@ elseif ($_REQUEST['act'] == 'edit_packing')
     $packing_info  = packing_info();
     $packing_goods = packing_goods_list();
 
-    $smarty->assign('packing',       $packing_info);
-    $smarty->assign('packing_goods', $packing_goods);
+    $smarty->assign('packing',        $packing_info);
+    $smarty->assign('packing_goods',  $packing_goods);
+    $smarty->assign('role_list',      get_role_by_depart(4));
 
     $smarty->assign('filename', $file);
     $smarty->assign('act', 'update_package');

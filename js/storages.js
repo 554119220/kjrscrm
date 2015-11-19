@@ -976,3 +976,12 @@ function mouseoverShowCtr(id, sta) {
   }
 }
 
+//编辑套餐
+function editPackingInfo(packingId){
+  $.get(
+      "storage.php?act=edit_packing&packing_id="+packingId,
+      function(res){
+        inMain(res);
+      },'JSON'
+      );
+}

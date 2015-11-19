@@ -175,7 +175,6 @@ elseif ($_REQUEST['act'] == 'goods_num') {
     $package_sales_rank  = sales_rank();
     $package_sales = break_up_package($package_sales_rank['sales_order_data']);
     $sales_rank['sales_order_data'] = merge_to_single($sales_rank['sales_order_data'], $package_sales);
-    //}
 
     $platform_list = platform_list();
     if (admin_priv('rank_list_part', '', false)) {
@@ -517,7 +516,6 @@ elseif ($_REQUEST['act'] == 'platform_brand') {
     $res['id']         = isset($_REQUEST['platform']) ? $_REQUEST['platform'] : 0;
 
     $stats_brand = stats_brand();
-    //print_r($stats_brand);
     $sql_select = 'SELECT brand_name,brand_id FROM '.$GLOBALS['ecs']->table('brand');
     $brand = $GLOBALS['db']->getAll($sql_select);
     $brand_list = array ();
@@ -2268,12 +2266,11 @@ function sales_rank ($is_pagination = true) {
 
     $filter['end_time']   = empty($_REQUEST['end_time'])   ? '' : $_REQUEST['end_time'];
     $filter['start_time'] = empty($_REQUEST['start_time']) ? '' : $_REQUEST['start_time'];
-    $filter['brand_id'] = empty($_REQUEST['brand_id']) ? '' : intval($_REQUEST['brand_id']);
-
+    $filter['brand_id']   = empty($_REQUEST['brand_id']) ? '' : intval($_REQUEST['brand_id']);
     $filter['sort_by']    = empty($_REQUEST['sort_by'])    ? 'goods_num' : trim($_REQUEST['sort_by']);
     $filter['sort_order'] = empty($_REQUEST['sort_order']) ? 'DESC'      : trim($_REQUEST['sort_order']);
     $filter['platform']   = empty($_REQUEST['platform'])   ? '' : intval($_REQUEST['platform']);
-    $filter['depart_id']   = empty($_REQUEST['depart_id'])   ? '' : intval($_REQUEST['depart_id']);
+    $filter['depart_id']  = empty($_REQUEST['depart_id'])   ? '' : intval($_REQUEST['depart_id']);
 
     $config = report_statistics_limit(1); // 报表统计范围
     if ($config['statistics_date_limit'] > 0 && $config['offset_month'] > 0 && (empty($filter['start_time']) || empty($filter['end_time']))) {
@@ -2327,15 +2324,24 @@ function sales_rank ($is_pagination = true) {
     } else {
         $order_type = ' AND CONCAT("", og.goods_sn *1)=og.goods_sn ';
         !empty($filter['brand_id']) && $order_type .= " AND og.brand_id={$filter['brand_id']} ";
+        $gift_where = ' AND og.is_gift=1 ';
     }
 
     $sql = 'SELECT og.goods_id,og.goods_sn,og.goods_name,oi.order_status,SUM(og.goods_number) goods_num,'.
         'SUM(og.goods_number*og.goods_price) turnover FROM '.$GLOBALS['ecs']->table('order_goods').' og, '.
         $GLOBALS['ecs']->table('order_info')." oi $where %s GROUP BY og.goods_sn ".
         ' ORDER BY ' . $filter['sort_by'] . ' ' . $filter['sort_order'];
-
     // 日常销量
     $sales_order_data = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND oi.order_type IN (2,3,4,6,100)"));
+
+    if ($gift_where) {
+        $gift_arr = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND oi.order_type IN (2,3,4,6,100) $gift_where"));
+        if ($gift_arr) {
+            foreach ($gift_arr as $g) {
+                $gifts[$g['goods_sn']] = $g;
+            }
+        }
+    }
 
     // 活动销量
     $res = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND oi.order_type IN (5,7) "));
@@ -2343,7 +2349,6 @@ function sales_rank ($is_pagination = true) {
     foreach($res as $val) {
         $promotions[$val['goods_sn']] = $val;
     }
-
     foreach ($sales_order_data as &$val) {
         // 活动数量
         @$val['promotion_num'] = $promotions[$val['goods_sn']]['goods_num'];
@@ -2356,7 +2361,8 @@ function sales_rank ($is_pagination = true) {
         // 订单总计
         @$val['turnover']  = bcadd($val['turnover'], $promotions[$val['goods_sn']]['turnover'], 3);
         @$val['turnover']  = bcadd($val['turnover'], $gifts[$val['goods_sn']]['turnover'], 2);
-        @$val['total_num'] = $val['goods_num'] + $promotions[$val['goods_sn']]['goods_num'] + $gifts[$val['goods_sn']]['goods_num'];
+        //@$val['total_num'] = $val['goods_num'] + $promotions[$val['goods_sn']]['goods_num'] + $gifts[$val['goods_sn']]['goods_num'];
+        @$val['total_num'] = $val['goods_num'];
     }
 
     $i = 1;
@@ -2367,6 +2373,7 @@ function sales_rank ($is_pagination = true) {
         $sales_order_data[$key]['index']       = $i++;
     }
 
+    //print_r($sales_order_data);exit;
     return array (
         'sales_order_data' => $sales_order_data,
         'filter'           => $filter,
@@ -4555,10 +4562,11 @@ function break_up_package($package) {
         }
         foreach ($package_list[$val['goods_sn']] as $k=>$v){
             if (isset($goods_list[$k])) {
-                $goods_list[$k] += bcmul($v,$val['goods_num']);
+                $goods_list[$k]['goods_num'] += bcmul($v,$val['goods_num']);
             } else {
-                $goods_list[$k] = bcmul($v,$val['goods_num']);
+                $goods_list[$k]['goods_num'] = bcmul($v,$val['goods_num']);
             }
+            $goods_list[$k]['turnover'] += $val['turnover'];
         }
     }
     return $goods_list;
@@ -4573,8 +4581,10 @@ function merge_to_single($single, $package) {
     }
     foreach ($goods_list as $key=>&$val){
         if (isset($package[$key])) {
-            $val['package_num'] = $package[$key];
-            $val['total_num']  += $package[$key];
+            $val['package_num'] = $package[$key]['goods_num'];
+            $val['total_num']  += $package[$key]['goods_num'];
+            $val['turnover'] += $package[$key]['turnover'];
+            $val['wvera_price'] = bcdiv($val['turnover'],$val['total_num'],2);
         } else {
             $val['package_num'] = 0;
         }
@@ -5003,8 +5013,6 @@ function analyse_user_contact(){
         'wechat_rate'  => 0,
     );
     foreach ($list as &$v) {
-        //echo $arr['total'][$v['user_id']];exit;
-        //$v['total']      = $arr['total'][$v['admin_id']];
         $v['has_qq']     = $arr['has_qq'][$v['admin_id']];
         $v['qq_rate']    = sprintf("%.2f",$v['has_qq']/$v['total'])*100;
         $v['has_wechat'] = $arr['has_wechat'][$v['admin_id']];

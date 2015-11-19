@@ -80,16 +80,15 @@ function addGoodsToPackage ()
 {
   // 表单对象
   var theForm = document.forms['theForm'];
-
   // 商品信息
   var number   = theForm.elements['number'].value;
   var goodsObj = theForm.elements['goods_id'];
+  var goodsPrice =theForm.elements['set_goods_price'].value;
   var id       = goodsObj.value;
 
   for (var i = 0; i < goodsObj.length; i++)
   {
-    if (goodsObj.options[i].selected)
-    {
+    if (goodsObj.options[i].selected) {
       var name = goodsObj.options[i].text;
     }
   }
@@ -98,17 +97,21 @@ function addGoodsToPackage ()
   var rowObj = goodsList.insertRow(goodsList.rows.length);
   rowObj.className = 'tr_list';
 
-  // 商品ID
-  var goodsId = rowObj.insertCell(0);
-  goodsId.innerHTML = '<input type="checkbox" form="package" name="list_id[]" value="'+id+'" id="goods_id_'+id+'"/><strong onclick="removeGoods(this)">删除</strong>';
-
   // 商品名称
-  var goodsName = rowObj.insertCell(1);
+  var goodsName = rowObj.insertCell(0);
   goodsName.innerHTML = name+'<input type="hidden" form="package" name="list_name[]" value="'+name+'"/>';
 
   // 商品数量
-  var goodsNumber = rowObj.insertCell(2);
-  goodsNumber.innerHTML = number+'<input type="hidden" form="package" name="list_number[]" value="'+number+'"/>';
+  var goodsNumber = rowObj.insertCell(1);
+  goodsNumber.innerHTML = '<input type="number" form="package" name="list_number[]" value="'+number+'"/>';
+
+  var goodsPriceObj = rowObj.insertCell(2);
+  goodsPriceObj.innerHTML = '<input type="text" form="package" name="goods_price[]" value="'+goodsPrice+'"/>';
+
+  // 商品ID
+  var goodsId = rowObj.insertCell(3);
+  goodsId.innerHTML = '<input type="hidden" form="package" name="list_id[]" value="'+id+'" id="goods_id_'+id+'"/><button class="btn_new" onclick="removeGoods(this)">删除</button>';
+
 }
 
 /**
