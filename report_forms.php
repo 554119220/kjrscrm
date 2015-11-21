@@ -2210,7 +2210,9 @@ elseif('act_user_analyse' == $_REQUEST['act']){
 //成交方式
 elseif($_REQUEST['act'] == 'deal_method_report'){
     $smarty->assign('curr_title','成交方式统计');
+    $smarty->assign('final',deal_order_report());
     $smarty->assign('deal_method',get_deal_method());
+    $smarty->assign('deal_method_div',$smarty->fetch('deal_method_report_div.htm'));
     $res['main'] = $smarty->fetch('deal_method_report.htm'); 
     die($json->encode($res));
 }
@@ -5029,6 +5031,55 @@ function analyse_user_contact(){
     $total['wechat_rate'] = sprintf("%.2f",$total['has_wechat']/$total['total'])*100;
     array_push($list,$total);
     return $list;
+}
+
+//成交方式报表
+function deal_order_report(){
+    $filter_type = intval($_REQUEST['fileter_type']);
+    $start_time  = strtotime($_REQUEST['start_time']);
+    $end_time    = strtotime($_REQUEST['end_time']);
+
+    if ($start_time && $end_time) {
+        $where = " AND o.add_time BETWEEN $start_time AND $end_time"; 
+    }
+
+    if(!$filter_type){
+        $sql = "SELECT SUM(final_amount) final_amount,COUNT(*) order_num,admin_id,admin_name,deal_method FROM "
+            .$GLOBALS['ecs']->table('order_info')
+            ." WHERE  order_type IN(4,5,6) AND order_status IN(5,1) AND shipping_status<>3 $where GROUP BY admin_id,deal_method ORDER BY final_amount DESC";
+        
+    }else{
+        $sql = "SELECT SUM(o.final_amount) final_amount,COUNT(*) order_num,o.deal_method,r.role_name,r.depart_id FROM "
+            .$GLOBALS['ecs']->table('order_info').' o LEFT JOIN '.$GLOBALS['ecs']->table('role')
+            .' r ON o.platform=r.role_id WHERE o.order_type IN(4,5,6) AND o.order_status IN(5,1) AND o.shipping_status<>3'
+            ." $where GROUP BY o.platform,o.deal_method ORDER BY final_amount DESC";
+    }
+    $res = $GLOBALS['db']->getAll($sql);
+    if ($res) {
+        $total = array(
+            'name' => '总计',
+        );
+        $list = array();
+        if (!$filter_type) {
+            foreach ($res as $v) {
+                $list[$v['admin_id']]['name'] = $v['admin_name'];
+                $list[$v['admin_id']]['list'][$v['deal_method']] = $v;
+                $total['list'][$v['deal_method']]['final_amount'] += $v['final_amount'];
+                $total['list'][$v['deal_method']]['order_num'] += $v['order_num'];
+                $total['amount'] += $v['final_amount'];
+            }
+        }else{
+
+        }
+        $res = $list;
+    }
+    unset($v);
+    foreach ($total['list'] as &$v) {
+        $v['amount_percent'] = bcdiv($v['final_amount'],$total['final_amount'],2);
+    }
+    //$total['amount_percent'] = bcdiv($total['']);
+    //print_r($total);exit;
+    return $res;
 }
 
 function optimize_array($arr){

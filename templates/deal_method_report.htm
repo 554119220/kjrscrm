@@ -14,35 +14,12 @@
           <option value="{$role.role_id}" {if $role.role_id eq $role_id}selected{/if}>{$role.role_name}</option>
           {/foreach}
         </select>
-        按：<label><input type="radio" name="filter_type" value="0"/> 部门</label>
-        <label><input type="radio" name="filter_type" value="1"/> 员工</label>
-        <label><input type="radio" name="filter_type" value="2"/> 日期</label>
+        按：<label><input type="radio" name="filter_type" value="0"/> 员工</label>
+        <label><input type="radio" name="filter_type" value="1"/> 小组</label>
+        <label><input type="radio" name="filter_type" value="2" checked/> 部门</label>
         <input type="submit" value="检索" class="b_submit">
       </form>
     </div>
   </div>
-  <div style="overflow-x:auto">
-    <table border="0" cellpadding="0" cellspacing="0" class="wu_table_list rb_border tr_hover" width="1324px">
-      <thead>
-        <tr id="sortByThis" class="align_right">
-          <th></th>
-          {foreach from=$deal_method item=v}
-          <th colspan="3">{$v.method_name}</th>
-          {/foreach}
-        </tr>
-        <tr>
-          <th>部门</th>
-          {foreach from=$deal_method item=v}
-          <th>成交数</th><th>金额</th><th>占比</th>
-          {/foreach}
-        </tr>
-      </thead>
-      <tbody class="align_right">
-        {foreach from=$final item=val name=i}
-        <tr{if !$smarty.foreach.i.last} group="{$val.group_id}" role="{$val.role_id}" admin="{$val.admin_id}" role_code='{$val.role_code}'{/if}>
-        </tr>
-        {/foreach}
-      </tbody>
-    </table>
-  </div>
+  <div style="overflow-x:auto"> {$deal_method_div} </div>
 </div>
