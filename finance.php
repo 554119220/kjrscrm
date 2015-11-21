@@ -109,6 +109,10 @@ elseif ($_REQUEST['act'] == 'everyday_order_check')
     $smarty->assign('month',         $month);
     $smarty->assign('days_list',     $days_list);
     $smarty->assign('order_list',    $order_list['orders']);
+    if (isset($_REQUEST['order_class'])) {
+        $smarty->assign('order_class',   $_REQUEST['order_class']);
+        $sch_condition .= '&order_class='.$_REQUEST['order_class'];
+    }
     $smarty->assign('sch_condition', $sch_condition);
 
     // 分页参数
@@ -391,7 +395,11 @@ function order_list() {
                 $filter['start_time'] = $time_tmp;
             }
 
-            $where .= " AND o.add_time BETWEEN '{$filter['start_time']}' AND '{$filter['end_time']}'";
+            if (isset($_REQUEST['order_class']) && $_REQUEST['order_class']) {
+                $where .= " AND o.shipping_time BETWEEN '{$filter['start_time']}' AND '{$filter['end_time']}'";
+            }else{
+                $where .= " AND o.add_time BETWEEN '{$filter['start_time']}' AND '{$filter['end_time']}'";
+            }
         }
 
         //订单金额

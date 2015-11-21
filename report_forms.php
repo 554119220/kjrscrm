@@ -2220,8 +2220,8 @@ elseif($_REQUEST['act'] == 'add_contact_report'){
     $report_time = report_time_list();
     $role_id    = isset($_REQUEST['role_id']) && $_REQUEST['role_id'] ? intval($_REQUEST['role_id']) : KEFU.','.KEFU2 ;
     $admin_list = admin_for_report(" AND role_id IN($role_id)");
+    $today      = add_contact_report($report_time['today_start_time'],$report_time['today_end_time']);
     $yesterday  = add_contact_report($report_time['yesterday_start_time'],$report_time['yesterday_end_time']);
-    $today      = add_contact_report($report_time['today_start_time'],$report_time['today_start_time']);
     $month      = add_contact_report($report_time['month_start_time'],$report_time['month_end_time']);
     $last_month = add_contact_report($report_time['last_month_start_time'],$report_time['last_month_end_time']);
 

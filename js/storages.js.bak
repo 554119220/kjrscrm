@@ -359,13 +359,13 @@ function filterEverydayCheck(obj) {
   var data = [];
   for (var i = 0; i < obj.elements.length - 1; i++) {
     if (obj.elements[i].name == 'month') continue;
-    if (obj.elements[i].name == 'order_class') continue;
+	if (obj.elements[i].name == 'order_class') continue;
     if (obj.elements[i].value != '') data.push(obj.elements[i].name + '=' + obj.elements[i].value);
   }
 
   var current_day = new Date();
   data.push('day=' + obj.month.value + '-' + current_day.getDate());
-  data.push('order_class=' + obj.order_class.value);
+  data.push('order_class' + obj.order_class.value);
 
   Ajax.call('finance.php?act=everyday_order_check', data.join('&'), sendToServerResponse, 'POST', 'JSON');
 }

@@ -148,8 +148,7 @@ elseif($_REQUEST['act'] == 'add_new_receipt')
 
     if($result)
     {
-        record_operate($sql_insert, 'stock');
-        $stock_id = mysql_insert_id();
+        $stock_id = $GLOBALS['db']->insert_id();
 
         //根据进货单插入进货单商品表
         foreach($list as $v)
@@ -862,9 +861,8 @@ elseif ($_REQUEST['act'] == 'edit_packing')
     $packing_info  = packing_info();
     $packing_goods = packing_goods_list();
 
-    $smarty->assign('packing',        $packing_info);
-    $smarty->assign('packing_goods',  $packing_goods);
-    $smarty->assign('role_list',      get_role_by_depart(4));
+    $smarty->assign('packing',       $packing_info);
+    $smarty->assign('packing_goods', $packing_goods);
 
     $smarty->assign('filename', $file);
     $smarty->assign('act', 'update_package');

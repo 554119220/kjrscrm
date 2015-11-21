@@ -16,6 +16,7 @@ $url = array (
     'taobao03' => 'https://oauth.taobao.com/token',
     'taobao04' => 'https://oauth.taobao.com/token',
     'jingdong' => 'http://oauth.jd.com/oauth/token',
+    'aksojd'   => 'http://oauth.jd.com/oauth/token',
     'yhd'      => 'https://member.yhd.com/login/token.do',
     'suning'   => 'http://open.suning.com/api/oauth/token',
 );
@@ -80,11 +81,12 @@ function authorize ($appkey, $platform)
         'taobao03' => 'https://oauth.taobao.com/authorize',
         'taobao04' => 'https://oauth.taobao.com/authorize',
         'jingdong' => 'https://oauth.jd.com/oauth/authorize',
+        'aksojd'   => 'https://oauth.jd.com/oauth/authorize',
         'yhd'      => 'https://member.yhd.com/login/authorize.do',
         'suning'   => 'http://open.suning.com/api/oauth/authorize',
     );
 
-    if ('jingdong' == $platform) {
+    if (in_array($platform,array('jingdong','aksojd'))) {
         $res = array (
             'uri'      => $request_uri[$platform].sprintf($tail.'urn:ietf:wg:oauth:2.0:oob&state=%s', $appkey, $platform),
             'platform' => $platform,

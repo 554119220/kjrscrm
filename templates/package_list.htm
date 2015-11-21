@@ -11,33 +11,47 @@
               <script language="javascript" type="text/javascript" src="My97DatePicker/WdatePicker.js"></script>
               添加时间：<input class="Wdate" id="start_time" type="text" value="" onclick="WdatePicker()">
               至<input class="Wdate" id="end_time" type="text" value="" onclick="WdatePicker()">
-              <input type="tex" name="package_name" value="" placeholder="套餐名"/>
-              <button value="storeage.php?act=package_list" onclick="searchPackage(this)" class="b_submit">搜索</button>
+              <select id="keyfields" onchange="changeKeywordsArae(this)">
+                   <option value="user_name">姓名</option>
+                   <option value="qq">QQ</option>
+                   <option value="aliww">旺旺</option>
+                   <option value="mobile_phone">手机号码</option>
+                   <option value="home_phone">固话</option>
+                   <option value="region">所在地区</option>
+                   <option value="address">详细地址</option>
+                   <option value="admin_name">健康顾问</option>
+                   <option value="eff_id">功效</option>
+                   <option value="type_id">分类</option>
+              </select>
+              <span id="keywordsArea">
+                   <input type="text" value="" id="keywords">
+              </span>
+              <button value="users.php?act=users_list" onclick="searchOrder(this)" class="b_submit">搜索</button>
          </div>
     </div>
 
   <div class="w830" id="listDiv">
-    <table border="0" cellpadding="0" cellspacing="0" class="wu_table_list rb_border tr_hover wu_rb_border" width="100%">
-         <tr>
-              <th width="10%">编号</th>
-              <th width="20%">套餐名称</th>
-              <th width="10%">价格</th>
-              <th width="15%">添加时间</th>
-              <th width="10%">积分额度</th>
-              <th width="5%">操作</th>
-              <th width="30%">备注</th>
+    <table border="0" cellpadding="0" cellspacing="0" class="all_table_list c_b" width="100%">
+         <tr class="goods_fixed">
+              <th align="center" width="10%">编号</th>
+              <th align="center" width="5%">操作</th>
+              <th align="center" width="20%">套餐名称</th>
+              <th align="center" width="10%">价格</th>
+              <th align="center" width="15%">添加时间</th>
+              <th align="center" width="10%">积分额度</th>
+              <th align="center" width="30%">备注</th>
          </tr>
          {foreach from=$package_list item=v}
          <tr id="tr_2_{$v.packing_id}" class="tr_list" onclick="getPackageStruct('{$v.packing_desc}',0)">
-              <td>{$v.packing_desc}</td>
-              <td>{$v.packing_name}</td>
-              <td>{$v.packing_price}</td>
-              <td>{$v.add_time}</td>
-              <td>{$v.integral}</td>
-              <td>
-                <button class="btn_new" onclick="editPackingInfo({$v.packing_id})">编辑</button>
+              <td align="center">{$v.packing_desc}</td>
+              <td align="center">
+                   <a href="storage.php?act=edit_packing&packing_id={$v.packing_id}"><img src="images/edit.gif"></a>
               </td>
-              <td>{$v.packing_name}</td>
+              <td height="20" align="center">{$v.packing_name}</td>
+              <td align="center">{$v.packing_price}</td>
+              <td align="center">{$v.add_time}</td>
+              <td align="center">{$v.integral}</td>
+              <td align="center"> </td>
          </tr>
          {/foreach}
  </table>
