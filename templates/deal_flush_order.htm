@@ -7,8 +7,10 @@
       <tr>
         <th style="width:10%"></th>
         <td>
+          {if $all}
           订单编号和快递单号要严格按照：  订单编号--递单号  的格式填写
           <br />示例： 10035314094--720003657638
+          {/if}
         </td>
       </tr>
       <tr>
@@ -20,6 +22,7 @@
           <textarea name="order_sn_list" style="width:236px;height:343px;resize:vertical;" placeholder="10035314094--720003657638"></textarea>
         </td>
       </tr>
+      {if $all}
       <tr>
         <th>快递:</th>
         <td>
@@ -32,6 +35,7 @@
           <input type="submit" value="确认" class="input_submit"/>
         </td>
       </tr>
+      {/if}
       <tr>
         <td colspan="2">
           <div>说明：此按钮只是将订单标记为【刷单】，并不做同步出库发货处理,只需填写订单编号并以“##”分隔，例10145144688##</div>

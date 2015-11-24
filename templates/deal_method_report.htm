@@ -14,12 +14,12 @@
           <option value="{$role.role_id}" {if $role.role_id eq $role_id}selected{/if}>{$role.role_name}</option>
           {/foreach}
         </select>
-        按：<label><input type="radio" name="filter_type" value="0"/> 员工</label>
+        按：<label><input type="radio" name="filter_type" value="0" checked/> 员工</label>
         <label><input type="radio" name="filter_type" value="1"/> 小组</label>
-        <label><input type="radio" name="filter_type" value="2" checked/> 部门</label>
+        <label><input type="radio" name="filter_type" value="2"/> 部门</label>
         <input type="submit" value="检索" class="b_submit">
       </form>
     </div>
   </div>
-  <div style="overflow-x:auto"> {$deal_method_div} </div>
+  <div style="overflow-x:auto" id="resource"> {$deal_method_div} </div>
 </div>

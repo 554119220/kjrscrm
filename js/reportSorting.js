@@ -268,6 +268,15 @@ function successOrderStats(obj){
   var end_time = obj.elements['end_time'].value;
   Ajax.call('report_forms.php?act=order_success_stats','role_id='+role_id+'&start_time='+start_time+'&end_time='+end_time,inMain,'POST','JSON');
 }
+
+//订单成交方式
+function successOrderStats(obj){
+  var role_id    = obj.elements['role_id'].value;
+  var start_time = obj.elements['start_time'].value;
+  var end_time   = obj.elements['end_time'].value;
+  Ajax.call('report_forms.php?act=deal_method_report','role_id='+role_id+'&start_time='+start_time+'&end_time='+end_time+'&sch='+true,fullSearchResponse,'GET','JSON');
+}
+
 //QQ,微信添加统计
 function addContactReport(obj){
   var role_id    = obj.elements['role_id'].value;

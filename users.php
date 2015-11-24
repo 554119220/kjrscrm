@@ -5778,7 +5778,6 @@ function get_user_info ($id)
         ' p ON p.region_id=ua.province LEFT JOIN '.$GLOBALS['ecs']->table('region').
         ' c ON c.region_id=ua.city LEFT JOIN '.$GLOBALS['ecs']->table('region').
         ' d ON d.region_id=ua.district'." WHERE ua.user_id=$id";
-    echo $sql_select;exit;
     $user_region = $GLOBALS['db']->getAll($sql_select);
 
     if (is_array($user_region[0]))

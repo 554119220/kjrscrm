@@ -2212,8 +2212,14 @@ elseif($_REQUEST['act'] == 'deal_method_report'){
     $smarty->assign('curr_title','成交方式统计');
     $smarty->assign('final',deal_order_report());
     $smarty->assign('deal_method',get_deal_method());
-    $smarty->assign('deal_method_div',$smarty->fetch('deal_method_report_div.htm'));
-    $res['main'] = $smarty->fetch('deal_method_report.htm'); 
+    if (isset($_REQUEST['sch'])) {
+        $res['response_action'] = 'search_service';
+        $res['main'] = $smarty->fetch('deal_method_report_div.htm'); 
+    }else{
+        $smarty->assign('role_list',get_role_list('','role_id,role_name'," AND depart_id IN(7,8)"));
+        $smarty->assign('deal_method_div',$smarty->fetch('deal_method_report_div.htm'));
+        $res['main'] = $smarty->fetch('deal_method_report.htm'); 
+    }
     die($json->encode($res));
 }
 
@@ -2222,8 +2228,8 @@ elseif($_REQUEST['act'] == 'add_contact_report'){
     $report_time = report_time_list();
     $role_id    = isset($_REQUEST['role_id']) && $_REQUEST['role_id'] ? intval($_REQUEST['role_id']) : KEFU.','.KEFU2 ;
     $admin_list = admin_for_report(" AND role_id IN($role_id)");
-    $today      = add_contact_report($report_time['today_start_time'],$report_time['today_end_time']);
     $yesterday  = add_contact_report($report_time['yesterday_start_time'],$report_time['yesterday_end_time']);
+    $today      = add_contact_report($report_time['today_start_time'],$report_time['today_end_time']);
     $month      = add_contact_report($report_time['month_start_time'],$report_time['month_end_time']);
     $last_month = add_contact_report($report_time['last_month_start_time'],$report_time['last_month_end_time']);
 
@@ -5039,16 +5045,23 @@ function deal_order_report(){
     $start_time  = strtotime($_REQUEST['start_time']);
     $end_time    = strtotime($_REQUEST['end_time']);
 
-    if ($start_time && $end_time) {
-        $where = " AND o.add_time BETWEEN $start_time AND $end_time"; 
+    if (!$start_time && !$end_time) {
+        $start_time = strtotime(date('Y-m-01 00:00:00'));
+        $end_time = strtotime(date('Y-m-t 23:59:59'));
     }
+    $where = " AND o.add_time BETWEEN $start_time AND $end_time"; 
 
     if(!$filter_type){
-        $sql = "SELECT SUM(final_amount) final_amount,COUNT(*) order_num,admin_id,admin_name,deal_method FROM "
-            .$GLOBALS['ecs']->table('order_info')
-            ." WHERE  order_type IN(4,5,6) AND order_status IN(5,1) AND shipping_status<>3 $where GROUP BY admin_id,deal_method ORDER BY final_amount DESC";
+        $sql = "SELECT SUM(o.final_amount) final_amount,COUNT(*) order_num,o.admin_id,o.admin_name,o.deal_method FROM "
+            .$GLOBALS['ecs']->table('order_info').' o LEFT JOIN '.$GLOBALS['ecs']->table('admin_user')
+            .' a ON o.admin_id=a.user_id'
+            ." WHERE o.order_type IN(4,5,6) AND o.order_status IN(5,1) AND o.shipping_status<>3 AND a.status=1 $where GROUP BY o.admin_id,o.deal_method ORDER BY final_amount DESC";
         
     }else{
+        if ($_REQUEST['role_id']) {
+            $role_id = intval($_REQUEST['role_id']);
+            $where .= " AND o.platform=$role_id ";
+        }
         $sql = "SELECT SUM(o.final_amount) final_amount,COUNT(*) order_num,o.deal_method,r.role_name,r.depart_id FROM "
             .$GLOBALS['ecs']->table('order_info').' o LEFT JOIN '.$GLOBALS['ecs']->table('role')
             .' r ON o.platform=r.role_id WHERE o.order_type IN(4,5,6) AND o.order_status IN(5,1) AND o.shipping_status<>3'
@@ -5066,19 +5079,33 @@ function deal_order_report(){
                 $list[$v['admin_id']]['list'][$v['deal_method']] = $v;
                 $total['list'][$v['deal_method']]['final_amount'] += $v['final_amount'];
                 $total['list'][$v['deal_method']]['order_num'] += $v['order_num'];
-                $total['amount'] += $v['final_amount'];
+                $total['list'][$v['deal_method']]['deal_method'] = $v['deal_method'];
+                $total['final_amount'] += $v['final_amount'];
             }
         }else{
+            //部门，小组
 
         }
         $res = $list;
     }
+    array_push($res,$total);
     unset($v);
-    foreach ($total['list'] as &$v) {
-        $v['amount_percent'] = bcdiv($v['final_amount'],$total['final_amount'],2);
+    $deal_method = get_deal_method();
+    foreach ($res as &$v) {
+        foreach ($v['list'] as $k=>&$l) {
+            $l['amount_percent'] = bcdiv($l['final_amount'],$total['final_amount'],2)*100;
+            foreach ($deal_method as $m) {
+                if ($v['list'][$m['method_id']]) {
+                    continue;
+                }else{
+                    $v['list'][$m['method_id']] = array(
+                        'order_num'=>0,'deal_method'=>$m['method_id'],'final_amount'=>0,'amount_percent'=>0,
+                    );
+                }
+            }
+        }
+        ksort($v['list']);
     }
-    //$total['amount_percent'] = bcdiv($total['']);
-    //print_r($total);exit;
     return $res;
 }
 

@@ -1286,14 +1286,7 @@ function get_role_list($type = '',$fields='',$append='')
     if (!empty($append)) {
         $where .= $append;
     }
-    //权限判断
-    if (admin_priv('order_sales_all', '', false)) {
-    } elseif (admin_priv('order_sales_trans-part', '', false)) {
-    } elseif (admin_priv('order_sales_part', '', false)) {
-    } elseif (admin_priv('order_sales_branch','',false)) {
-        //只能查看本部门的
-    }
-
+    
     $fields = !$fields ? 'role_id, role_name, action_list, compete, manager,depart_id' : 'depart_id,role_id,role_name,role_describe';  
     $sql  = "SELECT $fields FROM ".$GLOBALS['ecs']->table('role').$where.' ORDER BY convert(role_name using gbk) ASC';
 

@@ -3606,6 +3606,10 @@ elseif($_REQUEST['act'] == 'deal_flush_order'){
         admin_priv('all','',false) && $smarty->assign('all',true); 
         $smarty->assign('platform_list',platform_list(explode(',',ONLINE_STORE),true));
         $smarty->assign('shipping_list',shipping_list(3));
+        if ($_SESSION['role_id'] == 10 || admin_priv('all','',false)) {
+            $smarty->assign('all',true); 
+        }
+
         $res['main'] = $smarty->fetch('deal_flush_order.htm');
         die($json->encode($res));
         break;
