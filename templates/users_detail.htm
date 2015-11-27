@@ -9,7 +9,7 @@
           <li type="purchase" onclick="switchSubTab(this)"><span>购买记录</span></li>
           <li type="new_service" onclick="switchSubTab(this)"><span>跟进结果</span></li>
           <li type="new_order" onclick="switchSubTab(this)"><span>添加订单</span></li>
-          <li type="analyse" onclick="userdetailAnalyse(this)"><span>顾客分析</span></li>
+          <!--<li type="analyse" onclick="switchSubTab(this)"><span>顾客分析</span></li>-->
           <li type="contact" onclick="switchSubTab(this)"><span>详细信息</span></li>
           <li type="healthy_archive" onclick="switchSubTab(this)"><span>健康档案</span></li>
           <!--<li type="user_account_manager" onclick="switchSubTab(this)"><span>资金管理</span></li>-->
@@ -21,6 +21,7 @@
     </div>
   </div>
   <!--导航样式 end-->
+
   <div class="box_center user_list_info">
     <!-- 顾客基本信息 -->
     <div id="general" class="show">
@@ -46,7 +47,7 @@
           </td>
         </tr>
         <tr>
-          <th>顾客类型：</th>
+          <th>类型：</th>
           <td>{$user.customer_type}<button value="users.php?act=edit&info=customer_type&id={$user.user_id}&type=select" title="修改顾客类型" onclick="sendEditInfo(this)"></button></td>
           <th>产品需求：</th>
           <td>{$user.eff_name}<button value="users.php?act=edit&info=eff_id&id={$user.user_id}&type=select" title="修改需求" onclick="sendEditInfo(this)"></button></td>
@@ -66,7 +67,7 @@
           </td>
         </tr>
         <tr>
-          <th>顾客来源：</th>
+          <th>来源：</th>
           <td>{$user.from_where}{if !$user['from_where_edit']}<button value="users.php?act=edit&info=from_where&id={$user.user_id}&type=select" title="修改顾客来源" onclick="sendEditInfo(this)"></button>{/if}</td>
           <th>消费积分：</th>
           <td>{$user.rank_points}</td>
@@ -83,9 +84,14 @@
         </tr>
         <tr>
           <th>地址：</th>
-          <td colspan="5" class="tl pd12">
-            <span>{$user.province}{$user.city}{$user.district}<button value="users.php?act=edit&info=district&id={$user.user_id}&type=select" title="修改地址" onclick="sendEditInfo(this)"></button></span>
+          <td colspan="4" class="tl pd12">
+            <span>{$user.province}{$user.city}{$user.district} 
+              <button value="users.php?act=edit&info=district&id={$user.user_id}&type=select" title="修改地址" onclick="sendEditInfo(this)"></button></span>
             <span>{$user.address}<button value="users.php?act=edit&info=address&id={$user.user_id}&type=text" title="修改地址" onclick="sendEditInfo(this)"></button></span>
+          </td>
+          <td>
+            邮编：{if $user.zipcode}{$user.zipcode}{/if}
+            <button value="users.php?act=edit&info=zipcode&id={$user.user_id}&type=text" title="修改地址" onclick="sendEditInfo(this)">
           </td>
         </tr>
         <tr>
@@ -205,7 +211,8 @@
       <form name="contactInfo" onsubmit="return saveContactInfo()">
         <table border="0" style="float:left">
           <tbody>
-            <td class="pl12 tl" colspan="6">
+            <th> </th>
+            <td>
               <select name="contact_name" onchange="replaceToAddr(this)">
                 <option value="mobile">手机</option>
                 <option value="tel">电话</option>
@@ -218,9 +225,9 @@
                 <option value="1mall">一号店ID</option>
                 <option value="dangdang">当当ID</option>
               </select>
-              <input type="text" name="contact_value" size="15" value="">
-              <input type="submit" class="b_submit" value="添 加">
             </td>
+            <td colspan="4"><input type="text" name="contact_value" size="15" value=""></td>
+            <td><input type="submit" class="b_submit" value="添 加"></td>
           </tbody>
           <tbody>
             <tr id="mobileRow"{if !$contact_list.mobile} class="hide"{/if}>
@@ -253,7 +260,13 @@
               <th> 微信：</th>
               {if $contact_list.wechat}
               {foreach from=$contact_list.wechat item=val}
-              <td {if $val.add_time neq 0}title="添加时间:{$val.add_time}"{/if}>{$val.contact_value}<span cid="{$val.contact_id}" class=" {if $val.is_default eq 1}hide{else}pointer{/if}" onclick="setDefault(this)"><font color="red">[常用]</font></span></td>
+              <td {if $val.add_time neq 0}title="添加时间:{$val.add_time}"{/if}>{$val.contact_value}<span cid="{$val.contact_id}" class=" {if $val.is_default eq 1}hide{else}pointer{/if}" onclick="setDefault(this)"><font color="red">[常用]</font></span>
+                {if !$val.access}
+                <input type="button" value="未通过" onclick="setAccess(this,{$val.contact_id})" class="btn_new"/>
+                {else}
+                <span>验证通过</span>
+                {/if}
+              </td>
               {/foreach}
               {else}
               <td> </td>
@@ -271,6 +284,11 @@
                 <a href="tencent://message/?uin={$val}" title="{$val}" name="msg">
                   <img alt="{$val.contact_value}" src="http://wpa.qq.com/pa?p=1:{$val.contact_value}:17">
                 </a>
+                {if !$val.access}
+                <input type="button" value="未通过" onclick="setAccess(this,{$val.contact_id})" class="btn_new"/>
+                {else}
+                <span>验证通过</span>
+                {/if}
                 {/if}
               </td>
               {/foreach}
@@ -630,31 +648,25 @@
             </tr>
             <tr>
               <th>收货地址：</th>
-              <td>
+              <td colspan="5">
                 <select name="province" id="selProvinces" onchange="region.changed(this,2,'selCities')">
                   <option value="0">{$lang.select_please}</option>
                   {foreach from=$province_list item=province}
                   <option value="{$province.region_id}" {if $province.region_id eq $user.province_id}selected{/if}>{$province.region_name}</option>
                   {/foreach}
                 </select>
-              </td>
-              <td>
                 <select name="city" id="selCities" onchange="region.changed(this,3,'selDistricts')">
                   <option value="0">{$lang.select_please}</option>
                   {foreach from=$city_list item=city}
                   <option value="{$city.region_id}" {if $city.region_id eq $user.city_id}selected{/if}>{$city.region_name}</option>
                   {/foreach}
                 </select>
-              </td>
-              <td>
                 <select name="district" id="selDistricts">
                   <option value="0">{$lang.select_please}</option>
                   {foreach from=$district_list item=district}
                   <option value="{$district.region_id}"{if $district.region_id eq $user.district_id} selected{/if}>{$district.region_name}</option>
                   {/foreach}
                 </select>
-              </td>
-              <td>
                 <input type="text" name="address" value="{$user.address}" size="45" placeholder='详细地址'/>
               </td>
             </tr>

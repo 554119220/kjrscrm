@@ -1425,3 +1425,20 @@ function userdetailAnalyse(obj){
 function userdetailAnalyseResp(res){
   
 }
+
+function setAccess(obj,id){
+  obj.type = 'date';
+  obj.onclick = void(0);
+  obj.onblur = function(){
+    $.get(
+        'users.php?act=set_access&id='+id+'&access_time='+obj.value,
+        function(res){
+          showMsg(res);
+          obj.type = 'button';
+          obj.value = res.message;
+          if (res.code) {
+            obj.setAttribute('readOnly','readOnly');
+          }
+        },'JSON');
+  }
+}

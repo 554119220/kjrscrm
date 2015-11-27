@@ -64,9 +64,9 @@ elseif ($act == 'search')
                 $user_old = $GLOBALS['db']->getAll($sql_select);
             }else{
                 $where    = " WHERE $condition='$keyword' ";
-                if ('order_sn' == $condition) {
-                    $append_where = " OR platform_order_sn='$keyword' ";
-                }
+                //if ('order_sn' == $condition) {
+                //    $append_where = " OR platform_order_sn='$keyword' ";
+                //}
                 $user_old = get_user_id('order_info',$where.$append_where,$keyword);
 
                 if (!$user_old) {

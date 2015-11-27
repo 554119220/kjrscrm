@@ -183,7 +183,9 @@ elseif ($_REQUEST['act'] == 'goods_num') {
 
     $smarty->assign('rank', $sales_rank['sales_order_data']);
     $smarty->assign('platform_list', $platform_list);
-    $smarty->assign('depart_list',$depart_list);
+    if (admin_priv('all','',false)) {
+        $smarty->assign('depart_list',$depart_list);
+    }
     if ($_REQUEST['depart_id']) {
         $smarty->assign('depart_id',$_REQUEST['depart_id']);
     }
@@ -247,7 +249,7 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
     $depart_id  = intval($_REQUEST['depart_id']);
 
     //不包含待发货
-    $where = " WHERE oi.order_id=og.order_id AND oi.order_status IN(5,1) AND oi.shipping_status IN(1,2,4) AND oi.add_time BETWEEN $start_time AND $end_time AND oi.order_type IN (2,3,4,6,100) AND og.goods_sn='$goods_sn' ";
+    $where = " WHERE oi.order_id=og.order_id AND oi.order_status IN(5,1) AND oi.shipping_status IN(1,2,4) AND oi.add_time BETWEEN $start_time AND $end_time AND oi.order_type IN (2,3,4,6,100,9) AND og.goods_sn='$goods_sn' ";
     if ($platform) {
         $where .= " AND oi.platform=$platform ";
     }
@@ -259,7 +261,7 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
 
     //总的销售额
     $sql_count = 'SELECT SUM(og.goods_number*og.goods_price) FROM '.$GLOBALS['ecs']->table('order_goods').' og,'
-        .$GLOBALS['ecs']->table('order_info').' oi '.$where;
+        .$GLOBALS['ecs']->table('order_info')." oi $where AND og.is_gift<>1 ";
     $total = $GLOBALS['db']->getOne($sql_count);
     if ($total) {
         // @sel_item 1 部门 2 小组 3 员工
@@ -278,13 +280,23 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
             $group_by = 'oi.platform,';
         }
 
+        //正常销量不包含赠品
         $sql = 'SELECT og.goods_name,SUM(og.goods_number) goods_num,count(oi.order_id) order_num,'.
             'SUM(og.goods_number*og.goods_price) turnover %s FROM '.$GLOBALS['ecs']->table('order_goods').' og, '.
             $GLOBALS['ecs']->table('order_info').' oi, '.$GLOBALS['ecs']->table($table)
-            ." t $where GROUP BY %s og.goods_sn ORDER BY goods_num DESC";
-        $rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field,$group_by));
+            ." t $where %s GROUP BY %s og.goods_sn ORDER BY goods_num DESC";
+        $rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field,' AND og.is_gift<>1 ',$group_by));
+        $gift_rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field,' AND og.is_gift=1 ',$group_by));
         if ($rank_status) {
             $res['goods_name'] = $rank_status[0]['goods_name'];
+            if ($gift_rank_status) {
+                foreach ($gift_rank_status as $g) {
+                    foreach ($rank_status as &$v) {
+                        $v['goods_num'] = bcdiv($v['turnover'],$v['goods_num'],2);
+                        $v['sale_rate'] = bcdiv($v['turnover'],$total,3)*100;
+                    }   
+                }
+            }
             foreach ($rank_status as &$v) {
                 $v['ave'] = bcdiv($v['turnover'],$v['goods_num'],2);
                 $v['sale_rate'] = bcdiv($v['turnover'],$total,3)*100;
@@ -2211,6 +2223,7 @@ elseif('act_user_analyse' == $_REQUEST['act']){
 elseif($_REQUEST['act'] == 'deal_method_report'){
     $smarty->assign('curr_title','成交方式统计');
     $smarty->assign('final',deal_order_report());
+    $smarty->assign('role_list',get_role_list('','role_id,role_name'," AND depart_id IN(7,8)"));
     $smarty->assign('deal_method',get_deal_method());
     if (isset($_REQUEST['sch'])) {
         $res['response_action'] = 'search_service';
@@ -2340,10 +2353,10 @@ function sales_rank ($is_pagination = true) {
         $GLOBALS['ecs']->table('order_info')." oi $where %s GROUP BY og.goods_sn ".
         ' ORDER BY ' . $filter['sort_by'] . ' ' . $filter['sort_order'];
     // 日常销量
-    $sales_order_data = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND oi.order_type IN (2,3,4,6,100)"));
+    $sales_order_data = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND og.is_gift<>1 AND oi.order_type IN (2,3,4,6,100,9)"));
 
     if ($gift_where) {
-        $gift_arr = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND oi.order_type IN (2,3,4,6,100) $gift_where"));
+        $gift_arr = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND oi.order_type IN (2,3,4,6,100,10) $gift_where"));
         if ($gift_arr) {
             foreach ($gift_arr as $g) {
                 $gifts[$g['goods_sn']] = $g;
@@ -2368,20 +2381,24 @@ function sales_rank ($is_pagination = true) {
 
         // 订单总计
         @$val['turnover']  = bcadd($val['turnover'], $promotions[$val['goods_sn']]['turnover'], 3);
-        @$val['turnover']  = bcadd($val['turnover'], $gifts[$val['goods_sn']]['turnover'], 2);
+        //@$val['turnover']  = bcadd($val['turnover'], $gifts[$val['goods_sn']]['turnover'], 2);
         //@$val['total_num'] = $val['goods_num'] + $promotions[$val['goods_sn']]['goods_num'] + $gifts[$val['goods_sn']]['goods_num'];
-        @$val['total_num'] = $val['goods_num'];
+        @$val['total_num'] = $val['goods_num']+$val['gift_num'];
     }
 
     $i = 1;
     foreach ($sales_order_data as $key=>$item) {
         $sales_order_data[$key]['wvera_price'] = $item['total_num']?bcdiv($item['turnover'],$item['total_num'],2):0;
         $sales_order_data[$key]['short_name']  = sub_str($item['goods_name'], 30, true);
+        $sales_order_data[$key]['goods_num']  = $item['goods_num']+$item['gitf_num'];
         $sales_order_data[$key]['turnover']    = $item['turnover'];
         $sales_order_data[$key]['index']       = $i++;
     }
+    
+    //if (142 == $_SESSION['admin_id']) {
+    //  print_r($sales_order_data);exit;
+    //}
 
-    //print_r($sales_order_data);exit;
     return array (
         'sales_order_data' => $sales_order_data,
         'filter'           => $filter,

@@ -396,6 +396,7 @@ function order_list() {
             }
 
             if (isset($_REQUEST['order_class']) && $_REQUEST['order_class']) {
+                $condition .= "&order_class=".$_REQUEST['order_class'];
                 $where .= " AND o.shipping_time BETWEEN '{$filter['start_time']}' AND '{$filter['end_time']}'";
             }else{
                 $where .= " AND o.add_time BETWEEN '{$filter['start_time']}' AND '{$filter['end_time']}'";

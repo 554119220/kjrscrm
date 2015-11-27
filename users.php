@@ -851,7 +851,7 @@ elseif ($_REQUEST['act'] == 'user_detail') {
         $sql_select .= ' WHERE available=1 ORDER BY sort DESC';
         $smarty->assign('delivery_plus', 1);
     } else {
-        $sql_select .= ' WHERE available=1 AND type_id<100 ORDER BY sort ASC';
+        $sql_select .= ' WHERE available=1 AND type_id<100 ORDER BY sort DESC';
     }
 
     $order_type = $GLOBALS['db']->getAll($sql_select);
@@ -1041,7 +1041,7 @@ elseif ($_REQUEST['act'] == 'edit')
     $id = intval($_REQUEST['id']); // 顾客ID
     $request = addslashes_deep($_REQUEST);
 
-    if (!in_array($request['info'], array ('district','address','marketing')))
+    if (!in_array($request['info'], array ('district','address','marketing','zipcode')))
     {
         $sql_select = "SELECT add_time,{$request['info']} FROM ".$GLOBALS['ecs']->table('users')." WHERE user_id=$id";
         $user_info = $GLOBALS['db']->getRow($sql_select);
@@ -1069,7 +1069,7 @@ elseif ($_REQUEST['act'] == 'edit')
         $val = $GLOBALS['db']->getOne($sql_select);
     }
 
-    if ($_REQUEST['type'] == 'text' && $_REQUEST['info'] != 'address') {
+    if ($_REQUEST['type'] == 'text' && !in_array($_REQUEST['info'],array('address','zipcode'))) {
         $sql_select = "SELECT {$request['info']} FROM ".$GLOBALS['ecs']->table('users')." WHERE user_id=$id";
         $val = $GLOBALS['db']->getOne($sql_select);
 
@@ -1077,6 +1077,13 @@ elseif ($_REQUEST['act'] == 'edit')
             $val = '';
         }
     }
+
+    if ($_REQUEST['info'] == 'zipcode'){
+        $sql_select = 'SELECT zipcode FROM '.$GLOBALS['ecs']->table('user_address')." WHERE user_id=$id";
+        $val = $GLOBALS['db']->getOne($sql_select);
+    }
+
+
 
     if ($_REQUEST['type'] == 'select' && $_REQUEST['info'] != 'district')
     {
@@ -1167,7 +1174,7 @@ elseif ($_REQUEST['act'] == 'save')
     }
 
     // 验证联系方式是否已存在
-    if ('text' == $request['type'] && !in_array($_REQUEST['info'], array('district','user_name','address'))) {
+    if ('text' == $request['type'] && !in_array($_REQUEST['info'], array('district','user_name','address','zipcode'))) {
         $sql_select = "SELECT COUNT(*) FROM ".$GLOBALS['ecs']->table('users')
             ." WHERE {$request['info']}='{$request['value']}' AND user_id<>$user_id";
         $is_exist = $GLOBALS['db']->getOne($sql_select);
@@ -1178,7 +1185,7 @@ elseif ($_REQUEST['act'] == 'save')
     }
 
     // 修改信息
-    if (in_array($request['type'], array('text','select','radio')) && !in_array($_REQUEST['info'], array('district','address')))
+    if (in_array($request['type'], array('text','select','radio')) && !in_array($_REQUEST['info'], array('district','address','zipcode')))
     {
         $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users')." SET {$request['info']}='{$request['value']}' WHERE user_id=$user_id";
         if ($GLOBALS['db']->query($sql_update))
@@ -1242,6 +1249,16 @@ elseif ($_REQUEST['act'] == 'save')
         $GLOBALS['db']->query($sql_update);
 
         $sql_select = 'SELECT address FROM '.$GLOBALS['ecs']->table('user_address').
+            " WHERE user_id=$user_id";
+        $res['main'] = $GLOBALS['db']->getOne($sql_select);
+    }
+
+    if ($_REQUEST['info'] == 'zipcode') {
+        $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('user_address').
+            " SET zipcode='{$request['value']}' WHERE user_id=$user_id";
+        $GLOBALS['db']->query($sql_update);
+
+        $sql_select = 'SELECT zipcode FROM '.$GLOBALS['ecs']->table('user_address').
             " WHERE user_id=$user_id";
         $res['main'] = $GLOBALS['db']->getOne($sql_select);
     }
@@ -4942,6 +4959,22 @@ elseif($_REQUEST['act'] == 'onekey_classify_user'){
     die($json->encode($res));
 }
 
+//联系方式验证
+elseif('set_access'==$_REQUEST['act']){
+    $contact_id = intval($_REQUEST['id']);
+    $access_time = strtotime($_REQUEST['access_time']);
+
+    $sql = 'UPDATE '.$GLOBALS['ecs']->table('user_contact')
+        ." SET access=1,access_time=$access_time WHERE contact_id=$contact_id";
+    $code = $GLOBALS['db']->query($sql);
+    if ($code) {
+        $res = crm_msg('验证通过',true);
+    }else{
+        $res = crm_msg('失败',false);
+    }
+    die($json->encode($res));
+}
+
 /* 函数区 */
 
 //陶顾客列表函数
@@ -5773,7 +5806,7 @@ function get_user_info ($id)
 
     // 获取顾客地址
     $sql_select = 'SELECT p.region_name province,c.region_name city,d.region_name district,'.
-        'ua.address,ua.province province_id,ua.city city_id,ua.district district_id FROM '.
+        'ua.address,ua.province province_id,ua.city city_id,ua.district district_id,ua.zipcode FROM '.
         $GLOBALS['ecs']->table('user_address').' ua LEFT JOIN '.$GLOBALS['ecs']->table('region').
         ' p ON p.region_id=ua.province LEFT JOIN '.$GLOBALS['ecs']->table('region').
         ' c ON c.region_id=ua.city LEFT JOIN '.$GLOBALS['ecs']->table('region').
@@ -6561,7 +6594,7 @@ function referrals_list () {
  */
 function get_contact_list($user_id)
 {
-    $sql_select = 'SELECT contact_id,contact_name,contact_value,is_default,add_time FROM '.
+    $sql_select = 'SELECT contact_id,contact_name,contact_value,is_default,add_time,access FROM '.
         $GLOBALS['ecs']->table('user_contact')." WHERE user_id=$user_id AND is_del=0";
     $result = $GLOBALS['db']->getAll($sql_select);
 
@@ -6588,7 +6621,7 @@ function get_contact_list($user_id)
  */
 function get_addr_list ($user_id)
 {
-    $sql_select = 'SELECT a.addr_id,a.prov,a.city,a.dist,CONCAT(p.region_name,c.region_name,d.region_name,a.addr) addr FROM '.
+    $sql_select = "SELECT a.addr_id,a.prov,a.city,a.dist,CONCAT(IFNULL(p.region_name,''),IFNULL(c.region_name,''),IFNULL(d.region_name,''),IFNULL(a.addr,'')) addr FROM ".
         $GLOBALS['ecs']->table('user_addr').'a LEFT JOIN '.$GLOBALS['ecs']->table('region').' p ON a.prov=p.region_id LEFT JOIN'.
         $GLOBALS['ecs']->table('region').' c ON c.region_id=a.city LEFT JOIN '.$GLOBALS['ecs']->table('region').
         " d ON a.dist=d.region_id WHERE user_id=$user_id AND is_del=0";
