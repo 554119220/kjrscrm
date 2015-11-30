@@ -124,10 +124,8 @@ function dealFlushOrderRes(res){
 //批量标记刷单
 function markFlushOrder(obj){
   var orderlist = obj.elements['order_sn_list'].value;
-  var shipping_id = 0;
-  if (obj.elements['shipping_id']) {
-    shipping_id = obj.elements['shipping_id'].value;
-  }
+  var shipping_id = obj.elements['shipping_id'].value;
+  
   if (orderlist) {
     Ajax.call('order.php?act=deal_flush_order&behave=mark','&orderlist='+orderlist+'&shipping_id='+shipping_id,dealFlushOrderRes,'POST','JSON');
   }

@@ -1,6 +1,6 @@
 <?php
 return array (
-    'appkey'     => '2460D41C8D50C184A1DEFB6BBAEB4F00',
-    'secretKey'  => 'a337ac10d1b541edaed7d458c7402ce9',
+    'appkey'     => 'dab20447d18940c29bfecc7d8a350096',
+    'secretKey'  => 'a12aa8dbb7ca45bdb1a391616b2dfa92FQjGToLi',
     'platform'   => 'aksojd',
 );

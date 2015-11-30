@@ -1366,7 +1366,7 @@ function assoc_value ($arr, $key = 0)
  */
 function platform_list ($platform = array (),$single=false) {
     $sql_select = 'SELECT role_name,role_id,role_describe FROM '.$GLOBALS['ecs']->table('role')
-        ." WHERE role_type>0 AND depart_id>=0";
+        ." WHERE role_type>0 AND depart_id>0";
     if (!admin_priv('all', '', false) && empty($platform)) {
         $action = explode(',', $_SESSION['action_list']);
         $action = implode("','", array_filter($action));

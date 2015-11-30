@@ -249,7 +249,7 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
     $depart_id  = intval($_REQUEST['depart_id']);
 
     //不包含待发货
-    $where = " WHERE oi.order_id=og.order_id AND oi.order_status IN(5,1) AND oi.shipping_status IN(1,2,4) AND oi.add_time BETWEEN $start_time AND $end_time AND oi.order_type IN (2,3,4,6,100,9) AND og.goods_sn='$goods_sn' ";
+    $where = " WHERE oi.order_id=og.order_id AND oi.order_status IN(5,1) AND oi.shipping_status IN(1,2,4) AND oi.add_time BETWEEN $start_time AND $end_time AND oi.order_type IN (2,3,4,6,100,9) ";
     if ($platform) {
         $where .= " AND oi.platform=$platform ";
     }
@@ -261,7 +261,7 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
 
     //总的销售额
     $sql_count = 'SELECT SUM(og.goods_number*og.goods_price) FROM '.$GLOBALS['ecs']->table('order_goods').' og,'
-        .$GLOBALS['ecs']->table('order_info')." oi $where AND og.is_gift<>1 ";
+        .$GLOBALS['ecs']->table('order_info')." oi $where AND og.goods_sn='$goods_sn' AND og.is_gift<>1 ";
     $total = $GLOBALS['db']->getOne($sql_count);
     if ($total) {
         // @sel_item 1 部门 2 小组 3 员工
@@ -285,25 +285,74 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
             'SUM(og.goods_number*og.goods_price) turnover %s FROM '.$GLOBALS['ecs']->table('order_goods').' og, '.
             $GLOBALS['ecs']->table('order_info').' oi, '.$GLOBALS['ecs']->table($table)
             ." t $where %s GROUP BY %s og.goods_sn ORDER BY goods_num DESC";
-        $rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field,' AND og.is_gift<>1 ',$group_by));
-        $gift_rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field,' AND og.is_gift=1 ',$group_by));
+        $rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field," AND og.goods_sn='$goods_sn' AND og.is_gift<>1 ",$group_by));
+        $gift_rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field," AND og.goods_sn='$goods_sn' AND og.is_gift=1 ",$group_by));
+        $package_sales_rank  = $GLOBALS['db']->getAll(sprintf($sql, $field.',og.goods_sn '," AND og.goods_sn REGEXP '\d*_\d*' AND og.is_gift<>1 ",$group_by));
+
+        if ($package_sales_rank) {
+            foreach ($package_sales_rank as $val){
+                $package_sn[] = $val['goods_sn'];
+            }
+            $sql_select = 'SELECT package_sn,goods_sn,goods_name,num FROM '
+                .$GLOBALS['ecs']->table('packing_goods')
+                ." WHERE goods_sn='$goods_sn' "
+                .' AND package_sn IN ("'.implode('","', $package_sn).'")';
+            $result = $GLOBALS['db']->getAll($sql_select);
+            $package_goods_list = array();
+            foreach ($package_sales_rank as &$p) {
+                foreach ($result as $r) {
+                    if (!strcmp($r['package_sn'],$p['goods_sn'])) {
+                        $p['total_num'] = $r['num']*$p['goods_num'];
+                        $package_goods_list[] = $p;
+                    }
+                }
+            }
+        }
+
         if ($rank_status) {
             $res['goods_name'] = $rank_status[0]['goods_name'];
             if ($gift_rank_status) {
-                foreach ($gift_rank_status as $g) {
+                foreach ($gift_rank_status as $k=>&$g) {
+                    $g['turnover'] = 0;
                     foreach ($rank_status as &$v) {
-                        $v['goods_num'] = bcdiv($v['turnover'],$v['goods_num'],2);
-                        $v['sale_rate'] = bcdiv($v['turnover'],$total,3)*100;
+                        if (!strcmp($g['name'],$v['name'])) {
+                            $v['goods_num'] = $g['goods_num']+$v['goods_num'];
+                            unset($gift_rank_status[$k]);
+                        }
                     }   
                 }
+                if (count($gift_rank_status)) {
+                    $rank_status = array_merge($rank_status,$gift_rank_status);
+                }
             }
-            foreach ($rank_status as &$v) {
-                $v['ave'] = bcdiv($v['turnover'],$v['goods_num'],2);
-                $v['sale_rate'] = bcdiv($v['turnover'],$total,3)*100;
+            $total = 0;
+            if ($package_goods_list) {
+                unset($v,$p);
+                foreach ($rank_status as &$v) {
+                    foreach ($package_goods_list as $k=>$p) {
+                        if (!strcmp($v['name'],$p['name'])) {
+                            $v['turnover'] = bcadd($p['turnover'],$v['turnover'],2);
+                            $v['goods_num'] = $p['total_num']+$v['goods_num'];
+                            unset($package_goods_list[$k]);
+                        }
+                    }
+                }
+                if (count($package_goods_list)>0){
+                   $rank_status = array_merge($rank_status,$package_goods_list);
+                }
             }
+            unset($v);
+            foreach ($rank_status as $v) {
+                $total += $v['turnover'];
+            }
+            foreach ($rank_status as &$r) {
+                $r['sale_rate'] = bcdiv($r['turnover'],$total,3)*100;
+                $r['ave'] = bcdiv($r['turnover'],$r['goods_num'],2);
+            }
+
             //部门
             if ($sel_item == 1) {
-                unset($v);
+                unset($v,$r);
                 $depart_list = get_department();
                 foreach ($depart_list as $ky=>&$v) {
                     $v['name'] = $v['depart_name'];
@@ -313,7 +362,7 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
                             $v['order_num'] += $r['order_num'];
                             $v['turnover'] += $r['turnover'];
                         }
-                    } 
+                    }
                     if ($v['goods_num'] > 0 ) {
                         $v['turnover'] = sprintf("%.2f",$v['turnover']);
                         $v['ave'] = bcdiv($v['turnover'],$v['goods_num'],2);

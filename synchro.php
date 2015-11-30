@@ -87,9 +87,8 @@ function authorize ($appkey, $platform)
     );
 
     if (in_array($platform,array('jingdong','aksojd'))) {
-        $tail_var = 'http://192.168.1.217/crm2/admin/synchro.php';
         $res = array (
-            'uri'      => $request_uri[$platform].sprintf($tail.$tail_var.'urn:ietf:wg:oauth:2.0:oob&state=%s', $appkey, $platform),
+            'uri'      => $request_uri[$platform].sprintf($tail.'urn:ietf:wg:oauth:2.0:oob&state=%s', $appkey, $platform),
             'platform' => $platform,
         );
     } else {

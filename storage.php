@@ -820,11 +820,11 @@ elseif ($_REQUEST['act'] == 'insert_package')
             $sql_select = 'SELECT goods_id FROM '.$GLOBALS['ecs']->table('goods').
                 " WHERE goods_sn='$val'";
             $goods_id = $GLOBALS['db']->getOne($sql_select);
-            $goods_list[] = "($packing_id,$goods_id,'$list_name[$key]',$list_number[$key])";
+            $goods_list[] = "('$packing_desc',$packing_id,$goods_id,'$list_name[$key]',$list_number[$key])";
         }
 
         $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('packing_goods').
-            '(packing_id,goods_id,goods_name,num)VALUES'.implode(',', $goods_list);
+            '(package_sn,packing_id,goods_id,goods_name,num)VALUES'.implode(',', $goods_list);
         $GLOBALS['db']->query($sql_insert);
         if ($GLOBALS['db']->affected_rows())
         {
