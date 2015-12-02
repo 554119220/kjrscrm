@@ -19,7 +19,7 @@
     </div>
   </div>
   <div class="mt10">
-    <table border="0" id="person_style" cellpadding="0" cellspacing="0" class="wu_table_list rb_border tr_hover wu_rb_border" width="50%">
+    <table border="0" id="person_style" cellpadding="0" cellspacing="0" class="wu_table_list rb_border tr_hover wu_rb_border" width="60%">
       <thead>
         <tr>
           <th></th>
@@ -27,10 +27,10 @@
           {if $search}
           <th colspan="2">自定义搜索</th>
           {/if}
-          <th colspan="2">今天</th>
-          <th colspan="2">昨天</th>
-          <th colspan="2">本月</th>
-          <th colspan="2">上个月</th>
+          <th colspan="3">今天</th>
+          <th colspan="3">昨天</th>
+          <th colspan="3">本月</th>
+          <th colspan="3">上个月</th>
         </tr>
         <tr id="sortByThis" class="align_right">
           <th id="rank">排 名</th>
@@ -38,10 +38,10 @@
           {if $search}
           <th>QQ</th><th>微信</th>
           {/if}
-          <th>QQ</th><th>微信</th>
-          <th>QQ</th><th>微信</th>
-          <th>QQ</th><th>微信</th>
-          <th>QQ</th><th>微信</th>
+          <th>QQ</th><th>微信</th><th>通过验证</th>
+          <th>QQ</th><th>微信</th><th>通过验证</th>
+          <th>QQ</th><th>微信</th><th>通过验证</th>
+          <th>QQ</th><th>微信</th><th>通过验证</th>
         </tr>
       </thead>
       <tbody class="align_right">
@@ -50,17 +50,22 @@
           <td>{if !$smarty.foreach.i.last}{$smarty.foreach.i.iteration}{/if}</td>
           <td>{$val.admin_name}</td>
           {if $search}
-          <td title="">{if $val.custoemr.qq}{$val.customer.qq}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
+          <td title="">{if $val.customer.qq}{$val.customer.qq}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           <td title="">{if $val.customer.wechat}{$val.customer.wechat}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
+          <td title="">{if $val.customer.access}{$val.customer.access}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           {/if}
           <td>{if $val.today.qq}{$val.today.qq}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           <td>{if $val.today.wechat}{$val.today.wechat}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
+          <td>{if $val.today.access}{$val.today.access}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           <td>{if $val.yesterday.qq}{$val.yesterday.qq}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           <td>{if $val.yesterday.wechat}{$val.yesterday.wechat}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
+          <td>{if $val.yesterday.access}{$val.yesterday.access}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           <td>{if $val.month.qq}{$val.month.qq}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           <td>{if $val.month.wechat}{$val.month.wechat}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
+          <td>{if $val.month.access}{$val.month.access}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           <td>{if $val.last_month.qq}{$val.last_month.qq}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
           <td>{if $val.last_month.wechat}{$val.last_month.wechat}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
+          <td>{if $val.last_month.access}{$val.last_month.access}{elseif $smarty.foreach.i.last}{else}0{/if}</td>
         </tr>
         {/foreach}
       </tbody>

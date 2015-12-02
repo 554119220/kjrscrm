@@ -1427,7 +1427,7 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
 
     $sql_select = 'SELECT SUM(i.final_amount) final_amount,COUNT(*) order_num,i.admin_id,i.admin_name,r.role_describe FROM '.
         $GLOBALS['ecs']->table('order_info').' i,'.$GLOBALS['ecs']->table('role').' r WHERE i.order_status IN (1,5) AND '.
-        'i.shipping_status<>3 AND i.order_type IN (4,5,6) AND i.platform=r.role_id AND i.add_time BETWEEN '.
+        'i.shipping_status<>3 AND i.order_type IN (4,5,6,9) AND i.platform=r.role_id AND i.add_time BETWEEN '.
         " $month_start AND $month_end AND i.admin_id IN ($admin_list) GROUP BY admin_id ORDER BY final_amount DESC";
     $res = $GLOBALS['db']->getAll($sql_select);
 
@@ -1543,6 +1543,7 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
         $before_ytday = $yesterday -24*3600;                        // 前天
         $month_start  = strtotime(date('Y-m-01 00:00:00', time())); // 本月初
         $month_end    = strtotime(date('Y-m-t 23:59:59', time()));  // 本月末
+
         // 当天销量
         $today_stats = stats_personal_sales($yesterday, $today, $condition);
         // 昨天销量
@@ -2590,7 +2591,7 @@ function nature_stats ()
 
     // 设置统计开始时间
     $fields = '';
-    $sql_where = " WHERE add_time BETWEEN {$filter['start_time']} AND {$filter['end_time']} AND order_status IN (5,1) AND shipping_status<>3 AND order_type<>1 AND order_type<100 ";
+    $sql_where = " WHERE add_time BETWEEN {$filter['start_time']} AND {$filter['end_time']} AND order_status IN (5,1) AND shipping_status<>3 AND order_type NOT IN(1,10) AND order_type<100 ";
     $sql_platform = '';
     $k = '';
     if (admin_priv('nature_stats_all', '', false)) {
@@ -2841,6 +2842,9 @@ function stats_month_return ()
         ' role WHERE i.order_status IN (1,5) AND i.shipping_status=4 AND r.order_id=i.order_id AND role.role_id=i.platform AND '.
         " i.add_time BETWEEN $start AND $end $sql_platform";
     $res = $GLOBALS['db']->getAll($sql_select);
+    if($_SESSION['admin_id'] == 142){
+        echo $sql_select;exit;
+    }
 
     $stats_all = array ();
     foreach ($res as $val) {
@@ -5192,13 +5196,23 @@ function add_contact_report($start,$end){
         .' c LEFT JOIN '.$GLOBALS['ecs']->table('users').' u ON u.user_id=c.user_id '.
         " $where AND c.add_time BETWEEN $start AND $end AND c.contact_name IN('qq','wechat') AND c.add_time>0 GROUP BY c.add_admin,c.contact_name ORDER BY total DESC";
 
-    $res = $GLOBALS['db']->getAll($sql);
+    $res = $GLOBALS['db']->getAll(sprintf($sql,'c.count_name'));
+    $checked = $GLOBALS['db']->getAll(sprintf($sql,'c.access'));
     if ($res) {
         $list = array();
         foreach ($res as $v) {
          $list[$v['add_admin']][$v['contact_name']] = $v['total'];  
         }
         unset($v);
+        if ($checked) {
+            foreach ($checked as $c) {
+                foreach ($list as $k=>&$l) {
+                    if ($c['add_admin'] = $k) {
+                        $l['access'] = $c['total'];
+                    }
+                }
+            }
+        }
         $res = $list;
     }
     return $res;
