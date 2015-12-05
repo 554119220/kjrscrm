@@ -3633,11 +3633,15 @@ elseif($_REQUEST['act'] == 'deal_flush_order'){
             }
 
             //已经同步的订单
-            $sql_select = 'SELECT order_sn FROM '.$GLOBALS['ecs']->table('ordersyn_info')." WHERE order_sn IN($order_sn_list)";
-            $had_sync = $GLOBALS['db']->getCol($sql_select);
+            if ($order_sn_list) {
+                $sql_select = 'SELECT order_sn FROM '.$GLOBALS['ecs']->table('ordersyn_info')
+                    ." WHERE order_sn IN($order_sn_list)";
+                $had_sync = $GLOBALS['db']->getCol($sql_select);
+            }
             if ($had_sync) {
                 $unsync      = array_diff($arr_sn,$had_sync);
                 $error_sn    = array();    //记录标记失败的订单编号
+
                 $shipping_id = intval($_REQUEST['shipping_id']);
                 $sql = 'SELECT shipping_code,shipping_name FROM '.$GLOBALS['ecs']->table('shipping')
                     ." WHERE shipping_id=$shipping_id";
@@ -3981,7 +3985,8 @@ function order_list()
         if (admin_priv('order_part_view', '', false)) {
             $order_status .= " AND o.platform IN ($role_list_str) ";
         } else {
-            $order_status .= " AND o.platform={$_SESSION['role_id']} ";
+            //$order_status .= " AND o.platform={$_SESSION['role_id']} ";
+            $order_status .= ' AND o.platform IN('.KEFU.')';
         }
     } elseif (admin_priv('member', '', false)){
     } elseif (!admin_priv('order_list_all', '', false)) {

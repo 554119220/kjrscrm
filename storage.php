@@ -492,7 +492,7 @@ elseif($_REQUEST['act'] == 'goods_list') {
     $smarty->assign('filter', isset($_REQUEST['filter'])?$_REQUEST['filter']:'');
 
     //品牌库存修改模块
-    if(admin_priv('turn_on_stock','',false)){
+    if(admin_priv('turn_on_stock','',false) || $_SESSION['role_id'] == 8){
         $smarty->assign('power_turn_on','able');
         $sql_select = 'SELECT COUNT(*) FROM '.$GLOBALS['ecs']->table('brand').' WHERE mod_stock_status_time<='.time();
         $smarty->assign('main_switch',$GLOBALS['db']->getOne($sql_select));

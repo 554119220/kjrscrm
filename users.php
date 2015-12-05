@@ -5148,15 +5148,15 @@ function user_list() {
             //    " WHERE user_id={$filter['admin_id']} AND role_id={$_SESSION['role_id']}";
             //$power = $GLOBALS['db']->getOne($sql_select_admin);
             //}
-            //elseif (admin_priv('user_group_view', '', false)) {
-            //    //$ex_where .= " AND u.group_id={$_SESSION['group_id']}";
-            //    $ex_where .= " AND u.role_id={$_SESSION['role_id']}";
-            //    if ($filter['admin_id']) {
-            //        $ex_where .= " AND u.admin_id={$filter['admin_id']} ";
-            //    }
-            //}
-
-        }else{
+        }elseif (admin_priv('user_group_view', '', false)) {
+            //$ex_where .= " AND u.role_id={$_SESSION['role_id']}";
+            if ($filter['admin_id']) {
+                $ex_where .= " AND u.admin_id={$filter['admin_id']} ";
+            }else{
+                $ex_where .= " AND u.admin_id={$_SESSION['admin_id']}";
+            }
+        }
+        else{
             $ex_where .= " AND u.admin_id={$_SESSION['admin_id']} ";
         }
         $ex_where .= " AND customer_type NOT IN(4,5,6)";

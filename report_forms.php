@@ -5194,10 +5194,10 @@ function add_contact_report($start,$end){
     $where .= " AND u.role_id IN($role_id)";
     $sql = 'SELECT COUNT(*) total,c.add_admin,c.contact_name FROM '.$GLOBALS['ecs']->table('user_contact')
         .' c LEFT JOIN '.$GLOBALS['ecs']->table('users').' u ON u.user_id=c.user_id '.
-        " $where AND c.add_time BETWEEN $start AND $end AND c.contact_name IN('qq','wechat') AND c.add_time>0 GROUP BY c.add_admin,c.contact_name ORDER BY total DESC";
+        " $where %s AND c.add_time BETWEEN $start AND $end AND c.contact_name IN('qq','wechat') AND c.add_time>0 GROUP BY c.add_admin,%s ORDER BY total DESC";
 
-    $res = $GLOBALS['db']->getAll(sprintf($sql,'c.count_name'));
-    $checked = $GLOBALS['db']->getAll(sprintf($sql,'c.access'));
+    $res = $GLOBALS['db']->getAll(sprintf($sql,'','c.contact_name'));
+    $checked = $GLOBALS['db']->getAll(sprintf($sql,' AND c.access=1','c.access'));
     if ($res) {
         $list = array();
         foreach ($res as $v) {
@@ -5207,7 +5207,7 @@ function add_contact_report($start,$end){
         if ($checked) {
             foreach ($checked as $c) {
                 foreach ($list as $k=>&$l) {
-                    if ($c['add_admin'] = $k) {
+                    if ($c['add_admin'] == $k) {
                         $l['access'] = $c['total'];
                     }
                 }
