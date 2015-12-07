@@ -1378,7 +1378,6 @@ function platform_list ($platform = array (),$single=false) {
         $sql_select .= " AND role_id IN ($platform)";
     }
 
-    echo $sql_select;exit;
     $res =  $GLOBALS['db']->getAll($sql_select);
     if ($single && $res) {
         foreach ($res as $v) {

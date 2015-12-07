@@ -1435,17 +1435,25 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
     if ($_REQUEST['r_start'] && $_REQUEST['r_end']) {
         $month_start = strtotime($_REQUEST['r_start'].' 00:00:00');
         $month_end   = strtotime($_REQUEST['r_end'].' 23:59:59');
-        //本月01-15日添加的订单，退货算入下个月退货统计
-        //$a_time_start = strtotime(date('Y-m-01'.' 00:00:00',$month_start));
-        //$a_time_end = strtotime(date('Y-m-01'.' 23:59:59',$month_end));
-        //$r_where = " AND i.add_time NOT BETWEEN $a_time_start AND $a_time_end";
     }
 
-    $sql_select = 'SELECT COUNT(*) order_num,SUM(i.final_amount) final_amount,i.admin_name,i.admin_id FROM '.
-        $GLOBALS['ecs']->table('order_info').' i LEFT JOIN '.$GLOBALS['ecs']->table('returns_order').
-        " r ON r.order_id=i.order_id WHERE r.return_time BETWEEN $month_start AND $month_end AND i.admin_id IN ($admin_list) ".
-        " AND i.order_status IN (5,1) AND i.order_type IN (4,5,6) $r_where GROUP BY i.admin_id";
-    $return = $GLOBALS['db']->getAll($sql_select);
+    //$sql_select = 'SELECT COUNT(*) order_num,SUM(i.final_amount) final_amount,i.admin_name,i.admin_id FROM '.
+    //    $GLOBALS['ecs']->table('order_info').' i LEFT JOIN '.$GLOBALS['ecs']->table('returns_order').
+    //    " r ON r.order_id=i.order_id WHERE r.return_time BETWEEN $month_start AND $month_end AND i.admin_id IN ($admin_list) ".
+    //    " AND i.order_status IN (5,1) AND i.order_type IN (4,5,6) $r_where GROUP BY i.admin_id";
+    //$return = $GLOBALS['db']->getAll($sql_select);
+    $return = stats_returns_sales($month_start,$month_end,$admin_list);
+    $return_report = return_sales_report($month_start,$admin_list);
+    if ($return && $return_report) {
+        foreach ($return as &$r) {
+            foreach ($return_report as $rp) {
+                if ($r['admin_id'] == $rp['admin_id']) {
+                    $r['p_return_amount'] = $rp['final_amount'];
+                    $r['p_return_num'] = $rp['num'];
+                }
+            }
+        }
+    }
 
     $total = array ('final_amount'=>0,'order_num'=>0);
     foreach ($res as &$val) {
@@ -1462,9 +1470,11 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
         // 合并退货订单数据到  $res 数组
         foreach ($return as $v) {
             if ($v['admin_id'] == $val['admin_id']) {
-                $val['final_amount'] = bcsub($val['final_amount'],$v['final_amount'],2);
+                $val['final_amount'] = bcsub($val['final_amount'],bcsub($v['final_amount'],$v['p_return_amount']),2);
                 $val['return_amount'] = $v['final_amount'];
                 $val['return_count']  = $v['order_num'];
+                $val['p_return_amount'] = $v['p_return_amount'];
+                $val['p_return_num']  = $v['p_return_num'];
             }
         }
     }
@@ -1472,9 +1482,12 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
     $ret = array ('return_amount'=>0, 'return_count'=>0);
     foreach ($return as $va) {
         $ret['return_amount'] = bcadd($ret['return_amount'], $va['final_amount'], 2);
-        $ret['return_count'] += $va['order_num'];
+        $ret['return_count'] += $va['num'];
+        $ret['p_return_amount'] = bcadd($ret['p_return_amount'], $va['p_return_amount'], 2);
+        $ret['p_return_num'] += $va['p_return_num'];
     }
 
+    //print_r($res);exit;
     $total['average'] = bcdiv($total['final_amount'], $total['order_num'], 2);
 
     $total += $ret;
@@ -1552,24 +1565,20 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
         $condition .= ' ORDER BY final_amount DESC';
         $month_stats = stats_personal_sales($month_start, $month_end, $condition);
         // 当月退货订单及销量
-        $month_return = stats_returns_sales($month_start, $month_end, $admin_list);
-        $sales_return = array();
-        //区分本月下单本月退货和上个月下单本月退货
+        $month_return  = stats_returns_sales($month_start, $month_end, $admin_list);
+        $return_report = return_sales_report($month_start,$admin_list);
+        $sales_return  = array();
+        if ($return_report) {
+            foreach ($return_report as $r) {
+                //    //上个月下单本月退货
+                   $sales_return[$r['admin_id']]['p_return_count']  = $r['num'];
+                   $sales_return[$r['admin_id']]['p_return_amount'] = $r['final_amount'];
+            }
+        }
         foreach ($month_return as $val) {
             $sales_return[$val['admin_id']]['return_count']  = $val['num'];
             $sales_return[$val['admin_id']]['return_amount'] = $val['final_amount'];
             $sales_return[$val['admin_id']]['admin_name']    = $val['admin_name'];
-            //本月下单本月退货
-            if ($val['add_time']>=$month_start) {
-                $sales_return[$val['admin_id']]['m_return_count']  = $val['num'];
-                $sales_return[$val['admin_id']]['m_return_amount'] = $val['final_amount'];
-                $sales_return[$val['admin_id']]['m_admin_name']    = $val['admin_name'];
-            }else{
-                //上个月下单本月退货
-                $sales_return[$val['admin_id']]['p_return_count']  = $val['num'];
-                $sales_return[$val['admin_id']]['p_return_amount'] = $val['final_amount'];
-                $sales_return[$val['admin_id']]['p_admin_name']    = $val['admin_name'];
-            }
         }
         // 获取当月目标销量
         $target_list = get_saler_target();
@@ -1579,11 +1588,13 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
         unset($val);
 
         foreach ($month_stats as $val) {
-            @$sales_list[$val['admin_id']]['month_amount'] = sprintf("%.2f",$val['final_amount']-$sales_return[$val['admin_id']]['return_amount']);
+            @$sales_list[$val['admin_id']]['month_amount'] = bcsub($val['final_amount'],bcsub($sales_return[$val['admin_id']]['return_amount'],$sales_return[$val['admin_id']]['p_return_amount']));
             @$sales_list[$val['admin_id']]['month_count']  = $val['num'];
             @$sales_list[$val['admin_id']]['admin_name']   = $val['admin_name'];
             @$sales_list[$val['admin_id']]['return_count']  = $sales_return[$val['admin_id']]['return_count'];
             @$sales_list[$val['admin_id']]['return_amount'] = $sales_return[$val['admin_id']]['return_amount'];
+            @$sales_list[$val['admin_id']]['p_return_count']  = $sales_return[$val['admin_id']]['p_return_count'];
+            @$sales_list[$val['admin_id']]['p_return_amount'] = $sales_return[$val['admin_id']]['p_return_amount'];
             @$sales_list[$val['admin_id']]['role_id']   = $admin_info[$val['admin_id']]['role_id'];
             @$sales_list[$val['admin_id']]['group_id']  = $admin_info[$val['admin_id']]['group_id'];
             @$sales_list[$val['admin_id']]['admin_id']  = $val['admin_id'];
@@ -2445,10 +2456,6 @@ function sales_rank ($is_pagination = true) {
         $sales_order_data[$key]['index']       = $i++;
     }
     
-    //if (142 == $_SESSION['admin_id']) {
-    //  print_r($sales_order_data);exit;
-    //}
-
     return array (
         'sales_order_data' => $sales_order_data,
         'filter'           => $filter,
@@ -2842,9 +2849,6 @@ function stats_month_return ()
         ' role WHERE i.order_status IN (1,5) AND i.shipping_status=4 AND r.order_id=i.order_id AND role.role_id=i.platform AND '.
         " i.add_time BETWEEN $start AND $end $sql_platform";
     $res = $GLOBALS['db']->getAll($sql_select);
-    if($_SESSION['admin_id'] == 142){
-        echo $sql_select;exit;
-    }
 
     $stats_all = array ();
     foreach ($res as $val) {
@@ -4278,13 +4282,20 @@ function stats_personal_sales ($start, $end, $condition) {
  * 统计当月的退货数量
  */
 function stats_returns_sales ($start, $end, $admin_list) {
-     //不包含本月1-15日添加并在此期间退货的订单
-    //$a_start_time = strtotime(date('Y-m-01 00:00:00',$start));
-    //$a_end_time = strtotime(date('Y-m-15 23:59:59',$end));
-    $sql_select = 'SELECT COUNT(*) num,SUM(i.final_amount) final_amount,i.admin_name ,i.admin_id,i.add_time order_time FROM '.
+    $sql_select = 'SELECT COUNT(*) num,SUM(i.final_amount) final_amount,i.admin_name ,i.admin_id FROM '.
         $GLOBALS['ecs']->table('order_info').' i LEFT JOIN '.$GLOBALS['ecs']->table('returns_order').
         " r ON r.order_id=i.order_id WHERE r.return_time BETWEEN $start AND $end AND i.admin_id IN ($admin_list)".
         " AND i.order_type IN (4,5,6) GROUP BY i.admin_id";
+    return $GLOBALS['db']->getAll($sql_select);
+}
+
+//当月15日到次月15日的退货计算规则
+function return_sales_report($start,$admin_list){
+    $end = strtotime(date('Y-m-15',$start));
+    $sql_select = 'SELECT COUNT(*) num,SUM(i.final_amount) final_amount,i.admin_name ,i.admin_id,i.add_time order_time FROM '.
+        $GLOBALS['ecs']->table('order_info').' i LEFT JOIN '.$GLOBALS['ecs']->table('returns_order')
+        ." r ON r.order_id=i.order_id WHERE r.return_time BETWEEN $start AND $end AND i.add_time<$start "
+        ." AND i.admin_id IN ($admin_list) AND i.order_type IN (4,5,6) GROUP BY i.admin_id";
     return $GLOBALS['db']->getAll($sql_select);
 }
 
