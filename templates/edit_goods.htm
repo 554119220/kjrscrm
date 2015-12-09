@@ -48,7 +48,10 @@
         </td>
       </tr>
       <tr>
-        <td></td> <td></td>
+        <td>
+          <strong>条形码：</strong>
+          <input type="text" name="bar_code" value="{$goods.bar_code}"/>
+        </td> <td></td>
         <td>
           <input type="button" class="input_submit" value="修 改" onclick="editGoodsInfo({$goods.goods_id},'done')"/>
           <input type="button" class="input_submit" value="取 消" onclick="close_pop()"/>

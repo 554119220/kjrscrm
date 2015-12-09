@@ -131,6 +131,12 @@ function markFlushOrder(obj){
   }
 }
 
+//批量确认收货
+function autoCheckLogistics(){
+    Ajax.call('logistics_info.php?act=auto_checked_logistics','',showMsg,'GET','JSON');
+}
+
+
 function justMarkFlushOrder(obj){
   var platform = obj.elements['platform'].value;
   var goodsSn = obj.elements['goods_sn'].value;

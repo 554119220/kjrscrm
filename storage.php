@@ -594,7 +594,7 @@ else if($_REQUEST['act'] == 'add_goods') {
 
     if ($is_edit && isset($_REQUEST['goods_id']) && !empty($_REQUEST['goods_id'])) {
         $goods_id = intval($_REQUEST['goods_id']);
-        $sql = 'SELECT goods_id,goods_sn,goods_name,shop_price,min_price,cost_price,everyday_use FROM '
+        $sql = 'SELECT goods_id,goods_sn,goods_name,shop_price,min_price,cost_price,everyday_use,bar_code FROM '
             .$GLOBALS['ecs']->table('goods')." WHERE goods_id=$goods_id";
         $goods = $GLOBALS['db']->getRow($sql,true);
         $smarty->assign('goods',$goods);
@@ -608,12 +608,13 @@ else if($_REQUEST['act'] == 'add_goods') {
     }elseif($_REQUEST['behave'] == 'done' && !empty($_REQUEST['goods_id'])){
         $goods_name = mysql_real_escape_string(trim($_REQUEST['goods_name']));
         $office_url = trim(addslashes($_REQUEST['office_url']));
+        $bar_code = trim(mysql_real_escape_string($_REQUEST['bar_code']));
         $goods_id = intval($_REQUEST['goods_id']);
         $sql = 'UPDATE '.$GLOBALS['ecs']->table('goods')
-            ." SET goods_name='$goods_name',office_url='$office_url' WHERE goods_id=$goods_id";
+            ." SET goods_name='$goods_name',office_url='$office_url',bar_code='$bar_code' WHERE goods_id=$goods_id";
         $code = $GLOBALS['db']->query($sql);
         if ($code) {
-            $res = crm_msg('修改失败',$code);
+            $res = crm_msg('修改成功',$code);
         }else{
             $res = crm_msg('修改失败',$code);
         }

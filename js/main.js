@@ -1410,7 +1410,6 @@ function addNewOrder()
      return false;
      }
      */
-
   if (team == 0) {
     res['message'] = '请选择产生该订单的购买平台！';
     showMsg(res);

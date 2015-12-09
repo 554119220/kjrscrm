@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <div class="gridlist-action" style="width:880px">
+  <div class="gridlist-action" style="width:90%">
     <!-- 查询订单 -->
     <div class="nav-search">
       <script language="javascript" type="text/javascript" src="My97DatePicker/WdatePicker.js"></script>
@@ -45,9 +45,12 @@
       </select>
       {/if}
     </div>
-    <button value="order.php?act={$act}&exp_status={$exp_status}" onclick="searchOrder(this)" class="b_submit" style="margin:2px 0 0 5px">搜索</button>
+    <button value="order.php?act={$act}&exp_status={$exp_status}" onclick="searchOrder(this)" class="b_submit">搜索</button>
     {if $all}
     <label><input type="checkbox" name="abnormal" id="abnormal" value="1" {if $abnormal}checked{/if}/> 潜规则</label>
+    {/if}
+    {if $auto_check}
+    <input type="button" value="批量确认收货" class="b_submit" onclick="autoCheckLogistics()"/>
     {/if}
   </div>
 

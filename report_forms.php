@@ -1443,7 +1443,7 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
     //    " AND i.order_status IN (5,1) AND i.order_type IN (4,5,6) $r_where GROUP BY i.admin_id";
     //$return = $GLOBALS['db']->getAll($sql_select);
     $return = stats_returns_sales($month_start,$month_end,$admin_list);
-    $return_report = return_sales_report($month_start,$admin_list);
+    $return_report = return_sales_report($month_start,$admin_list); //上月单本月退货
     if ($return && $return_report) {
         foreach ($return as &$r) {
             foreach ($return_report as $rp) {
@@ -1457,12 +1457,7 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
 
     $total = array ('final_amount'=>0,'order_num'=>0);
     foreach ($res as &$val) {
-        $val['average'] = bcdiv($val['final_amount'], $val['order_num'], 2);
-        $total['final_amount'] = bcadd($total['final_amount'], $val['final_amount'], 2);
-        $total['order_num'] += $val['order_num'];
-
         $total['target'] = bcadd($total['target'], $sales_target[$val['admin_id']]['sales_target'], 2);
-
         $val['target']   = $sales_target[$val['admin_id']]['sales_target'];
         $val['group_id'] = $admin_info[$val['admin_id']]['group_id'];
         $val['role_id']  = $admin_info[$val['admin_id']]['role_id'];
@@ -1470,12 +1465,18 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
         // 合并退货订单数据到  $res 数组
         foreach ($return as $v) {
             if ($v['admin_id'] == $val['admin_id']) {
+                $val['order_num']--;
                 $val['final_amount'] = bcsub($val['final_amount'],bcsub($v['final_amount'],$v['p_return_amount']),2);
                 $val['return_amount'] = $v['final_amount'];
-                $val['return_count']  = $v['order_num'];
+                $val['return_count']  = $v['num'];
                 $val['p_return_amount'] = $v['p_return_amount'];
                 $val['p_return_num']  = $v['p_return_num'];
             }
+        }
+        $total['final_amount'] = bcadd($total['final_amount'], $val['final_amount'], 2);
+        $total['order_num'] += $val['order_num'];
+        if ($val['order_num']) {
+            $val['average'] = bcdiv($val['final_amount'], $val['order_num'], 2);
         }
     }
 
@@ -1487,7 +1488,6 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
         $ret['p_return_num'] += $va['p_return_num'];
     }
 
-    //print_r($res);exit;
     $total['average'] = bcdiv($total['final_amount'], $total['order_num'], 2);
 
     $total += $ret;
@@ -1588,7 +1588,9 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
         unset($val);
 
         foreach ($month_stats as $val) {
-            @$sales_list[$val['admin_id']]['month_amount'] = bcsub($val['final_amount'],bcsub($sales_return[$val['admin_id']]['return_amount'],$sales_return[$val['admin_id']]['p_return_amount']));
+            @$val['final_amount'] = bcsub($val['final_amount'],bcsub($sales_return[$val['admin_id']]['return_amount'],$sales_return[$val['admin_id']]['p_return_amount']));
+            @$sales_list[$val['admin_id']]['month_amount'] = $val['final_amount'];
+            $val['num'] -=$sales_return[$val['admin_id']]['p_return_count'];
             @$sales_list[$val['admin_id']]['month_count']  = $val['num'];
             @$sales_list[$val['admin_id']]['admin_name']   = $val['admin_name'];
             @$sales_list[$val['admin_id']]['return_count']  = $sales_return[$val['admin_id']]['return_count'];
@@ -2325,6 +2327,7 @@ elseif($_REQUEST['act'] == 'add_contact_report'){
                 $v[$k] = $ar[$v['admin_id']];
                 $total[$k]['qq'] += $ar[$v['admin_id']]['qq'];
                 $total[$k]['wechat'] += $ar[$v['admin_id']]['wechat'];
+                $total[$k]['access'] += $ar[$v['admin_id']]['access'];
             }
         }
     }
@@ -5172,6 +5175,7 @@ function deal_order_report(){
     array_push($res,$total);
     unset($v);
     $deal_method = get_deal_method();
+    //print_r($res);exit;
     foreach ($res as &$v) {
         foreach ($v['list'] as $k=>&$l) {
             $l['amount_percent'] = bcdiv($l['final_amount'],$total['final_amount'],2)*100;

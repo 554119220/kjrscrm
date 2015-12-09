@@ -302,15 +302,21 @@ function editGoodsDetail(){
 
 //修改产品基本信息
 function editGoodsInfo(goodsId,behave){
-  var goodsName = '';
+  //var goodsName = ''
+  var data = [];
+  data.push('behave='+behave);
+  data.push('goods_id='+goodsId);
   if (behave == 'done') {
-    goodsName = $.trim($("[name='edit_goods_name").val()); 
-    if (goodsName) {
-      goodsName = '&goods_name='+goodsName+'&office_url='+$("[name='office_url']").val();
-    }else return false;
+    //goodsName = $.trim($("[name='edit_goods_name").val()); 
+    data.push('goods_name='+$.trim($("[name='edit_goods_name").val())); 
+    data.push('bar_code='+$.trim($("[name='bar_code").val())); 
+    data.push('office_url='+$("[name='office_url']").val()); 
+    //if (goodsName) {
+    //  goodsName = '&goods_name='+goodsName+'&office_url='+$("[name='office_url']").val();
+    //}else return false;
   }
   if (goodsId) {
-    Ajax.call('storage.php?act=add_goods','behave='+behave+'&goods_id='+goodsId+goodsName,editGoodsInfoResp,'GET','JSON');
+    Ajax.call('storage.php?act=add_goods&',data.join('&'),editGoodsInfoResp,'GET','JSON');
   }
 }
 
@@ -318,6 +324,7 @@ function editGoodsInfoResp(res){
   if (res.act == 'done') {
     if (res.code) {
       close_pop();
+      showMsg(res);
     }
   }else{
     $("#div_pop_ups").show('slow');

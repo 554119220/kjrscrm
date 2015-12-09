@@ -281,6 +281,7 @@ elseif ($_REQUEST['act'] == 'history_order')
 
     $smarty->assign('exp_list', $exp_list);
     $smarty->assign('act', 'history_order');
+    $smarty->assign('auto_check', 'auto_check');
 
     // 分页参数
     $smarty->assign('page_link',     $order_list['condition']);

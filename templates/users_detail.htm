@@ -674,6 +674,7 @@
               <th>成交方式：</th>
               <td>
                 <select name="deal_method">
+                  <option value="0">请选择成交方式</option>
                   {foreach from=$deal_method item=v}
                   <option value="{$v.method_id}">{$v.method_name}</option>
                   {/foreach}
