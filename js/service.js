@@ -1674,3 +1674,13 @@ function delServiceLog(obj,serviceId){
     Ajax.call('service.php?act=del_service','service_id='+serviceId,showMsg,'GET','JSON');
   }
 }
+
+function tabSub(obj){
+  $("ul.tab1 li button").attr('class','btn_a');
+  $("ul.tab1 li button").each(function(){
+  $("#"+$(this).attr('name')).css('display','none');
+  });
+  obj.attr('class','btn_s');
+  var name = obj.attr('name');
+  $("#"+name).css('display','');
+}

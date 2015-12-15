@@ -3,10 +3,10 @@
   <tr>
     <th width="5%"class="first"> </th>
     <th width="10%">顾客</th>
-    <th width="10%">性别</th>
-    <th width="10%">年龄</th>
-    <!--<th width="5%">旺旺</th>-->
-    <!--<th width="5%">QQ</th>-->
+    <th width="5%">性别</th>
+    <th width="5%">年龄</th>
+    <th width="10%">等级</th>
+    <th width="10%">积分</th>
     <th width="10%">添加时间</th>
     <th width="10%">上次服务</th>
     <th width="10%">所属客服</th>
@@ -28,6 +28,8 @@
     </td>
     <td>{if $user.sex eq 1}男{elseif $user.sex eq 2}女{elseif $user.sex eq 0}未知{/if}</td>
     <td>{$user.age_group}</td>
+    <td>{$user.rank_name}</td>
+    <td>{$user.rank_points}</td>
     <!--<td>-->
     <!--  {if $user.aliww}<a target="_blank" href="http://www.taobao.com/webww/ww.php?ver=3&touid={$user.aliww}&siteid=cntaobao&status=2&charset=utf-8" title="{$user.aliww}"><img border="0" src="http://amos.alicdn.com/realonline.aw?v=2&uid={$user.aliww}&site=cntaobao&s=2&charset=utf-8" alt="{$user.aliww}" /></a>{/if}-->
     <!--</td>-->

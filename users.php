@@ -5152,6 +5152,8 @@ function user_list() {
             //$ex_where .= " AND u.role_id={$_SESSION['role_id']}";
             if ($filter['admin_id']) {
                 $ex_where .= " AND u.admin_id={$filter['admin_id']} ";
+            }elseif($filter['keywords']){
+                $ex_where .= " AND u.role_id={$_SESSION['role_id']}";
             }else{
                 $ex_where .= " AND u.admin_id={$_SESSION['admin_id']}";
             }
@@ -5265,7 +5267,7 @@ function user_list() {
         //    .$GLOBALS['ecs']->table('users').' u LEFT JOIN '.
         //    $GLOBALS['ecs']->table('memship_number').' c ON c.user_id=u.user_id LEFT JOIN '.$GLOBALS['ecs']->table('effects').
         //    ' e ON e.eff_id=u.eff_id';
-        $sql = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,u.user_name,u.sex,'.
+        $sql = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,u.user_name,u.sex,u.user_rank,'.
             'u.is_validated,u.add_time,u.remarks,u.service_time,u.assign_time FROM '
             .$GLOBALS['ecs']->table('users').' u ';
 
@@ -5330,7 +5332,7 @@ function user_list() {
             $where = " u.admin_id={$_SESSION['admin_id']}";
         }
 
-        $sql_select = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,u.user_name,u.sex,'.
+        $sql_select = 'SELECT u.age_group,u.admin_name,u.user_id,u.is_black,u.user_name,u.sex,u.user_rank,'.
             'u.is_validated,u.add_time,'.
             'u.remarks,u.service_time FROM '.$GLOBALS['ecs']->table('users').' u LEFT JOIN '.
             $GLOBALS['ecs']->table('user_contact')." uc ON u.user_id=uc.user_id WHERE $where AND u.customer_type IN ({$filter['type']})".
@@ -5348,6 +5350,7 @@ function user_list() {
         $user_list += $user_info;
     }
 
+    $user_rank = get_rank_list();
     foreach ($user_list as &$val) {
         $val['add_time']      = date('Y-m-d', $val['add_time']);
         //$val['transfer_time'] = $val['transfer_time'] ? date('Y-m-d', $val['transfer_time']) : '-';
@@ -5765,7 +5768,7 @@ function get_address ($id)
  */
 function get_user_info ($id)
 {
-    $field = 'u.wechat,u.mobile_phone,u.home_phone,u.aliww,u.qq,';
+    $field = 'u.wechat,u.mobile_phone,u.home_phone,u.aliww,u.qq,u.rank_points,';
     $mem = new Memcache();
     $mem->connect('127.0.0.1',11211);
 

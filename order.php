@@ -1356,6 +1356,19 @@ elseif ($_REQUEST['act'] == 'add_new_order') {
         $order_info['platform_order_sn'] = NULL;
     }
 
+    //使用了积分
+    if($order_info['integral']>0){
+       $sql_integral = "SELECT rank_points FROM ".$GLOBALS['ecs']->table('users')." WHERE user_id={$order_info['user_id']}"; 
+       $rank_points = $GLOBALS['db']->getOne($sql_integral);
+       if ($rank_points <$order_info['integral']) {
+           $res['message'] = '使用积分超过上限';
+           $res['timeout'] = 2000;
+           die($json->encode($res));
+       }else{
+           $available_integral = true;
+       }
+    }
+
     $goods_list = $order_info['goods_list'];
     unset($order_info['goods_list']);
 
@@ -1420,15 +1433,28 @@ elseif ($_REQUEST['act'] == 'add_new_order') {
             'i.pay_name=p.pay_name,i.group_id=u.group_id WHERE i.admin_id=u.user_id AND i.shipping_id=s.shipping_id AND '.
             " i.pay_id=p.pay_id AND i.order_id=$order_id";
         $GLOBALS['db']->query($sql_update);
+        //使用积分，减去顾客的积分
+        if($available_integral){
+            $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users')." SET rank_points=rank_points-{$order_info['integral']}".
+                " WHERE user_id={$order_info['user_id']}";
+            $GLOBALS['db']->query($sql_update);
+            $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('user_integral')
+                .' (integral_id,points,receive_time,user_id,admin_id,exchange_points,confirm_time,source,source_id,confirm,pre_points)VALUES('
+                ."15,{$order_info['integral']},{$_SERVER['REQUEST_TIME']},{$order_info['user_id']},{$_SESSION['admin_id']}"
+                .",{$order_info['integral']},{$_SERVER['REQUEST_TIME']},'order',$order_id,1,$rank_points)";
+            $GLOBALS['db']->query($sql_insert);
+        }
+
         $goods_fields = array_keys($goods_list[0]);
         $goods_fields = '(order_id,is_package,'.implode(',', $goods_fields).')VALUES';
         $goods_values = "($order_id,\"".implode("\"),($order_id,\"", $goods_values).'")';
     } else {
         $res['message'] = '订单提交出错，请检查订单中是否存在商品！';
         $res['timeout'] = 2000;
-
         die($json->encode($res));
     }
+
+
 
     $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('order_goods').$goods_fields.$goods_values;
     if ($GLOBALS['db']->query($sql_insert)) {
@@ -5433,13 +5459,16 @@ function shipping_synchro($order_id)
     }
 
     // 同步发货（京东）
-    if ($order_info['shipping_time'] && $order_info['team'] == 10) {
+    if ($order_info['shipping_time'] && in_array($order_info['team'],array(10,54,55))) {
         include dirname(__FILE__).'/jingdong/JdClient.php';
         include dirname(__FILE__).'/jingdong/JdException.php';
         include dirname(__FILE__).'/jingdong/request/order/OrderSopOutstorageRequest.php';
 
-        include dirname(__FILE__).'/jingdong/sk.php';
-        $auth = include dirname(__FILE__).'/jingdong/config.php';
+        $platform_path = array (10 => 'jingdong', 54 => 'aksojd', 55 => 'jlfjd');
+        require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/sk.php");
+        $auth = require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/config.php");
+        //include dirname(__FILE__).'/jingdong/sk.php';
+        //$auth = include dirname(__FILE__).'/jingdong/config.php';
 
         $req = new OrderSopOutstorageRequest;
         $req->setOrderId($order_info['order_sn']);

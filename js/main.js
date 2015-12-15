@@ -1285,6 +1285,7 @@ function addNewGoods ()
 
   // 商品名称
   goodsName = rowObj.insertCell(1);
+  goodsName.setAttribute('colspan',3);
   rowObj.style.height = '20px';
   if (isNaN(id)) {
     Ajax.call('order.php?act=packing_goods&id='+id, '', packingGoodsListResp, 'GET', 'TEXT');
@@ -1302,6 +1303,7 @@ function addNewGoods ()
 
   // 赠品
   var gift = rowObj.insertCell(4);
+  gift.setAttribute('colspan',2);
   /*
      var promotions = '';
      if (1 == isGift) {
@@ -1364,6 +1366,7 @@ function addNewOrder()
   var deal_method = orderInfo.elements['deal_method'].value;
 
   var platform_order_sn = orderInfo.elements['platform_order_sn'].value; // 订单编号
+  var integral = document.getElementById('integral').value; //使用积分 
 
   var res = new Array ();
   res['timeout'] = 2000;
@@ -1420,12 +1423,13 @@ function addNewOrder()
     res['message'] = '非中老年、会员部订单须提供购买平台的订单编号';
     showMsg(res);
     return false;
-  }else{
-    if(!deal_method){
-      res['message'] = '请选择成交方式';
-      showMsg(res);
-    } 
   }
+
+  if(deal_method == 0){
+    res['message'] = '请选择成交方式';
+    showMsg(res);
+    return false;
+  } 
 
   if (!order_type) {
     if (confirm('您没有选择订单类型，系统将按静默订单进行处理？')) {
@@ -1471,7 +1475,8 @@ function addNewOrder()
     "order_type":order_type,
     "goods_amount":goods_amount,
     "remarks":remarks,
-    "deal_method":deal_method
+    "deal_method":deal_method,
+    "integral":integral
   };
 
   for (var i = orderInfo.elements['order_source'].length -1; i > 0; i--) {

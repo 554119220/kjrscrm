@@ -19,6 +19,7 @@ require_once(ROOT_PATH.'includes/lib_goods.php');
 require_once(ROOT_PATH.'includes/lib_main.php');
 require_once(ROOT_PATH.'admin/includes/lib_wav.php');
 
+
 $file = basename($_SERVER['PHP_SELF'], '.php');
 $smarty->assign('filename', $file);
 
@@ -2302,17 +2303,18 @@ elseif($_REQUEST['act'] == 'deal_method_report'){
 //QQ,微信添加统计
 elseif($_REQUEST['act'] == 'add_contact_report'){
     $report_time = report_time_list();
-    $role_id    = isset($_REQUEST['role_id']) && $_REQUEST['role_id'] ? intval($_REQUEST['role_id']) : KEFU.','.KEFU2 ;
-    $admin_list = admin_for_report(" AND role_id IN($role_id)");
-    $yesterday  = add_contact_report($report_time['yesterday_start_time'],$report_time['yesterday_end_time']);
-    $today      = add_contact_report($report_time['today_start_time'],$report_time['today_end_time']);
-    $month      = add_contact_report($report_time['month_start_time'],$report_time['month_end_time']);
-    $last_month = add_contact_report($report_time['last_month_start_time'],$report_time['last_month_end_time']);
+    $role_id     = isset($_REQUEST['role_id']) && $_REQUEST['role_id'] ? intval($_REQUEST['role_id']) : KEFU.','.KEFU2 ;
+    $admin_list  = admin_for_report(" AND role_id IN($role_id)");
+    $yesterday   = add_contact_report($report_time['yesterday_start_time'],$report_time['yesterday_end_time']);
+    $today       = add_contact_report($report_time['today_start_time'],$report_time['today_end_time']);
+    $month       = add_contact_report($report_time['month_start_time'],$report_time['month_end_time']);
+    $last_month  = add_contact_report($report_time['last_month_start_time'],$report_time['last_month_end_time']);
+    $year        = add_contact_report(strtotime(date('2012-01-01 00:00')),$_SERVER['REQUEST_TIME']);
 
     $total = array(
         'admin_name' => '总计',
     );
-    $keys = array('yesterday','today','month','last_month');
+    $keys = array('yesterday','today','month','last_month','year');
     if (isset($_REQUEST['start_time']) && !empty($_REQUEST['start_time']) && !empty($_REQUEST['end_time'])) {
         $start_time = strtotime($_REQUEST['start_time'].' 00:00:00');
         $end_time   = strtotime($_REQUEST['end_time'].' 23:59:59');
@@ -2485,7 +2487,7 @@ function stats_order ($start_time, $end_time, $status,$platform_list = array())
     $sql_select = 'SELECT r.depart_id,r.role_describe,i.order_type,COUNT(*) order_number,SUM(i.final_amount) final_amount,'.
         'SUM(i.goods_amount) goods_amount,SUM(i.shipping_fee) shipping_fee FROM '.$GLOBALS['ecs']->table('order_info').' i, '.
         $GLOBALS['ecs']->table('role')." r WHERE add_time BETWEEN $start_time AND $end_time $status AND ".
-        "r.role_id=i.platform AND i.order_type NOT IN (1,2,8) GROUP BY $group_by,order_type ORDER BY final_amount DESC";
+        "r.role_id=i.platform AND i.order_type NOT IN (1,2,8,10) GROUP BY $group_by,order_type ORDER BY final_amount DESC";
 
     $result = $GLOBALS['db']->getAll($sql_select);
 
@@ -2705,7 +2707,7 @@ function stats_all ()
 
     $sql_select = 'SELECT COUNT(*) order_num,SUM(i.final_amount) order_amount,r.depart_desc platform,i.admin_id,i.admin_name FROM '.
         $GLOBALS['ecs']->table('order_info').' i,'.$GLOBALS['ecs']->table('role').
-        " r WHERE i.order_status IN (1,5) AND i.shipping_status<>3 AND i.platform=r.role_id AND i.add_time BETWEEN $start AND $end $sql_platform";
+        " r WHERE i.order_status IN (1,5) AND i.order_type NOT IN (1,10,100) AND i.shipping_status<>3 AND i.platform=r.role_id AND i.add_time BETWEEN $start AND $end $sql_platform";
     $res = $GLOBALS['db']->getAll($sql_select);
 
     $stats_all = array ();
@@ -2998,7 +3000,7 @@ function buy_back_stats($field)
     $platform_old_users_count = array(); // 各平台老顾客购买总人数
     $all_old_users_count = 0;            // 老顾客购买总人数
     foreach ($all_old_users_res as $val) {
-        @$platform_old_users_count[$val[$field]] += $val['times'];
+        $platform_old_users_count[$val[$field]] += $val['times'];
         $all_old_users_count += $val['times'];
     }
 
@@ -3029,7 +3031,7 @@ function buy_back_stats($field)
     }
 
     // 统计各平台订单总数量
-    $sql_select = "SELECT COUNT(*) times,$field,SUM(final_amount) total_amount FROM ".$GLOBALS['ecs']->table('order_info').
+    $sql_select = "SELECT COUNT(1) times,$field,SUM(final_amount) total_amount FROM ".$GLOBALS['ecs']->table('order_info').
         " WHERE order_status IN (1,5) AND shipping_status IN (0,1,2) AND team<>23 AND order_type IN (3,4,5,6,7) $ex_where GROUP BY $field";
     $platform_order_res = $GLOBALS['db']->getAll($sql_select);
 
@@ -4107,7 +4109,6 @@ function repo_rate () {
     if (admin_priv('personal_repo_all', '', false)) {
         // 部门
         $ex_where = $filter['role_id'] ? " AND u.role_id={$filter['role_id']} " : ' AND u.role_id IN ('.OFFLINE_SALE.') ';
-
         // 客服
         $ex_where .= $filter['admin_id'] ? " AND u.admin_id={$filter['admin_id']} " : '';
     } elseif (admin_priv('personal_repo_part', '', false)) { // 所属部门客服
@@ -4177,10 +4178,10 @@ function repo_rate () {
     $calc_total_all = calc_total($purchases_total);
 
     // 统计每位客服的顾客数量
+    //$sql_select = 'SELECT COUNT(DISTINCT user_id) users_number, admin_id, admin_name FROM '.
+        //$GLOBALS['ecs']->table('users').' WHERE admin_id>0 AND customer_type IN (2,3,4,5,11) AND role_id<>23 GROUP BY admin_id';
     $sql_select = 'SELECT COUNT(DISTINCT user_id) users_number, admin_id, admin_name FROM '.
-        $GLOBALS['ecs']->table('users').' WHERE admin_id>0 AND customer_type IN (2,3,4,5,11) AND role_id<>23 GROUP BY admin_id';
-    $sql_select = 'SELECT COUNT(DISTINCT user_id) users_number, admin_id, admin_name FROM '.
-        $GLOBALS['ecs']->table('users').' u WHERE u.admin_id>0 AND u.user_id IN (SELECT user_id FROM '.$GLOBALS['ecs']->table('order_info').
+        $GLOBALS['ecs']->table('users').' u WHERE u.admin_id>0 AND u.customer_type NOT IN(5,6,7,21) AND u.user_id IN (SELECT user_id FROM '.$GLOBALS['ecs']->table('order_info').
         ' WHERE order_status IN (1,5) AND shipping_status IN (0,1,2) AND team<>23 AND final_amount>0 AND order_type IN (3,4,5,6,7))';
     $users_number = $GLOBALS['db']->getAll($sql_select.$ex_where.' GROUP BY admin_id');
 
@@ -5175,7 +5176,7 @@ function deal_order_report(){
     array_push($res,$total);
     unset($v);
     $deal_method = get_deal_method();
-    //print_r($res);exit;
+    array_push($deal_method,array('method_id'=>0,'method_name'=>'以前'));
     foreach ($res as &$v) {
         foreach ($v['list'] as $k=>&$l) {
             $l['amount_percent'] = bcdiv($l['final_amount'],$total['final_amount'],2)*100;
@@ -5191,6 +5192,7 @@ function deal_order_report(){
         }
         ksort($v['list']);
     }
+    print_r($res);exit;
     return $res;
 }
 

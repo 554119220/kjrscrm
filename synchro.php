@@ -17,6 +17,7 @@ $url = array (
     'taobao04' => 'https://oauth.taobao.com/token',
     'jingdong' => 'http://oauth.jd.com/oauth/token',
     'aksojd'   => 'http://oauth.jd.com/oauth/token',
+    'jlfjd'   => 'http://oauth.jd.com/oauth/token',
     'yhd'      => 'https://member.yhd.com/login/token.do',
     'suning'   => 'http://open.suning.com/api/oauth/token',
 );
@@ -34,8 +35,9 @@ if (isset($_REQUEST['state'])) {
         'redirect_uri'  => 'http://192.168.1.217/crm2/admin/synchro.php' // 回调地址
     );
 
-    $token = selfcurl($url[$_REQUEST['state']],$postfields);
-    if ('jingdong' == $_REQUEST['state']) {
+    $token = selfcurl($url[$_REQUEST['state']],$postfields);    //第三方授权
+    
+    if (in_array($_REQUEST['state'],array('jingdong','aksojd','jlfjd'))) {
         $token = substr($token, 0, strrpos($token,',')).'}';
     }
     $token = json_decode($token, true);
@@ -82,11 +84,12 @@ function authorize ($appkey, $platform)
         'taobao04' => 'https://oauth.taobao.com/authorize',
         'jingdong' => 'https://oauth.jd.com/oauth/authorize',
         'aksojd'   => 'https://oauth.jd.com/oauth/authorize',
+        'jlfjd'   => 'https://oauth.jd.com/oauth/authorize',
         'yhd'      => 'https://member.yhd.com/login/authorize.do',
         'suning'   => 'http://open.suning.com/api/oauth/authorize',
     );
 
-    if (in_array($platform,array('jingdong','aksojd'))) {
+    if (in_array($platform,array('jingdong'))) {
         $res = array (
             'uri'      => $request_uri[$platform].sprintf($tail.'urn:ietf:wg:oauth:2.0:oob&state=%s', $appkey, $platform),
             'platform' => $platform,
@@ -105,6 +108,7 @@ function authorize ($appkey, $platform)
  * 获取第三方平台sessionkey
  */
 function selfcurl($url, $postFields = null) {
+    
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_FAILONERROR, false);
@@ -123,6 +127,11 @@ function selfcurl($url, $postFields = null) {
         curl_setopt ($ch, CURLOPT_POST, true);
         curl_setopt ($ch, CURLOPT_POSTFIELDS, substr($postBodyString,0,-1));
     }
+    //if ('aksojd' == $_REQUEST['state']) {
+    //    echo substr($postBodyString,0,-1);exit;
+    //    echo $url;exit;
+    //    //print_r($postfields);exit;
+    //}
     $reponse = curl_exec($ch);
 
     if (curl_errno($ch)) {

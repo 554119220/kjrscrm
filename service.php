@@ -1310,18 +1310,15 @@ elseif ($_REQUEST['act'] == 'user_rank')
     $sql_select = 'SELECT * FROM '.$ecs->table('role').' WHERE role_id IN(1,2,6,7,10)';
     $platform = $db->getAll($sql_select);
 
-
     //积分等级信息
     $sql_select = 'SELECT ur.*,r.role_id,r.role_name FROM '.$ecs->table('user_rank').' AS ur LEFT JOIN '.
         $GLOBALS['ecs']->table('role').' AS r ON ur.role_id=r.role_id ORDER BY ur.modify_time DESC';
     $user_rank = $GLOBALS['db']->getAll($sql_select);
 
-    foreach($user_rank as &$val)
-    {
+    foreach($user_rank as &$val) {
         $val['modify_time'] = date('y-m-d H:i',$val['modify_time']);
         if(isset($val['platform']) && $val['platform'] != 'all'){}
-        else
-        {
+        else {
             $val['platform'] = '所有';
         }
     }
@@ -1340,8 +1337,7 @@ elseif ($_REQUEST['act'] == 'user_rank')
     $past_due_integral = array();
 
     $j = $i = $k = 0;
-    foreach($integral as &$val)
-    {
+    foreach($integral as &$val) {
         $val['add_time'] = date('Y-m-d',$val['add_time']);        
         $val['present_start'] = date('Y-m-d',$val['present_start']);        
         $val['present_end'] = date('Y-m-d',$val['present_end']);
@@ -1985,18 +1981,13 @@ elseif ($_REQUEST['act'] == 'ch_points_history')
 {
     /* 分页大小 */
     $filter['page'] = empty($_REQUEST['page']) || (intval($_REQUEST['page'])<=0) ? 1 : intval($_REQUEST['page']);
-    if (isset($_REQUEST['page_size']) && intval($_REQUEST['page_size']) > 0)
-    {
+    if (isset($_REQUEST['page_size']) && intval($_REQUEST['page_size']) > 0) {
         $filter['page_size'] = intval($_REQUEST['page_size']);
-    }
-    else
-    {
+    } else {
         $filter['page_size'] = 20; 
     }
 
-
-    if(admin_priv('all','',false))
-    {
+    if(admin_priv('all','',false)) {
         $sql_select = 'SELECT COUNT(*) FROM '.$GLOBALS['ecs']->table('user_integral').
             ' AS ui LEFT JOIN '.$GLOBALS['ecs']->table('users').
             ' AS u ON ui.user_id=u.user_id LEFT JOIN '.$GLOBALS['ecs']->table('admin_user').
@@ -2010,21 +2001,16 @@ elseif ($_REQUEST['act'] == 'ch_points_history')
 
         // 设置分页
         $page_set = array (1,2,3,4,5,6,7);
-        if ($filter['page'] > 4)
-        {
-            foreach ($page_set as &$val)
-            {
+        if ($filter['page'] > 4) {
+            foreach ($page_set as &$val) {
                 $val += $filter['page'] -4;
             }
         }
 
-        if (end($page_set) > $filter['page_count'])
-        {
+        if (end($page_set) > $filter['page_count']) {
             $page_set = array ();
-            for ($i = 7; $i >= 0; $i--)
-            {
-                if ($filter['page_count'] - $i > 0)
-                {
+            for ($i = 7; $i >= 0; $i--) {
+                if ($filter['page_count'] - $i > 0) {
                     $page_set[] = $filter['page_count'] - $i;
                 }
             }
@@ -2043,8 +2029,8 @@ elseif ($_REQUEST['act'] == 'ch_points_history')
             'act'           => 'ch_points_history',
         );
 
-        $role = get_role();
-        $sql_select = 'SELECT ui.*,u.user_name,r.rank_name,a.user_name as admin_name,i.integral_title,(ui.pre_points+ui.exchange_points) as cur_integral,o.goods_amount FROM '.$GLOBALS['ecs']->table('user_integral').
+        $role = get_role('role_id IN('.KEFU.','.KEFU2.')');
+        $sql_select = 'SELECT ui.receive_time,ui.confirm_time,ui.validity,ui.exchange_points,ui.pre_points,ui.increase_reduce,u.user_name,r.rank_name,a.user_name as admin_name,i.integral_title,u.rank_points cur_integral,o.goods_amount FROM '.$GLOBALS['ecs']->table('user_integral').
             ' AS ui LEFT JOIN '.$GLOBALS['ecs']->table('users').
             ' AS u ON ui.user_id=u.user_id LEFT JOIN '.$GLOBALS['ecs']->table('admin_user').
             ' AS a ON u.admin_id=a.user_id LEFT JOIN '.$GLOBALS['ecs']->table('integral').
@@ -2052,17 +2038,13 @@ elseif ($_REQUEST['act'] == 'ch_points_history')
             ' AS o ON ui.source_id=o.order_id LEFT JOIN '.$GLOBALS['ecs']->table('user_rank').
             ' AS r ON u.user_rank=r.rank_id WHERE ui.confirm=1 AND u.user_name IS NOT NULL AND u.role_id IS NOT NULL ORDER BY ui.confirm_time  DESC,ui.receive_time DESC'.
             ' LIMIT '.($filter['page']-1)*$filter['page_size'].",{$filter['page_size']}";
+    } elseif(admin_priv('ch_points_history','',false)) {
+        $role = get_role("role_id={$_SESSION['role_id']}");
     }
 
-    elseif(admin_priv('ch_points_history','',false))
-    {
-        $sql_select = 'SELECT * FROM '.$GLOBALS['ecs']->table('role').' WHERE role='.$_SESSION['role_id'];
-        $role = $GLOBALS['db']->getAll($sql_select);
-    }
-
+    echo $sql_select;exit;
     $result = $GLOBALS['db']->getAll($sql_select);
-    foreach($result as &$val)
-    {
+    foreach($result as &$val) {
         $val['receive_time'] = date('m月d H:i',$val['receive_time']);
         $val['confirm_time'] = date('m月d H:i',$val['confirm_time']);
         $val['validity'] = date('Y-m-d H:i',$val['validity']);

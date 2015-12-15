@@ -2,10 +2,10 @@
 <div class="toptitle">
   <h2 style="display:inline">会员积分等级设置</h2>
   <ul class="tab1" style="float:left">
-    <li class=""><button class="btn_s" name='base_config' onmouseover="tabSub(this)" onclick="tabSub(this)">会员等级设置</button></li>
-    <li class=""><button class="btn_a" name='cur_rank_div' onmouseover="tabSub(this)" onclick="tabSub(this)">会员等级列表</button></li>
-    <li class=""><button class="btn_a" name='strategy' onmouseover="tabSub(this)" onclick="tabSub(this)">积分策略设置</button></li>
-    <li class=""><button class="btn_a" name='cur_integral_rule' onmouseover="tabSub(this)" onclick="tabSub(this)">积分策略列表</button></li>
+    <li class=""><button class="btn_s" name='base_config'  onclick="tabSub($(this))">会员等级设置</button></li>
+    <li class=""><button class="btn_a" name='cur_rank_div' onclick="tabSub($(this))">会员等级列表</button></li>
+    <li class=""><button class="btn_a" name='strategy'  onclick="tabSub($(this))">积分策略设置</button></li>
+    <li class=""><button class="btn_a" name='cur_integral_rule' onclick="tabSub($(this))">积分策略列表</button></li>
   </ul>
 </div>
 
@@ -76,7 +76,7 @@
       </select>
     </span>
     <ins_div id="ins_div">
-    <table style="margin-left:15px;margin-bottom:15px" id="cur_rank" border="0" cellpadding="0" cellspacing="0" width="98%" class="all_table_list w830 rb_border c_b tr_hover">
+    <table style="margin-left:15px;margin-bottom:15px" id="cur_rank" border="0" cellpadding="0" cellspacing="0" width="80%" class="all_table_list rb_border c_b tr_hover">
       <tr id="caption">
         <th width="80px">会员等级</th>
         <th width="80px">积分下限</th>
@@ -189,7 +189,7 @@
   </div>
 
   <!-- 已经存在积分规则-->
-  <div class="box_center" style="width:98%;padding:3px;clear:both;display:none" id="cur_integral_rule">
+  <div class="box_center" style="width:80%;padding:3px;clear:both;display:none" id="cur_integral_rule">
     <br/>
     <span style="float:right;margin-right:20px">
       平台
@@ -207,20 +207,20 @@
       <input type="button" style="background:#E0E0E0" class="b_submit" id="past_due" value="已过期" onmouseover="tabAvailable(2)"/>
     </span>
     <ins_div2 id="ins_div2">
-    <table id="cur_integral" style="margin-left:10px;margin-bottom:15px" border="0" cellpadding="0" cellspacing="0" width="98%" class="all_table_list w830 rb_border c_b tr_hover" >
+    <table id="cur_integral" style="margin-left:10px;margin-bottom:15px" border="0" cellpadding="0" cellspacing="0" width="98%" class="all_table_list rb_border c_b tr_hover" >
       <tr id="caption">
-        <th style="width:80px">规则</th>
-        <th style="width:80px">赠送方式</th>
-        <th style="width:60px">赠送比例</th>
-        <th style="width:100px">启动时间</th>
-        <th style="width:100px">结束时间</th>
-        <th style="width:100px">适用平台</th>
-        <th style="width:100px">适用品牌</th>
-        <th style="width:100px">消费下/上限</th>
-        <th style="width:75px">添加人</th>
-        <th style="width:100px">修改时间</th>
-        <th style="width:75px">当前状态</th>
-        <th style="width:130px">操作</th>
+        <th width="10%">规则</th>
+        <th width="10%">赠送方式</th>
+        <th width="10%">赠送比例</th>
+        <th width="10%">启动时间</th>
+        <th width="10%">结束时间</th>
+        <th width="10%">适用平台</th>
+        <th width="10%">适用品牌</th>
+        <th width="10%">消费下/上限</th>
+        <th width="10%">添加人</th>
+        <th width="10%">修改时间</th>
+        <th width="10%">当前状态</th>
+        <th width="10%">操作</th>
       </tr>
       {foreach from=$en_integral item=val}
       <tr>
@@ -248,20 +248,20 @@
     </table>
 
     <!-- 未启用 -->
-    <table id="dis_integral" style="margin-left:10px;margin-bottom:15px;display:none" border="0" cellpadding="0" cellspacing="0" width="98%" class="all_table_list w830 rb_border c_b tr_hover" >
+    <table id="dis_integral" style="margin-left:10px;margin-bottom:15px;display:none" border="0" cellpadding="0" cellspacing="0" width="98%" class="all_table_list rb_border c_b tr_hover" >
       <tr>
-        <th width="80px">规则</th>
-        <th width="80px">赠送方式</th>
-        <th width="60px">赠送比例</th>
-        <th width="100px">启动时间</th>
-        <th width="100px">结束时间</th>
-        <th width="100px">适用平台</th>
-        <th width="100px">适用品牌</th>
-        <th width="120px">消费下/上限</th>
-        <th width="75px">添加人</th>
-        <th width="100px">修改时间</th>
-        <th width="75px">当前状态</th>
-        <th width="130px">操作</th>
+        <th width="10%">规则</th>
+        <th width="10%">赠送方式</th>
+        <th width="10%">赠送比例</th>
+        <th width="10%">启动时间</th>
+        <th width="10%">结束时间</th>
+        <th width="10%">适用平台</th>
+        <th width="10%">适用品牌</th>
+        <th width="10%">消费下/上限</th>
+        <th width="10%">添加人</th>
+        <th width="10%">修改时间</th>
+        <th width="10%">当前状态</th>
+        <th width="10%">操作</th>
       </tr>
       {foreach from=$dis_integral item=val}
       <tr>
@@ -289,20 +289,20 @@
     </table>
 
     <!--已过期-->
-    <table id="past_due_integral" style="margin-left:10px;margin-bottom:15px;display:none" border="0" cellpadding="0" cellspacing="0" width="98%" class="all_table_list w830 rb_border c_b tr_hover" >
+    <table id="past_due_integral" style="margin-left:10px;margin-bottom:15px;display:none" border="0" cellpadding="0" cellspacing="0" width="98%" class="all_table_list rb_border c_b tr_hover" >
       <tr>
-        <th width="80px">规则</th>
-        <th width="80px">赠送方式</th>
-        <th width="60px">赠送比例</th>
-        <th width="100px">启动时间</th>
-        <th width="100px">结束时间</th>
-        <th width="100px">适用平台</th>
-        <th width="100px">适用品牌</th>
-        <th width="120px">消费下/上限</th>
-        <th width="75px">添加人</th>
-        <th width="100px">修改时间</th>
-        <th width="75px">当前状态</th>
-        <th width="130px">操作</th>
+        <th width="10%">规则</th>
+        <th width="10%">赠送方式</th>
+        <th width="10%">赠送比例</th>
+        <th width="10%">启动时间</th>
+        <th width="10%">结束时间</th>
+        <th width="10%">适用平台</th>
+        <th width="10%">适用品牌</th>
+        <th width="10%">消费下/上限</th>
+        <th width="10%">添加人</th>
+        <th width="10%">修改时间</th>
+        <th width="10%">当前状态</th>
+        <th width="10%">操作</th>
       </tr>
       {foreach from=$past_due_integral item=val}
       <tr>
