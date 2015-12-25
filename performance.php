@@ -33,24 +33,23 @@ if ($_REQUEST['act'] == 'menu')
 }
 
 /*--- 显示推广表登记 ---*/
-elseif($_REQUEST['act'] == 'spread')
-{
-    $file = strstr(basename($_SERVER['PHP_SELF']), '.', true);
-    $nav = list_nav();
-    $smarty->assign('nav_2nd', $nav[1][$file]);
-    $smarty->assign('nav_3rd', $nav[2]);
-    $smarty->assign('file_name', $file);
-    $res['left'] = $smarty->fetch('left.htm');
+elseif($_REQUEST['act'] == 'spread') {
+    //$file = strstr(basename($_SERVER['PHP_SELF']), '.', true);
+    //$nav = list_nav();
+    //$smarty->assign('nav_2nd', $nav[1][$file]);
+    //$smarty->assign('nav_3rd', $nav[2]);
+    //$smarty->assign('file_name', $file);
+    //$res['left'] = $smarty->fetch('left.htm');
 
     //获取所属商城的所有名字
-    $sql_select = 'SELECT role_id,role_name FROM '.$GLOBALS['ecs']->table('role');
-    $role_list = $GLOBALS['db']->getAll($sql_select);
-    $smarty->assign('role_list',$role_list);
+    //$sql_select = 'SELECT role_id,role_name FROM '.$GLOBALS['ecs']->table('role');
+    //$role_list = $GLOBALS['db']->getAll($sql_select);
+    //$smarty->assign('role_list',$role_list);
 
     //获取广告活动名字
-    $sql_select = 'SELECT * FROM '.$GLOBALS['ecs']->table('advertisement');
-    $ad_list = $GLOBALS['db']->getAll($sql_select);
-    $smarty->assign('ad_list',$ad_list);
+    //$sql_select = 'SELECT * FROM '.$GLOBALS['ecs']->table('advertisement');
+    //$ad_list = $GLOBALS['db']->getAll($sql_select);
+    //$smarty->assign('ad_list',$ad_list);
     $res['main'] = $smarty->fetch('spread.htm');
 
     die($json->encode($res));
@@ -103,113 +102,44 @@ elseif($_REQUEST['act'] == 'spread_list')
 }
 
 /*--- 添加推广表记录 ---*/
-elseif($_REQUEST['act'] == 'add_spread')
-{
-    $spread_pv       = intval($_REQUEST['spread_pv']);
-    $spread_uv       = intval($_REQUEST['spread_uv']);
-    $orders          = intval($_REQUEST['orders']);
-    $sale            = floatval($_REQUEST['sale']);
-    $job_content     = mysql_real_escape_string($_REQUEST['job_content']);
-    $summary         = mysql_real_escape_string($_REQUEST['summary']);
-    $scalping_num    = intval($_REQUEST['scalping_num']);
-    $scalping_amount = floatval($_REQUEST['scalping_amount']);
+elseif($_REQUEST['act'] == 'add_spread') {
+    $data            = array_filter($_POST);
+    $pc_spread_uv    = intval($data['pc_spread_uv']);
+    $pc_order_num   = intval($data['pc_order_num']);
+    $pc_sale         = floatval($data['pc_sale']);
+    $m_spread_uv     = intval($data['m_spread_uv']);
+    $m_order_num    = intval($data['m_order_num']);
+    $m_sale          = floatval($data['m_sale']);
+    $scalping_num    = intval($data['scalping_num']);
+    $scalping_amount = floatval($data['scalping_amount']);
+    $ad_amount = floatval($data['ad_amount']);
+    $report_time = strtotime($data['report_time']);
 
-    //加判断防止提交空数据
-    if( $job_content == '' || $summary == '' )
-    {
-        $res['req_msg'] = true;
-        $res['message'] = '提交内容不能为空';
-        $res['timeout'] = 2000;
+    //$add_time = time()+28800;
+    //$sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('work_summary').
+    //    "(summary,job_content,admin_id,platform,add_time,belong_time)
+    //    VALUES('$summary','$job_content','{$_SESSION['admin_id']}','{$_SESSION['role_id']}',$add_time','$add_time')";
+    //$GLOBALS['db']->query($sql_insert);
 
-        die($json->encode($res));
-    }
-
-    //根据推广人的id找到对应的所属平台
-    $sql_select = "SELECT role_id FROM ".$GLOBALS['ecs']->table('admin_user')." WHERE user_id='$_SESSION[admin_id]'";
-    $rid = $GLOBALS['db']->getOne($sql_select);
-
-    //重组传过来的参数
-    $list = array();
-    foreach($_REQUEST['adname_id'] as $key=>$v)
-    {
-        $list[$key]['adname_id']    = $_REQUEST['adname_id'][$key];
-        $list[$key]['ad_costs']     = $_REQUEST['ad_costs'][$key];
-        $list[$key]['ad_revenue']   = $_REQUEST['ad_revenue'][$key];
-        $list[$key]['favorite_num'] = $_REQUEST['favorite_num'][$key];
-        $list[$key]['change_order'] = $_REQUEST['change_order'][$key];
-    }
-
-    //插入工作总结表
-    $add_time = time()+28800;
-    $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('work_summary').
-        "(summary,job_content,admin_id,platform,add_time,belong_time)
-        VALUES('$summary','$job_content','{$_SESSION['admin_id']}','{$_SESSION['role_id']}',$add_time','$add_time')";
-    $GLOBALS['db']->query($sql_insert);
-
-    //获取工作总结对应的id
-    $work_id = $GLOBALS['db']->insert_id();
-
-    if($work_id)
-    {   
+    ////获取工作总结对应的id
+    //$work_id = $GLOBALS['db']->insert_id();
         //插入推广表
-        $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('spread').'(spread_pv,spread_uv,orders,sale,
-            admin_id,add_time,work_id,scalping_amount,scalping_num)'."VALUES('$spread_pv','$spread_uv','$orders',
-            '$sale','{$_SESSION['admin_id']}','$add_time','$work_id','$scalping_amount','$scalping_num')";
-        $GLOBALS['db']->query($sql_insert);
-
-        //获取推广表对应的id
-        $spread_id = $GLOBALS['db']->insert_id();
-
-        if($spread_id)
-        {
-            foreach($list as $v)
-            {
-                if(!empty($v))
-                {
-                    //插入广告费用表
-                    $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('spread_ad').
-                        '(ad_costs,ad_revenue,favorite_num,change_order,adname_id,
-                        spread_id,add_time,rid)VALUES'.
-                        "('$v[ad_costs]','$v[ad_revenue]','$v[favorite_num]',
-                        '$v[change_order]','$v[adname_id]',
-                        '$spread_id','$add_time','$rid')";
-                    $result = $GLOBALS['db']->query($sql_insert);
-
-                    if($result)
-                    {
-                        $res['req_msg'] = true;
-                        $res['message'] = '添加成功';
-                        $res['timeout'] = 2000;
-                    }
-                    else
-                    {
-                        $res['req_msg'] = true;
-                        $res['message'] = '添加失败';
-                        $res['timeout'] = 2000;
-
-                        die($json->encode($res));
-                    }
-                }
-            }
-        }
-        else
-        {
-            $res['req_msg'] = true;
-            $res['message'] = '添加失败';
-            $res['timeout'] = 2000;
-
-            die($json->encode($res));
-        }
+    $today = strtotime(date('Y-m-d 00:00:00'));
+    //$sql_select = 'SELECT COUNT(1) FROM '
+    //    .$GLOBALS['ecs']->table('spread')." WHERE platform={$_SESSION['role_id']} AND admin_id={$_SESSION['admin_id']} AND add_time>$today";
+    //if ($GLOBALS['db']->getOne($sql_select)) {
+    //   $res = crm_msg('一天只能提交一次'); 
+    //}else{
+    $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('spread')
+        .'(pc_spread_uv,pc_order_num,pc_sale,m_spread_uv,m_order_num,m_sale,admin_id,add_time,report_time,scalping_amount,scalping_num,platform,ad_amount)'
+        ."VALUES($pc_spread_uv,$pc_order_num,$pc_sale,$m_spread_uv,$m_order_num,$m_sale,{$_SESSION['admin_id']},{$_SERVER['REQUEST_TIME']},$report_time,$scalping_amount,$scalping_num,{$_SESSION['role_id']},$ad_amount)";
+    $code = $GLOBALS['db']->query($sql_insert);
+    if ($code) {
+        $res = crm_msg('提交成功');
+    }else{
+        $res = crm_msg('提交失败',$code);
     }
-    else
-    {
-        $res['req_msg'] = true;
-        $res['message'] = '添加失败';
-        $res['timeout'] = 2000;
-
-        die($json->encode($res));
-    }
-
+    //}
     die($json->encode($res));
 }
 

@@ -136,9 +136,7 @@ elseif ($act == 'search')
             }
         }
     }
-
-    if($user_new || $user_old)
-    {
+    if($user_new || $user_old) {
         if($user_old){
             $smarty->assign('old_user_info',$old_user_info);
         }
@@ -155,9 +153,7 @@ elseif ($act == 'search')
         $res = $smarty->fetch('res_search.htm');
 
         die($json->encode($res));
-    }
-    else
-    {
+    } else {
         die($json->encode(0));
     }
 }
@@ -322,30 +318,30 @@ function get_user_id($table_name,$where,$keyword){
 function get_user_info($table_name,$user_id){
     $tel = $_SESSION['action_list'] == 'all' ? 'CONCAT(home_phone, " ", mobile_phone) tel ' : "IF(admin_id=$_SESSION[admin_id], CONCAT(home_phone,' ', mobile_phone), '-') tel ";
 
-    $sql = "SELECT u.user_id,u.user_name,u.admin_name,u.home_phone,u.mobile_phone,u.admin_id,u.is_black,c.type_name customer_type FROM "
+    $sql = "SELECT u.user_id,u.user_name,u.admin_name,$tel,u.admin_id,u.is_black,c.type_name customer_type FROM "
         .$GLOBALS['ecs']->table($table_name).' u LEFT JOIN '.$GLOBALS['ecs']->table('customer_type')
         .' c ON u.customer_type=c.type_id'  
         ." WHERE u.user_id IN ($user_id)";
 
     $user_info = $GLOBALS['db']->getAll($sql);
-    if ($user_info) {
-        if ($_SESSION['action_list'] != 'all') {
-            foreach ($user_info as &$v) {
-                if ($v['admin_id'] != $_SESSION['admin_id']) {
-                    $mobile_phone = hideContact($v['mobile_phone']);
-                    $home_phone = hideContact($v['home_phone']);
-                }else{
-                    $mobile_phone = $v['mobile_phone'];
-                    $home_phone = $v['home_phone'];
-                }
-                $v['tel'] = "$mobile_phone $home_phone";
-            }
-        }else{
-            foreach ($user_info as &$v) {
-                $v['tel'] = "{$v['mobile_phone']} {$v['home_phone']}";
-            }
-        }
-    }
+    //if ($user_info) {
+    //    if ($_SESSION['action_list'] != 'all') {
+    //        foreach ($user_info as &$v) {
+    //            if ($v['admin_id'] != $_SESSION['admin_id']) {
+    //                $mobile_phone = hideContact($v['mobile_phone']);
+    //                $home_phone = hideContact($v['home_phone']);
+    //            }else{
+    //                $mobile_phone = $v['mobile_phone'];
+    //                $home_phone = $v['home_phone'];
+    //            }
+    //            $v['tel'] = "$mobile_phone $home_phone";
+    //        }
+    //    }else{
+    //        foreach ($user_info as &$v) {
+    //            $v['tel'] = "{$v['mobile_phone']} {$v['home_phone']}";
+    //        }
+    //    }
+    //}
 
     return $user_info;
 }

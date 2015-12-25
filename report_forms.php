@@ -65,7 +65,7 @@ elseif($_REQUEST['act'] == 'role_order_sales' ){
     $res['switch_tag'] = true;
     $res['id'] = isset($_REQUEST['platform']) ? $_REQUEST['platform'] : 0;
 
-    $status = ' AND order_status IN (1,5) AND shipping_status<>3 AND order_type<>10 ';
+    $status = ' AND order_status IN (1,5) AND shipping_status<>3';
     $refund_where = '';
     $trans_role_list = '';
 
@@ -126,7 +126,7 @@ elseif ($_REQUEST['act'] == 'order_sales') {
     $res['switch_tag'] = true;
     $res['id'] = isset($_REQUEST['platform']) ? $_REQUEST['platform'] : 0;
 
-    $status = ' AND order_status IN (1,5) AND shipping_status<>3 AND order_type<>10 ';
+    $status = ' AND order_status IN (1,5) AND shipping_status<>3 ';
     $refund_where = '';
     $trans_role_list = '';
 
@@ -1401,11 +1401,11 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
     if (!admin_priv('everyone_sales', '',false) && !admin_priv('personal_trans-part_stats', '', false)) {
         $role_id = $_SESSION['role_id'];
     } elseif (!admin_priv('all', '', false) && admin_priv('personal_trans-part_stats', '', false)) {
-        if ($_SESSION['admin_id'] == 64) {
-            $role_id = KEFU.','.KEFU2;
-        }else{
+        //if ($_SESSION['admin_id'] == 64) {
+        //    $role_id = KEFU.','.KEFU2;
+        //}else{
             $role_id = implode(',', trans_part_list());
-        }
+        //}
     } else {
         $role_id = OFFLINE_SALE;
     }
@@ -1530,7 +1530,13 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
             $range = " a.user_id={$_SESSION['admin_id']} ";
         }
     } else {
-        $range = ' r.role_id IN ('.OFFLINE_SALE.') AND a.stats>0 ';
+        if ($_SESSION['role_id']) {
+            $role_id = implode(',', trans_part_list());
+            //$r_str = return_role_by_all();
+            $range = ' r.role_id IN ('.$role_id.') AND a.stats>0 ';
+        }else{
+            $range = ' r.role_id IN ('.OFFLINE_SALE.') AND a.stats>0 ';
+        }
         $smarty->assign('part_all', true);
     }
 
@@ -1589,7 +1595,7 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
         unset($val);
 
         foreach ($month_stats as $val) {
-            @$val['final_amount'] = bcsub($val['final_amount'],bcsub($sales_return[$val['admin_id']]['return_amount'],$sales_return[$val['admin_id']]['p_return_amount']));
+            @$val['final_amount'] = bcsub($val['final_amount'],bcsub($sales_return[$val['admin_id']]['return_amount'],$sales_return[$val['admin_id']]['p_return_amount'],2),2);
             @$sales_list[$val['admin_id']]['month_amount'] = $val['final_amount'];
             $val['num'] -=$sales_return[$val['admin_id']]['p_return_count'];
             @$sales_list[$val['admin_id']]['month_count']  = $val['num'];
@@ -1729,6 +1735,7 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
         if (admin_priv('personal_stats_query', '', false)) {
             $smarty->assign('personal_stats_query', true);
         }
+        $smarty->assign('depart_list',array(array('depart_id'=>7,'depart_name'=>'客服二部'),array('depart_id'=>8,'depart_name'=>'客服一部')));
         $res['main'] = $smarty->fetch('personal_sales_stats.htm');
         die($json->encode($res));
     }
@@ -2340,6 +2347,76 @@ elseif($_REQUEST['act'] == 'add_contact_report'){
     $res['main'] = $smarty->fetch('add_contact_report.htm');
     die($json->encode($res));
 }
+//平台核心数据报表
+elseif($_REQUEST['act']=='spread_report'){
+    if (!empty($_REQUEST['start_time']) && !empty($_REQUEST['end_time'])) {
+        $smarty->assign('start_time',$_REQUEST['start_time']);
+        $smarty->assign('end_time',$_REQUEST['end_time']);
+        $start_time = strtotime($_REQUEST['start_time']);
+        $end_time = strtotime($_REQUEST['end_time']);
+    }else{
+        $start_time = strtotime(date('Y-m-01 00:00:00'));
+        $end_time = strtotime(date('Y-m-t 23:59:59'));
+        $smarty->assign('start_time',date('Y-m-01'));
+        $smarty->assign('end_time',date('Y-m-t'));
+    }
+    $where = " WHERE report_time BETWEEN $start_time AND $end_time ";
+
+    if ($_REQUEST['platform']) {
+        $platform = intval($_REQUEST['platform']);
+        $smarty->assign('platform',$platform);
+        $where .= " AND platform=$platform ";
+    }
+
+    $online_store = ONLINE_STORE;
+    if (admin_priv('all','',false) || admin_priv('spread_all','',false)) {
+        $where .= " AND platform IN($online_store) ";
+    }elseif(admin_priv('spread_part','',false)){
+        $platform = trans_part_list();
+        $platform = implode(',',$platform);
+        $where .= " AND platform IN($platform) ";
+    }else{
+        $where .= " AND platform={$_SESSION['role_id']}";
+    }
+
+    $sql = 'SELECT r.role_name,pc_spread_uv,pc_order_num,pc_sale,m_spread_uv,m_order_num,m_sale,scalping_num,scalping_amount,ad_amount,report_time'
+        .' FROM '.$GLOBALS['ecs']->table('spread').' s LEFT JOIN '.$GLOBALS['ecs']->table('role').' r ON s.platform=r.role_id'
+        ." $where ORDER BY report_time DESC";
+    $data = $GLOBALS['db']->getAll($sql);
+    if ($data) {
+        $total = array(
+            'role_name'=>'总计',
+        );
+        foreach ($data as &$v) {
+            $v['add_time']             = date('Y-m-d',$v['report_time']);
+            $v['total_spread_uv']             = $v['pc_spread_uv']+$v['m_spread_uv'];
+            $v['total_order_num']      = $v['m_order_num']+$v['m_order_num'];
+            $v['total_transformation'] = bcdiv($v['total_order_num'],$v['total_spread_uv'],2)*100;
+            $v['pc_transformation']    = bcdiv($v['pc_order_num'],$v['pc_spread_uv'],2)*100;
+            $v['m_transformation']     = bcdiv($v['m_order_num'],$v['m_spread_uv'],2)*100;
+            $total['pc_spread_uv']    += $v['pc_spread_uv'];
+            $total['pc_order_num']    += $v['pc_order_num'];
+            $total['pc_sale']         = bcadd($v['pc_sale'],$total['pc_sale'],2);
+            $total['m_spread_uv']     += $v['m_spread_uv'];
+            $total['m_order_num']     += $v['m_order_num'];
+            $total['m_sale']          = bcadd($v['m_sale'],$total['m_sale'],2);
+            $total['scalping_num']    += $v['scalping_num'];
+            $total['scalping_amount'] = bcadd($v['scalping_amount'],$total['scalping_amount'],2);
+            $total['ad_amount']       = bcadd($v['ad_amount'],$total['ad_amount'],2);
+        }
+        $total['total_spread_uv'] = $total['pc_spread_uv']+$total['m_spread_uv'];
+        $total['total_order_num'] = $total['pc_order_num']+$total['m_order_num'];
+        $total['total_transformation'] = bcdiv($total['total_order_num'],$total['total_spread_uv'],2)*100;
+        $total['pc_transformation'] = bcdiv($total['pc_order_num'],$total['pc_spread_uv'],2)*100;
+        $total['m_transformation'] = bcdiv($total['m_order_num'],$total['m_spread_uv'],2)*100;
+        array_push($data,$total);
+    }
+    $role_list = get_role(" role_id IN($online_store)");
+    $smarty->assign('data',$data);
+    $smarty->assign('role_list',$role_list);
+    $res['main'] = $smarty->fetch('spread_report.htm');
+    die($json->encode($res));
+}
 /*------------------------------------------------------ */
 //--排行统计需要的函数
 /*------------------------------------------------------ */
@@ -2486,8 +2563,8 @@ function stats_order ($start_time, $end_time, $status,$platform_list = array())
     // 获取各平台的销售数据
     $sql_select = 'SELECT r.depart_id,r.role_describe,i.order_type,COUNT(*) order_number,SUM(i.final_amount) final_amount,'.
         'SUM(i.goods_amount) goods_amount,SUM(i.shipping_fee) shipping_fee FROM '.$GLOBALS['ecs']->table('order_info').' i, '.
-        $GLOBALS['ecs']->table('role')." r WHERE add_time BETWEEN $start_time AND $end_time $status AND ".
-        "r.role_id=i.platform AND i.order_type NOT IN (1,2,8,10) GROUP BY $group_by,order_type ORDER BY final_amount DESC";
+        $GLOBALS['ecs']->table('role')." r WHERE i.add_time BETWEEN $start_time AND $end_time $status AND ".
+        "r.role_id=i.platform AND i.order_type NOT IN (1,2,8,10) GROUP BY $group_by,i.order_type ORDER BY final_amount DESC";
 
     $result = $GLOBALS['db']->getAll($sql_select);
 
@@ -2992,10 +3069,22 @@ function buy_back_stats($field)
     }
 
     // 统计各平台老顾客购买人数
-    $sql_select = "SELECT COUNT(DISTINCT user_id) times,$field FROM ".$GLOBALS['ecs']->table('order_info').
-        ' WHERE order_status IN (1,5) AND shipping_status IN (0,1,2) AND order_type IN (3,4,5,6,7) AND team<>23'.
-        " $ex_where GROUP BY user_id HAVING COUNT(user_id)>1";
+    //$sql_select = "SELECT COUNT(DISTINCT user_id) times,$field FROM ".$GLOBALS['ecs']->table('order_info').
+    //    ' WHERE order_status IN (1,5) AND shipping_status IN (0,1,2) AND order_type IN (3,4,5,6,7) AND team<>23'.
+    //    " $ex_where GROUP BY user_id HAVING COUNT(user_id)>1";
+    $available_type = VALID_ORDER_TYPE;
+    $start_time = '1316719262';
+    $end_time   = $_SERVER['REQUEST_TIME'];
+    $condition  = " add_time BETWEEN $start_time AND $end_time ";
+    $sql_select = "SELECT 1 times,$field,user_id FROM ".$GLOBALS['ecs']->table('order_info')
+        ." WHERE $condition AND order_status IN (1,5) AND shipping_status IN (0,1,2) AND order_type IN ($available_type) AND team<>23"
+        ." $ex_where ";
     $all_old_users_res = $GLOBALS['db']->getAll($sql_select);
+
+    //过虑只购买过一次的顾客
+    //if ($_SESSION['admin_id'] == 142) {
+        $all_old_users_res = rebuy_repeat($all_old_users_res,'user_id');
+    //}
 
     $platform_old_users_count = array(); // 各平台老顾客购买总人数
     $all_old_users_count = 0;            // 老顾客购买总人数
@@ -3005,11 +3094,11 @@ function buy_back_stats($field)
     }
 
     // 统计各平台有购买记录的顾客总数量
-    $sql_select = "SELECT COUNT(DISTINCT user_id) times,$field FROM ".$GLOBALS['ecs']->table('order_info').
-        " WHERE order_status IN (1,5) AND shipping_status IN (0,1,2) AND team<>23 AND final_amount>0 AND order_type IN (3,4,5,6,7) $ex_where GROUP BY $field";
-    //order_type IN (3,4,5,6,7)
-    $platform_users_res = $GLOBALS['db']->getAll($sql_select);
+    $sql_select = "SELECT 1 times,$field FROM ".$GLOBALS['ecs']->table('order_info').
+        " WHERE $condition AND order_status IN (1,5) AND shipping_status IN (0,1,2) AND team<>23 AND final_amount>0 AND order_type IN ($available_type) $ex_where";
 
+    $platform_users_res = $GLOBALS['db']->getAll($sql_select);
+    $platform_users_res = rebuy_repeat($platform_users_res,'team');
     // 计算有购买记录的顾客总数量
     $all_users_count = 0;
     $platform_users_count = array();
@@ -3032,7 +3121,11 @@ function buy_back_stats($field)
 
     // 统计各平台订单总数量
     $sql_select = "SELECT COUNT(1) times,$field,SUM(final_amount) total_amount FROM ".$GLOBALS['ecs']->table('order_info').
-        " WHERE order_status IN (1,5) AND shipping_status IN (0,1,2) AND team<>23 AND order_type IN (3,4,5,6,7) $ex_where GROUP BY $field";
+        " WHERE $condition AND order_status IN (1,5) AND shipping_status IN (0,1,2) AND team<>23 AND order_type IN ($available_type) $ex_where GROUP BY $field";
+
+    if ($_SESSION['admin_id'] == 142) {
+        echo $sql_select;exit;
+    }
     $platform_order_res = $GLOBALS['db']->getAll($sql_select);
 
     // 计算订单总数量
@@ -4147,7 +4240,6 @@ function repo_rate () {
     }
 
     $time_limit = ' AND i.add_time BETWEEN '.strtotime($filter['start_time']).' AND '.strtotime($filter['end_time']);
-
     // 取该段时间之前的有过购买记录的顾客
     $before_time = ' AND i.user_id IN (SELECT user_id FROM '.$GLOBALS['ecs']->table('order_info').
         ' WHERE order_status IN (1,5) AND shipping_status IN (0,1,2) AND team<>23 AND final_amount>0 AND team>0 AND add_time<'.
@@ -4160,7 +4252,6 @@ function repo_rate () {
     $owner_order = 'AND i.admin_id=u.admin_id AND i.order_type=4 ';
     $group_by = ' GROUP BY i.user_id';
     $having_count = ' HAVING COUNT(order_id)>1 ';
-
     // 获取老顾客当期的有效订单
     $repo_list = $GLOBALS['db']->getAll($sql_select.$owner_order.$ex_where.$time_limit.$before_time.$group_by);
     $calc_repo_current = calc_total($repo_list);
@@ -5192,7 +5283,6 @@ function deal_order_report(){
         }
         ksort($v['list']);
     }
-    print_r($res);exit;
     return $res;
 }
 
@@ -5239,4 +5329,19 @@ function admin_for_report($where){
     $sql = 'SELECT user_id admin_id,user_name admin_name,group_id,role_id FROM '.$GLOBALS['ecs']->table('admin_user')
         ." WHERE status>0 AND stats>0 $where";
     return $GLOBALS['db']->getAll($sql);
+}
+
+function rebuy_repeat($res,$key){
+    $tmp = array();
+    $final = array();
+    foreach ($res as $ar) {
+        $final[$ar[$key]] = $ar;
+        $tmp[$ar[$key]] += 1;
+    }
+    foreach ($tmp as $k=>$t) {
+        if ($t == 1) {
+            unset($final[$k]);
+        }
+    }
+    return $final;
 }

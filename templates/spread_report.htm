@@ -1,0 +1,71 @@
+<br>
+<div>
+  <h3>平台核心数据统计表</h3> 
+  <div class="gridlist-action">
+    <div class="nav-search">
+      <form name="sale_date" onsubmit="spreadReport(this)" action="javascript:void(0)">
+        起始：
+        <input class="Wdate" name="start_time" type="text" value="{$start_time}" size="13px" onclick="WdatePicker({dateFmt:'yyyy-MM-dd',})">
+        终止：
+        <input class="Wdate" name="end_time" type="text" value="{$end_time}" size="13px" onclick="WdatePicker({dateFmt:'yyyy-MM-dd',})">
+        <select name="platform">
+          <option value="0">平台</option>
+          {foreach from=$role_list item=v}
+          <option value="{$v.role_id}" {if $platform eq $v.role_id}selected{/if}>{$v.role_name}</option>
+          {/foreach}
+        </select>
+        <input type="submit" name="" value="搜索" class="b_submit"/>
+      </form>
+    </div>
+  </div>
+  <div>
+    <table class="wu_table_list wu_rb_border rb_boder" width="100%" cellspacing="0" cellpadding="0">
+  <thead>
+      <tr id="sortByThis">
+        <th width="6%">日期</th>
+        <th width="5%">平台</th>
+        <th width="5%">总UV</th>
+        <th width="5%">总转化率</th>
+        <th width="5%">PC端UV</th>
+        <th width="5%">PC端订单</th>
+        <th width="5%">PC端销量</th>
+        <th width="5%">PC端转化率</th>
+        <th width="5%">移动端UV</th>
+        <th width="5%">移动端订单</th>
+        <th width="5%">移动端销量</th>
+        <th width="6%">移动端转化率</th>
+        <th width="5%">刷单金额</th>
+        <th width="5%">刷单数</th>
+        <th width="5%">广告费</th>
+      </tr>
+    </thead>
+    <tbody>
+      {if $data}
+      {foreach from=$data item=v}
+      <tr>
+        <td>{$v.add_time}</td>
+        <td>{$v.role_name}</td>
+        <td>{$v.total_spread_uv}</td>
+        <td>{$v.total_transformation}%</td>
+        <td>{$v.pc_spread_uv}</td>
+        <td>{$v.pc_order_num}</td>
+        <td>{$v.pc_sale}</td>
+        <td>{$v.pc_transformation}%</td>
+        <td>{$v.m_spread_uv}</td>
+        <td>{$v.m_order_num}</td>
+        <td>{$v.m_sale}</td>
+        <td>{$v.m_transformation}%</td>
+        <td>{$v.scalping_amount}</td>
+        <td>{$v.scalping_num}</td>
+        <td>{$v.ad_amount}</td>
+      </tr>
+      {/foreach}
+      {else}
+      <tr>
+        <td colspan="13">没有记录</td>
+      </tr>
+      {/if}
+    </tbody>
+    </table>
+  </div>
+</div>

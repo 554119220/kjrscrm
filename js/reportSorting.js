@@ -407,5 +407,14 @@ function getGoodsSaleRankResp(res){
   $("#goods_name").html(res.goods_name);
 }
 
+//平台核心数据报表
+function spreadReport(obj){
+  var startTime = obj.elements['start_time'].value;
+  var endTime = obj.elements['end_time'].value;
+  var platform = obj.elements['platform'].value;
+  Ajax.call('report_forms.php?act=spread_report','start_time='+startTime+'&end_time='+endTime+'&platform='+platform,inMain,'GET','JSON');
+}
+
 function sale_trend(res){
 }
+

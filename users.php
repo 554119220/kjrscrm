@@ -5866,7 +5866,7 @@ function access_purchase_records ($id)
         ' r.role_describe platform FROM '.$GLOBALS['ecs']->table('order_info')
         .' o,'.$GLOBALS['ecs']->table('admin_user').' a, '.
         $GLOBALS['ecs']->table('role').' r WHERE  o.add_admin_id=a.user_id AND '.
-        " r.role_id=o.team AND o.user_id=$id $where GROUP BY o.order_id ORDER BY o.add_time ASC ";
+        " r.role_id=o.team AND o.user_id=$id AND o.order_type<>1 $where GROUP BY o.order_id ORDER BY o.add_time ASC ";
 
     $order_list = $GLOBALS['db']->getAll($sql_select);
 

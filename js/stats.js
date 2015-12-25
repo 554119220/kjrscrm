@@ -373,9 +373,9 @@ function statsUserSource (obj) {
 function filterByThis () {
     var role  = document.getElementById('role_id') && document.getElementById('role_id').value;
     var group = document.getElementById('group_id') && document.getElementById('group_id').value;
+    var depart = document.getElementById('depart_id') && document.getElementById('depart_id').value;
 
     var rowsList = document.getElementById('person_style').tBodies[0].rows;
-
     var attribute = null;
     if (/\d+/.test(role)) {
         attribute = 'role';

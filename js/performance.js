@@ -48,17 +48,21 @@ function removeTrResp(res) {
 *  添加一条推广记录
 */
 function addSpread(obj) {
-	var table = document.getElementById('ad_table');
-	var form = document.forms['spread'];
-
 	var str = '';
-	for (var i in form.elements) {
-		if (typeof(form.elements[i]) == 'object' && form.elements[i].name != '') {
-			str = str + '&' + form.elements[i].name + '=' + form.elements[i].value;
-		}
+	var form = obj;
+  var elements = form.getElementsByTagName('input');
+	for (var i=0;i<elements.length;i++) {
+		if (elements[i].name != '' && elements[i].value != '' ) {
+			str = str + '&' + elements[i].name + '=' + elements[i].value;
+		}else{
+      var msg = new Array();
+      msg['message'] = '请完善信息';
+      msg['timeout'] = 2000;
+      showMsg(msg);
+      return false;
+    }
 	}
-
-	Ajax.call('performance.php?act=add_spread', str, editSpreadResponse, 'POST', 'JSON');
+	Ajax.call('performance.php?act=add_spread',str,showMsg, 'POST', 'JSON');
 }
 
 /**

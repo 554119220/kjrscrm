@@ -414,6 +414,7 @@ elseif ($_REQUEST['act'] == 'history_users_order') {
 
     $order_list    = order_list();        // 读取订单列表
     $platform_list = platform_list();      // 列出各个销售平台
+
     if (admin_priv('order_list_all', '', false)) {
         array_unshift($platform_list, array('role_name'=>'全部','role_id'=>0));
     }
@@ -3854,7 +3855,7 @@ function order_list()
             $order_status = " AND order_status=0 AND o.platform IN ($role_list_str) ";
         } elseif (admin_priv('order_group_view', '', false)) {
             //$order_status = ' AND order_status=0 AND o.admin_id>0 AND o.group_id='.$_SESSION['group_id'];
-            $order_status = ' AND order_status=0 AND o.admin_id>0 ';
+            $order_status = " AND order_status=0 AND o.admin_id>0 AND u.role_id={$_SESSION['role_id']}";
             if (isset($_REQUEST['admin_id']) && intval($_REQUEST['admin_id'])) {
                 $order_status = ' AND order_status=0 AND o.admin_id='.intval($_REQUEST['admin_id']);
             }
