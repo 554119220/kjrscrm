@@ -19,6 +19,7 @@ $url = array (
     'aksojd'   => 'http://oauth.jd.com/oauth/token',
     'jlfjd'   => 'http://oauth.jd.com/oauth/token',
     'yhd'      => 'https://member.yhd.com/login/token.do',
+    'jlfyhd'      => 'https://member.yhd.com/login/token.do',
     'suning'   => 'http://open.suning.com/api/oauth/token',
 );
 
@@ -86,6 +87,7 @@ function authorize ($appkey, $platform)
         'aksojd'   => 'https://oauth.jd.com/oauth/authorize',
         'jlfjd'   => 'https://oauth.jd.com/oauth/authorize',
         'yhd'      => 'https://member.yhd.com/login/authorize.do',
+        'jlfyhd'      => 'https://member.yhd.com/login/authorize.do',
         'suning'   => 'http://open.suning.com/api/oauth/authorize',
     );
 
@@ -127,11 +129,7 @@ function selfcurl($url, $postFields = null) {
         curl_setopt ($ch, CURLOPT_POST, true);
         curl_setopt ($ch, CURLOPT_POSTFIELDS, substr($postBodyString,0,-1));
     }
-    //if ('aksojd' == $_REQUEST['state']) {
-    //    echo substr($postBodyString,0,-1);exit;
-    //    echo $url;exit;
-    //    //print_r($postfields);exit;
-    //}
+   
     $reponse = curl_exec($ch);
 
     if (curl_errno($ch)) {

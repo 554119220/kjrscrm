@@ -4578,7 +4578,7 @@ elseif ($_REQUEST['act'] == 'search_by_goods') {
     }
     if (admin_priv('all','',false)) {
         $smarty->assign('all',true);
-        $smarty->assign('role_list', get_role_customer(' AND role_id IN(33,34,35,36,37,40,13)'));
+        $smarty->assign('role_list', get_role_customer(' AND role_id IN('.KEFU.','.KEFU2.',13)'));
     }
 
     // 品牌列表
@@ -6707,6 +6707,7 @@ function search_by_goods() {
     $sql_select = 'SELECT u.user_id,u.user_name,u.sex,u.member_cid,u.add_time,u.service_time,u.admin_name,u.assign_time,u.remarks FROM '.
         $GLOBALS['ecs']->table('users').' u,'.$GLOBALS['ecs']->table('order_info').' i,'.$GLOBALS['ecs']->table('order_goods').' g '.
         $where.' GROUP BY u.user_id LIMIT '.($filter['page'] -1)*$filter['page_size'].', '.$filter['page_size'];
+    echo $sql_select;exit;
     $result = $GLOBALS['db']->getAll($sql_select);
 
     foreach ($result as &$val){

@@ -48,8 +48,8 @@ elseif($_REQUEST['act'] == 'spread') {
 
     //获取广告活动名字
     //$sql_select = 'SELECT * FROM '.$GLOBALS['ecs']->table('advertisement');
-    //$ad_list = $GLOBALS['db']->getAll($sql_select);
-    //$smarty->assign('ad_list',$ad_list);
+    //$ad_list = $GLOBALS['db']->getAll($sql_select); //$smarty->assign('ad_list',$ad_list);
+    $smarty->assign('report_time',date('Y-m-d',$_SERVER['REQUEST_TIME']-86400));
     $res['main'] = $smarty->fetch('spread.htm');
 
     die($json->encode($res));
@@ -105,15 +105,16 @@ elseif($_REQUEST['act'] == 'spread_list')
 elseif($_REQUEST['act'] == 'add_spread') {
     $data            = array_filter($_POST);
     $pc_spread_uv    = intval($data['pc_spread_uv']);
-    $pc_order_num   = intval($data['pc_order_num']);
-    $pc_sale         = floatval($data['pc_sale']);
+    $pc_order_num  = intval($data['pc_order_num']);
+    $pc_sale       = floatval($data['pc_sale']);
     $m_spread_uv     = intval($data['m_spread_uv']);
-    $m_order_num    = intval($data['m_order_num']);
-    $m_sale          = floatval($data['m_sale']);
+    $m_order_num   = intval($data['m_order_num']);
+    $m_sale        = floatval($data['m_sale']);
     $scalping_num    = intval($data['scalping_num']);
     $scalping_amount = floatval($data['scalping_amount']);
-    $ad_amount = floatval($data['ad_amount']);
-    $report_time = strtotime($data['report_time']);
+    $activity_sale   = floatval($data['activity_sale']);
+    $ad_amount       = floatval($data['ad_amount']);
+    $report_time     = strtotime($data['report_time']);
 
     //$add_time = time()+28800;
     //$sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('work_summary').
@@ -131,8 +132,8 @@ elseif($_REQUEST['act'] == 'add_spread') {
     //   $res = crm_msg('一天只能提交一次'); 
     //}else{
     $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('spread')
-        .'(pc_spread_uv,pc_order_num,pc_sale,m_spread_uv,m_order_num,m_sale,admin_id,add_time,report_time,scalping_amount,scalping_num,platform,ad_amount)'
-        ."VALUES($pc_spread_uv,$pc_order_num,$pc_sale,$m_spread_uv,$m_order_num,$m_sale,{$_SESSION['admin_id']},{$_SERVER['REQUEST_TIME']},$report_time,$scalping_amount,$scalping_num,{$_SESSION['role_id']},$ad_amount)";
+        .'(pc_spread_uv,pc_order_num,pc_sale,m_spread_uv,m_order_num,m_sale,admin_id,add_time,report_time,scalping_amount,scalping_num,platform,ad_amount,activity_sale)'
+        ."VALUES($pc_spread_uv,$pc_order_num,$pc_sale,$m_spread_uv,$m_order_num,$m_sale,{$_SESSION['admin_id']},{$_SERVER['REQUEST_TIME']},$report_time,$scalping_amount,$scalping_num,{$_SESSION['role_id']},$ad_amount,$activity_sale)";
     $code = $GLOBALS['db']->query($sql_insert);
     if ($code) {
         $res = crm_msg('提交成功');

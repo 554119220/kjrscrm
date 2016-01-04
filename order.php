@@ -1581,8 +1581,7 @@ elseif ($_REQUEST['act'] == 'add_goods')
                     ' si SET sg.goods_id=g.goods_id, sg.goods_name=g.goods_name, sg.order_sn=si.order_sn '.
                     " WHERE sg.goods_sn=g.goods_sn AND sg.order_id=si.order_id AND sg.order_id=$order_id";
             }
-            else
-            {
+            else {
                 $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('ordersyn_goods').' sg, '.
                     $GLOBALS['ecs']->table('packing').' p, '.$GLOBALS['ecs']->table('ordersyn_info').
                     ' si SET sg.goods_name=p.packing_name, sg.order_sn=si.order_sn,sg.is_package=1 '.
@@ -3983,12 +3982,15 @@ function order_list()
     case 'order_before_transfer' :
         $table_order = 'order_info';
         $table_user  = 'users';
-        if ($_SESSION['admin_id'] == 164) {
-            $order_status = " AND u.admin_id=a.user_id AND o.order_status=5 AND o.shipping_status IN (1,2) AND o.admin_id={$_SESSION['admin_id']}";
+        $order_status = " AND u.admin_id=a.user_id AND o.order_status=5 AND o.shipping_status IN (1,2) ";
+        if (admin_priv('all','',false)) {
+            if ($_SESSION['role_id']>0) {
+                $role_list = implode(',',trans_part_list());
+                $order_status .= " AND o.platform IN($role_list)";
+            }
         }else{
-            $order_status = " AND u.admin_id=a.user_id AND o.order_status=5 AND o.shipping_status IN (1,2) AND u.admin_id={$_SESSION['admin_id']}";
+            $order_status .= " AND u.admin_id={$_SESSION['admin_id']}";
         }
-        //$order_status = " AND u.admin_id=a.user_id AND o.order_status=5 AND o.shipping_status IN (1,2) AND u.admin_id={$_SESSION['admin_id']}";
         $table_admin = ','.$GLOBALS['ecs']->table('admin_user').' a ';
         $temp_fields = ',o.review,a.user_name add_admin';
         $sort_by = ' o.shipping_time DESC';

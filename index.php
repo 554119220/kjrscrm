@@ -1740,7 +1740,7 @@ function license_check()
 //公司规章制度
 function company_rule($role_id)
 {
-    $sql_select = 'SELECT title,content FROM '.$GLOBALS['ecs']->table('company_system').
+    $sql_select = 'SELECT title,content,id FROM '.$GLOBALS['ecs']->table('company_system').
         " WHERE role_id IN ($role_id) OR role_id=0 ORDER BY add_time DESC";
 
     return $GLOBALS['db']->getAll($sql_select);

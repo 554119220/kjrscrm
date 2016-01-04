@@ -394,7 +394,11 @@ function filterByThis () {
             if (rowsList[i].getAttribute(attribute) == role) {
                 rowsList[i].className = '';
             }
-        } else if (parseInt(group)) {
+        } else if(parseInt(depart)){
+          if (rowsList[i].getAttribute('depart') == depart) {
+                rowsList[i].className = '';
+            }
+        }else if (parseInt(group)) {
             if (rowsList[i].getAttribute('group') == group) {
                 rowsList[i].className = '';
             }

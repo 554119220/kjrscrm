@@ -1,28 +1,44 @@
 <div class="blank"></div>
 <div class="finder-title mt10 ">推广登记表</div>
 <div class="box_center">
-<form method="post" name="spread" action="javascript:void(0)" onsubmit="addSpread(this)">
-  <table border="0" class="table_form table_tr list_table_form" width="70%">
-    <tr>
-      <td>PC端UV：</td><td><input type="text" name="pc_spread_uv" value="" size="6"/></td>
-      <td>PC端订单数：</td><td><input type="text" name="pc_order_num" value="" size="6"/></td>
-      <td>PC端销量：</td><td><input type="text" name="pc_sale" value="" size="6"/>&nbsp;元</td>
+  <form method="post" name="spread" action="javascript:void(0)" onsubmit="addSpread(this)">
+    <table border="0" class="table_form table_tr list_table_form" width="70%">
+      <tr>
+        <td>PC端UV：</td><td><input type="text" name="pc_spread_uv" value="" size="6"/>（请减去刷的UV）</td>
+      </tr>
+
+      <tr>
+        <!--<td>总销量：</td><td><input type="text" name="sale" value="" size="6"/>&nbsp;元（包括老顾客销量在内，不包括刷单）</td>-->
+        <td>PC端订单数：</td><td><input type="text" name="pc_order_num" value="" size="6"/>（包括老顾客、活动订单数在内，不包括刷单）</td>
+      </tr>
+      <tr>
+        <td>PC端销量：</td><td><input type="text" name="pc_sale" value="" size="6"/>&nbsp;元（包括老顾客、活动销量在内，不包括刷单）</td>
+      </tr>
+      <tr>
+        <td>移动端UV：</td><td><input type="text" name="m_spread_uv" value="" size="6"/>（请减去刷的UV）</td>
+      </tr>
+      <tr>
+        <td>移动端订单数：</td><td><input type="text" name="m_order_num" value="" size="6"/>（包括老顾客、活动订单数在内，不包括刷单）</td>
+      </tr>
+      <tr>
+        <td>移动端销量：</td><td><input type="text" name="m_sale" value="" size="6"/>&nbsp;元（包括老顾客、活动销量在内，不包括刷单）</td>
+      </tr>
+      <tr>
+        <td>刷单金额：</td><td><input type="text" name="scalping_amount" value="" size="6"/>&nbsp;元
+          刷单数量：<input type="text" name="scalping_num" value="" size="6"/></td>
+      </tr>
+      <td>广告费：</td><td><input type="text" name="ad_amount" value="" size="6"/>&nbsp;元 (直通车、钻展、团购及其它费用，不包括刷单及平台提点)</td>
     </tr>
     <tr>
-      <td>移动端UV：</td><td><input type="text" name="m_spread_uv" value="" size="6"/></td>
-      <td>移动端订单数：</td><td><input type="text" name="m_order_num" value="" size="6"/></td>
-      <td>移动端销量：</td><td><input type="text" name="m_sale" value="" size="6"/>&nbsp;元</td>
-    </tr>
-    <tr>
-      <td>刷单数量：</td><td><input type="text" name="scalping_num" value="" size="6"/></td>
-      <td>刷单金额：</td><td><input type="text" name="scalping_amount" value="" size="6"/>&nbsp;元</td>
-      <td>广告费：</td><td><input type="text" name="ad_amount" value="" size="6"/>&nbsp;元</td>
+      <td>活动销量：</td> <td> <input type="text" name="activity_sale" value="" size="6"/> 元（当天团购等活动销量） </td>
     </tr>
     <tr>
       <td>日期：</td>
       <td colspan="2">
-        <input name="report_time" id="report_time" type="text" maxlength="12" onclick="WdatePicker({dateFmt:'yyyy-M-d'})">
+        <input name="report_time" value="{$report_time}" id="report_time" type="text" maxlength="12" onclick="WdatePicker({dateFmt:'yyyy-M-d'})">
       </td>
+    </tr>
+    <tr>
       <td align="center">
         <input type="submit" name="submit" value="提交"  class="input_submit"/>
       </td>
@@ -30,24 +46,24 @@
     <!--<tr>-->
       <!--  <td colspan="6">-->
         <!--    <table border="0" id="ad_table">-->
-    <!--      <tr>-->
-    <!--        <td>广告：</td>-->
-    <!--        <td>-->
-    <!--          <select name="adname_id[]" id="ad_name1">-->
-    <!--            {foreach from=$ad_list item=v}-->
-    <!--            <option value="{$v.id}">{$v.activity_name}</option>-->
-    <!--            {/foreach}   -->
-    <!--          </select>-->
-    <!--        </td>-->
-    <!--        <td>&nbsp;&nbsp;广告费用：<input type="text" name="ad_costs[]" id="ad_costs1" size="5" value=""/>&nbsp;元</td>-->
-    <!--        <td>&nbsp;&nbsp;收益：<input type="text" name="ad_revenue[]" id="ad_revenue1" size="5" value=""/>&nbsp;元</td>-->
-    <!--        <td>&nbsp;&nbsp;收藏数：<input type="text" name="favorite_num[]" id="favorite_num1" size="3" value=""/></td>-->
-    <!--        <td>&nbsp;&nbsp;转化订单数：<input type="text" name="change_order[]" id="change_order1" size="3" value=""/></td>-->
-    <!--        <td><span class="cursor" onclick="insertRowElement(this)">[&nbsp;+&nbsp;]</span></td>-->
-    <!--      </tr>   -->
-    <!--    </table>-->
-    <!--  </td>-->
-    <!--</tr>-->
+          <!--      <tr>-->
+            <!--        <td>广告：</td>-->
+            <!--        <td>-->
+              <!--          <select name="adname_id[]" id="ad_name1">-->
+                <!--            {foreach from=$ad_list item=v}-->
+                <!--            <option value="{$v.id}">{$v.activity_name}</option>-->
+                <!--            {/foreach}   -->
+                <!--          </select>-->
+              <!--        </td>-->
+            <!--        <td>&nbsp;&nbsp;广告费用：<input type="text" name="ad_costs[]" id="ad_costs1" size="5" value=""/>&nbsp;元</td>-->
+            <!--        <td>&nbsp;&nbsp;收益：<input type="text" name="ad_revenue[]" id="ad_revenue1" size="5" value=""/>&nbsp;元</td>-->
+            <!--        <td>&nbsp;&nbsp;收藏数：<input type="text" name="favorite_num[]" id="favorite_num1" size="3" value=""/></td>-->
+            <!--        <td>&nbsp;&nbsp;转化订单数：<input type="text" name="change_order[]" id="change_order1" size="3" value=""/></td>-->
+            <!--        <td><span class="cursor" onclick="insertRowElement(this)">[&nbsp;+&nbsp;]</span></td>-->
+            <!--      </tr>   -->
+          <!--    </table>-->
+        <!--  </td>-->
+      <!--</tr>-->
     <!--<tr>-->
       <!--  <td align="left">工作内容：</td>-->
       <!--  <td colspan="6" vertical=><textarea name="job_content" rows="5" cols="50"></textarea></td>-->

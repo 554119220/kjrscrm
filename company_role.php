@@ -11,18 +11,19 @@ if($_REQUEST['act'] == 'get_rule')
         " WHERE id=$id"; 
     $f = $GLOBALS['db']->getOne($sql_select);
 
-    switch($f){
-	    case 'ext':
-		    $file_name = 'ext.htm';
-		    break;
-	    case 'company_rule':
-		    $file_name = 'employee_rule.htm';
-		    break;
-	    case 'sales_rule':
-		    $file_name = 'sales_rule.htm';
-		    break;
+    $file_name = "$f.htm";
+    //switch($f){
+	//    case 'ext':
+	//        $file_name = 'ext.htm';
+	//        break;
+	//    case 'company_rule':
+	//        $file_name = 'employee_rule.htm';
+	//        break;
+	//    case 'sales_rule':
+	//        $file_name = 'sales_rule.htm';
+	//        break;
 
-    }
+    //}
     $res['main'] = $smarty->fetch($file_name);
 
     die($json->encode($res));

@@ -1401,11 +1401,7 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
     if (!admin_priv('everyone_sales', '',false) && !admin_priv('personal_trans-part_stats', '', false)) {
         $role_id = $_SESSION['role_id'];
     } elseif (!admin_priv('all', '', false) && admin_priv('personal_trans-part_stats', '', false)) {
-        //if ($_SESSION['admin_id'] == 64) {
-        //    $role_id = KEFU.','.KEFU2;
-        //}else{
-            $role_id = implode(',', trans_part_list());
-        //}
+        $role_id = implode(',', trans_part_list());
     } else {
         $role_id = OFFLINE_SALE;
     }
@@ -1511,11 +1507,12 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
     // 权限控制
     $trans_role_list = '';
     if (!admin_priv('all', '', false) && admin_priv('personal_trans-part_stats', '', false)) {
-        $trans_role_list = implode(',', trans_part_list());
-        if ($_SESSION['admin_id'] == 64) {
-            $trans_role_list = KEFU.','.KEFU2;
+        if (admin_priv('salary_deal','',false)) {
+            $range = ' r.role_id IN ('.OFFLINE_SALE.') AND a.stats>0 ';
+        }else{
+            $trans_role_list = implode(',', trans_part_list());
+            $range = "r.role_id IN ($trans_role_list) AND a.stats>0";
         }
-        $range = "r.role_id IN ($trans_role_list) AND a.stats>0";
     } elseif (!admin_priv('all', '',false) && !admin_priv('finance', '', false)) {
         if (admin_priv('personal_part_stats', '', false)) {
             $admin_list = get_admin_tmp_list($_SESSION['role_id']);
@@ -1530,13 +1527,13 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
             $range = " a.user_id={$_SESSION['admin_id']} ";
         }
     } else {
-        if ($_SESSION['role_id']) {
-            $role_id = implode(',', trans_part_list());
-            //$r_str = return_role_by_all();
-            $range = ' r.role_id IN ('.$role_id.') AND a.stats>0 ';
-        }else{
-            $range = ' r.role_id IN ('.OFFLINE_SALE.') AND a.stats>0 ';
-        }
+        //if ($_SESSION['role_id']) {
+        //    //$role_id = implode(',', trans_part_list());
+        //    //$r_str = return_role_by_all();
+        //    $range = ' r.role_id IN ('.$role_id.') AND a.stats>0 ';
+        //}else{
+        $range = ' r.role_id IN ('.OFFLINE_SALE.') AND a.stats>0 ';
+        //}
         $smarty->assign('part_all', true);
     }
 
@@ -1546,7 +1543,7 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
 
     $role_list = array_merge(explode(',', OFFLINE_SALE), explode(',', FINANCE));
     if (empty($_SESSION['role_id']) || in_array($_SESSION['role_id'], $role_list)) {
-        $sql_select = 'SELECT a.user_id,a.role_id,a.group_id,r.role_describe FROM '.
+        $sql_select = 'SELECT a.user_id,a.role_id,a.group_id,r.role_describe,r.depart_id FROM '.
             $GLOBALS['ecs']->table('admin_user').' a, '.$GLOBALS['ecs']->table('role').
             " r WHERE $range AND a.status>0 AND a.user_id<>74 AND a.role_id=r.role_id";
         $admin_users = $GLOBALS['db']->getAll($sql_select);
@@ -1605,7 +1602,8 @@ elseif ($_REQUEST['act'] == 'personal_sales_stats') {
             @$sales_list[$val['admin_id']]['p_return_count']  = $sales_return[$val['admin_id']]['p_return_count'];
             @$sales_list[$val['admin_id']]['p_return_amount'] = $sales_return[$val['admin_id']]['p_return_amount'];
             @$sales_list[$val['admin_id']]['role_id']   = $admin_info[$val['admin_id']]['role_id'];
-            @$sales_list[$val['admin_id']]['group_id']  = $admin_info[$val['admin_id']]['group_id'];
+            @$sales_list[$val['admin_id']]['depart_id']  = $admin_info[$val['admin_id']]['depart_id'];
+            //@$sales_list[$val['admin_id']]['group_id']  = $admin_info[$val['admin_id']]['group_id'];
             @$sales_list[$val['admin_id']]['admin_id']  = $val['admin_id'];
             @$sales_list[$val['admin_id']]['role_code'] = $admin_info[$val['admin_id']]['role_describe'];
             $net_sales = $sales_list[$val['admin_id']]['month_amount'];
@@ -2354,9 +2352,10 @@ elseif($_REQUEST['act']=='spread_report'){
         $smarty->assign('end_time',$_REQUEST['end_time']);
         $start_time = strtotime($_REQUEST['start_time']);
         $end_time = strtotime($_REQUEST['end_time']);
+        $sch = true;
     }else{
-        $start_time = strtotime(date('Y-m-01 00:00:00'));
-        $end_time = strtotime(date('Y-m-t 23:59:59'));
+        $start_time = strtotime(date('Y-m-d 00:00:00'));
+        $end_time = strtotime(date('Y-m-d 23:59:59'));
         $smarty->assign('start_time',date('Y-m-01'));
         $smarty->assign('end_time',date('Y-m-t'));
     }
@@ -2379,21 +2378,36 @@ elseif($_REQUEST['act']=='spread_report'){
         $where .= " AND platform={$_SESSION['role_id']}";
     }
 
-    $sql = 'SELECT r.role_name,pc_spread_uv,pc_order_num,pc_sale,m_spread_uv,m_order_num,m_sale,scalping_num,scalping_amount,ad_amount,report_time'
-        .' FROM '.$GLOBALS['ecs']->table('spread').' s LEFT JOIN '.$GLOBALS['ecs']->table('role').' r ON s.platform=r.role_id'
-        ." $where ORDER BY report_time DESC";
+    if (isset($_REQUEST['sel_type']) && $_REQUEST['sel_type']) {
+        $sql = "SELECT r.role_name,sum(pc_spread_uv) pc_spread_uv,sum(pc_order_num) pc_order_num,sum(pc_sale) pc_sale,sum(m_spread_uv) m_spread_uv,sum(m_order_num) m_order_num,sum(m_sale) m_sale,sum(activity_sale) activity_sale,sum(scalping_num) scalping_num,sum(scalping_amount) scalping_amount,sum(ad_amount) ad_amount,'-' report_time"
+            .' FROM '.$GLOBALS['ecs']->table('spread').' s LEFT JOIN '.$GLOBALS['ecs']->table('role').' r ON s.platform=r.role_id'
+            ." $where GROUP BY s.platform ORDER BY report_time DESC";
+        $smarty->assign('sel_type',$_REQUEST['sel_type']);
+    }else{
+        $sql = 'SELECT r.role_name,pc_spread_uv,pc_order_num,pc_sale,m_spread_uv,m_order_num,m_sale,activity_sale,scalping_num,scalping_amount,ad_amount,report_time'
+            .' FROM '.$GLOBALS['ecs']->table('spread').' s LEFT JOIN '.$GLOBALS['ecs']->table('role').' r ON s.platform=r.role_id'
+            ." $where ORDER BY report_time DESC";    
+    }
     $data = $GLOBALS['db']->getAll($sql);
     if ($data) {
+        //if ($total_data) {
+        //    $data = array_merge($total_data,$data);
+        //}
         $total = array(
             'role_name'=>'总计',
         );
         foreach ($data as &$v) {
-            $v['add_time']             = date('Y-m-d',$v['report_time']);
+            $v['add_time']             = $v['report_time'] != '-'?date('Y-m-d',$v['report_time']):'-';
+            $v['total_sale'] = bcadd($v['pc_sale'],$v['m_sale'],2);
             $v['total_spread_uv']             = $v['pc_spread_uv']+$v['m_spread_uv'];
             $v['total_order_num']      = $v['m_order_num']+$v['m_order_num'];
-            $v['total_transformation'] = bcdiv($v['total_order_num'],$v['total_spread_uv'],2)*100;
-            $v['pc_transformation']    = bcdiv($v['pc_order_num'],$v['pc_spread_uv'],2)*100;
+            $v['total_transformation'] = bcdiv($v['total_order_num'],$v['total_spread_uv'],4)*100;
+            $v['pc_transformation']    = bcdiv($v['pc_order_num'],$v['pc_spread_uv'],4)*100;
             $v['m_transformation']     = bcdiv($v['m_order_num'],$v['m_spread_uv'],2)*100;
+            //if ($v['add_time'] == '-') {
+            //    $v['add_time'] = '总合';
+            //    continue;
+            //}
             $total['pc_spread_uv']    += $v['pc_spread_uv'];
             $total['pc_order_num']    += $v['pc_order_num'];
             $total['pc_sale']         = bcadd($v['pc_sale'],$total['pc_sale'],2);
@@ -2403,7 +2417,9 @@ elseif($_REQUEST['act']=='spread_report'){
             $total['scalping_num']    += $v['scalping_num'];
             $total['scalping_amount'] = bcadd($v['scalping_amount'],$total['scalping_amount'],2);
             $total['ad_amount']       = bcadd($v['ad_amount'],$total['ad_amount'],2);
+            $total['activity_sale']       = bcadd($v['activity_sale'],$total['activity_sale'],2);
         }
+        $total['total_sale'] = bcadd($total['pc_sale'],$total['m_sale'],2);
         $total['total_spread_uv'] = $total['pc_spread_uv']+$total['m_spread_uv'];
         $total['total_order_num'] = $total['pc_order_num']+$total['m_order_num'];
         $total['total_transformation'] = bcdiv($total['total_order_num'],$total['total_spread_uv'],2)*100;
@@ -4753,6 +4769,7 @@ function break_up_package($package) {
             $goods_list[$k]['turnover'] += $val['turnover'];
         }
     }
+
     return $goods_list;
 }
 /**

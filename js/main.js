@@ -2008,10 +2008,11 @@ function statsMemberResp (res)
  * 查询个人销量
  */
 function querySales (obj) {
-  var start = obj.elements['start_time'].value;
-  var end   = obj.elements['end_time'].value;
+  var start   = obj.elements['start_time'].value;
+  var end     = obj.elements['end_time'].value;
   var r_start = obj.elements['r_start_time'].value;
-  var r_end = obj.elements['r_end_time'].value;
+  var r_end   = obj.elements['r_end_time'].value;
+  var depart_id   = obj.elements['depart_id'].value;
 
   Ajax.call('report_forms.php', 'act=stats_saler_month&start='+start+'&end='+end+'&r_start='+r_start+'&r_end='+r_end, querySalesResp, 'POST', 'JSON');
   return false;

@@ -484,7 +484,7 @@ function order_list() {
         $sql_select = 'SELECT SUBSTRING(u.user_name FROM 1 FOR 3) buyer,SUBSTRING(o.consignee FROM 1 FOR 4) consignee,u.aliww,u.qq,'.
             ' r.role_name platform,r.role_describe,o.add_time,o.final_amount,o.remarks,o.admin_name,o.order_amount,o.money_paid,o.pay_id,'.
             ' CONCAT(o.order_status,o.shipping_status,o.pay_status) order_status,o.shipping_status, o.order_id, SUBSTR(o.order_sn,-8,8) '.
-            ' order_sn,o.tracking_sn,o.shipping_code,r.role_describe,o.order_type '." $temp_fields FROM ".$GLOBALS['ecs']->table($table_order).' o,'.
+            ' order_sn,o.order_sn full_order_sn,o.tracking_sn,o.shipping_code,r.role_describe,o.order_type '." $temp_fields FROM ".$GLOBALS['ecs']->table($table_order).' o,'.
             $GLOBALS['ecs']->table($table_user).' u, '.$GLOBALS['ecs']->table('role').
             " r $table_admin WHERE o.user_id=u.user_id AND r.role_id=o.platform $where $order_status ".
             " ORDER BY $sort_by LIMIT ".($filter['page'] -1)*$filter['page_size'].",{$filter['page_size']}";
