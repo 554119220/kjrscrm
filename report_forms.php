@@ -1401,7 +1401,11 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
     if (!admin_priv('everyone_sales', '',false) && !admin_priv('personal_trans-part_stats', '', false)) {
         $role_id = $_SESSION['role_id'];
     } elseif (!admin_priv('all', '', false) && admin_priv('personal_trans-part_stats', '', false)) {
-        $role_id = implode(',', trans_part_list());
+        if (admin_priv('salary_deal','',false)) {
+        $role_id = OFFLINE_SALE;
+        }else{
+            $role_id = implode(',', trans_part_list());
+        }
     } else {
         $role_id = OFFLINE_SALE;
     }
@@ -3139,9 +3143,9 @@ function buy_back_stats($field)
     $sql_select = "SELECT COUNT(1) times,$field,SUM(final_amount) total_amount FROM ".$GLOBALS['ecs']->table('order_info').
         " WHERE $condition AND order_status IN (1,5) AND shipping_status IN (0,1,2) AND team<>23 AND order_type IN ($available_type) $ex_where GROUP BY $field";
 
-    if ($_SESSION['admin_id'] == 142) {
-        echo $sql_select;exit;
-    }
+    //if ($_SESSION['admin_id'] == 142) {
+    //    echo $sql_select;exit;
+    //}
     $platform_order_res = $GLOBALS['db']->getAll($sql_select);
 
     // 计算订单总数量
