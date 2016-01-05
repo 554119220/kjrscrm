@@ -5249,9 +5249,10 @@ function deal_order_report(){
     $where = " AND o.add_time BETWEEN $start_time AND $end_time"; 
 
     if(!$filter_type){
-        $sql = "SELECT SUM(o.final_amount) final_amount,COUNT(*) order_num,o.admin_id,o.admin_name,o.deal_method FROM "
+        $sql = "SELECT SUM(o.final_amount) final_amount,COUNT(*) order_num,o.admin_id,o.admin_name,o.deal_method,a.role_id,r.role_code FROM "
             .$GLOBALS['ecs']->table('order_info').' o LEFT JOIN '.$GLOBALS['ecs']->table('admin_user')
-            .' a ON o.admin_id=a.user_id'
+            .' a ON o.admin_id=a.user_id LEFT JOIN '.$GLOBALS['ecs']->table('role')
+            .' r ON a.role_id=r.role_id '
             ." WHERE o.order_type IN(4,5,6) AND o.order_status IN(5,1) AND o.shipping_status<>3 AND a.status=1 $where GROUP BY o.admin_id,o.deal_method ORDER BY final_amount DESC";
         
     }else{
@@ -5272,6 +5273,8 @@ function deal_order_report(){
         $list = array();
         if (!$filter_type) {
             foreach ($res as $v) {
+                $list[$v['admin_id']]['role_id'] = $v['role_id'];
+                $list[$v['admin_id']]['role_code'] = $v['role_code'];
                 $list[$v['admin_id']]['name'] = $v['admin_name'];
                 $list[$v['admin_id']]['list'][$v['deal_method']] = $v;
                 $total['list'][$v['deal_method']]['final_amount'] += $v['final_amount'];
@@ -5304,6 +5307,7 @@ function deal_order_report(){
         }
         ksort($v['list']);
     }
+
     return $res;
 }
 

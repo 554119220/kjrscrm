@@ -3,7 +3,7 @@
   <div class="finder-title mt10">{$curr_title}<font>{$num}</font></div>
   <div class="gridlist-action">
     <div class="nav-search">
-      <form name="sale_date" onsubmit="successOrderStats(this)" action="javascript:void(0)">
+      <form name="sale_date" action="javascript:void(0)">
         起始：
         <input class="Wdate" name="start_time" type="text"value="{$start_time}" size="13px" onClick="WdatePicker({dateFmt:'yyyy-MM-dd',{$min_date}})">
         终止：
@@ -17,7 +17,7 @@
         按：<label><input type="radio" name="filter_type" value="0" checked/> 员工</label>
         <label><input type="radio" name="filter_type" value="1"/> 小组</label>
         <label><input type="radio" name="filter_type" value="2"/> 部门</label>
-        <input type="submit" value="检索" class="b_submit">
+        <input type="button" value="检索" class="b_submit" onclick="filterByThis(this)">
       </form>
     </div>
   </div>

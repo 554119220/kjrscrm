@@ -207,8 +207,10 @@ function calcTotal() {
   }
 
   var pctObj = document.getElementById('pct');
-  var ave = (pctObj.previousSibling.previousSibling.innerText/pctObj.previousSibling.previousSibling.previousSibling.previousSibling.innerText).toFixed(2);
-  pctObj.innerText = isNaN(ave) ? 0 : ave;
+  if (pctObj !== null && pctObj) {
+    var ave = (pctObj.previousSibling.previousSibling.innerText/pctObj.previousSibling.previousSibling.previousSibling.previousSibling.innerText).toFixed(2);
+    pctObj.innerText = isNaN(ave) ? 0 : ave;
+  }
 }
 
 /**
@@ -418,4 +420,3 @@ function spreadReport(obj){
 
 function sale_trend(res){
 }
-

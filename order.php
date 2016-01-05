@@ -2497,8 +2497,13 @@ elseif ($_REQUEST['act'] == 'shipping_done') {
                 }
             }
 
-            //确认收货转顾客
-            //assign_user($order_id);
+            //确认收货转顾客,发货时间在2016-01-04之前
+            $sql_select = 'SELECT shipping_time FROM '.$GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
+            $shipping_time = $GLOBALS['db']->getOne($sql_select);
+            if ($shipping_time < strtotime(date('Y-m-d','2016-01-05'))) {
+                assign_user($order_id);
+            }
+
             update_taking_time();  // 更新商品可服用时间
 
             if (in_array($user['customer_type'], array(1,12,6,7,8,13,14,15,16,17))) {
@@ -4269,7 +4274,6 @@ function order_list()
         $filter     = $result['filter'];
     }
 
-    echo $sql_select;exit;
     $row = $GLOBALS['db']->getAll($sql_select);
 
     $sql_select = 'SELECT type_id,type_name FROM '.$GLOBALS['ecs']->table('order_type').' WHERE available=1';
