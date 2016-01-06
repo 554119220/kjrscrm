@@ -1832,7 +1832,7 @@ $db->query($sql_update);
     $sql_select = 'SELECT * FROM '.$GLOBALS['ecs']->table('repeat_purchase')." WHERE order_id={$order_id}";
     $isExistRep = $GLOBALS['db']->getRow($sql_select);
     //打单转顾客
-    assign_user($order_id);
+    //assign_user($order_id);
     if (empty($isExistRep)) {
         // 统计当前订单是该顾客第几次购买
         $sql_select = 'SELECT COUNT(*) FROM '.$GLOBALS['ecs']->table('order_info').
@@ -2500,9 +2500,9 @@ elseif ($_REQUEST['act'] == 'shipping_done') {
             //确认收货转顾客,发货时间在2016-01-04之前
             $sql_select = 'SELECT shipping_time FROM '.$GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
             $shipping_time = $GLOBALS['db']->getOne($sql_select);
-            if ($shipping_time < strtotime(date('Y-m-d','2016-01-05'))) {
+            //if ($shipping_time < strtotime(date('Y-m-d','2016-01-05'))) {
                 assign_user($order_id);
-            }
+            //}
 
             update_taking_time();  // 更新商品可服用时间
 
@@ -6415,27 +6415,49 @@ function jingdong_shiping_syn($order_id){
         " WHERE shipping_id='{$order_info['shipping_id']}'";
     $logistics = $GLOBALS['db']->getRow($sql);   
     // 同步发货（京东）
-    if ($order_info['shipping_time'] && $order_info['team'] == 10) {
+    if ($order_info['shipping_time'] && in_array($order_info['team'],array(10,54))) {
         include_once dirname(__FILE__).'/jingdong/JdClient.php';
         include_once dirname(__FILE__).'/jingdong/JdException.php';
         include_once dirname(__FILE__).'/jingdong/request/order/OrderSopOutstorageRequest.php';
 
         //include_once dirname(__FILE__).'/jingdong/sk.php';
         //$auth = include dirname(__FILE__).'/jingdong/config.php';
-        $sk = array (
-            'access_token'  => '9a35e657-2247-4c54-a270-232e100913b7',
-            'code'          => 0,
-            'expires_in'    => 13457820,
-            'refresh_token' => 'c1112a83-dd6b-45ff-b2e2-ed10a4d81570',
-            'time'          => '1418624799233',
-            'token_type'    => 'bearer',
-            'uid'           => '1021634047',
-        );
-        $auth = array (
-            'appkey'     => '6F8B4579DB13C33DDC521ECDCF750929',
-            'secretKey'  => 'a337ac10d1b541edaed7d458c7402ce9',
-            'platform'   => 'jingdong',
-        );
+        switch($order_info['team']){
+        case 10:
+            $sk = array (
+                'access_token'  => '9a35e657-2247-4c54-a270-232e100913b7',
+                'code'          => 0,
+                'expires_in'    => 13457820,
+                'refresh_token' => 'c1112a83-dd6b-45ff-b2e2-ed10a4d81570',
+                'time'          => '1418624799233',
+                'token_type'    => 'bearer',
+                'uid'           => '1021634047',
+            );
+            $auth = array (
+                'appkey'     => '6F8B4579DB13C33DDC521ECDCF750929',
+                'secretKey'  => 'a337ac10d1b541edaed7d458c7402ce9',
+                'platform'   => 'jingdong',
+            );
+            break;
+        case 54:
+            $sk = array (
+                'access_token' => 'd101763e-fc8a-4f00-8ebe-be47b1c5d492',
+                'code' => 0,
+                'expires_in' => 31621505,
+                'refresh_token' => '1b2106cb-ca81-43bf-a3a5-91d7987e600a',
+                'time' => '1448880455138',
+                'token_type' => 'bearer',
+                'uid' => '0119572449',
+            );
+            $auth =  array (
+                'appkey'     => '31079278BBD34661483D1C01AC061D80',
+                'secretKey'  => '909b77937f4d4cf6a21f48d315043118',
+                'platform'   => 'aksojd',
+            );
+
+            break;
+        }
+
 
         $req = new OrderSopOutstorageRequest;
         $req->setOrderId($order_info['order_sn']);
