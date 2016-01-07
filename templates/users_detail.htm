@@ -445,7 +445,7 @@
               <th width="5%">序号</th>
               <th width="15%">购买日期</th>
               <th width="10%">金额</th>
-              <th width="40%">订单</th>
+              <th width="40%">订单 {if $order_analyse}(平均订购时间：{$order_analyse.time_diff} 天，客单价：{$order_analyse.average}){/if}</th>
               <th width="10%">订单状态</th>
               <th width="10%">下单客服</th>
             </tr>

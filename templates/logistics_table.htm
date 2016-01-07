@@ -1,0 +1,57 @@
+{if $pay}
+<table class="wu_table_list tr_hover rb_border wu_rb_border" cellpadding="0" cellspacing="0" width="70%">
+  <thead>
+    <tr>
+      <th width="15%">省份</th>
+      {foreach from=$shipping item=v name=i}
+      <th colspan="2">{$v.shipping_name}</th>
+      {/foreach}
+    </tr>
+    <tr>
+      <th width="10%"></th>
+      {foreach from=$shipping item=v name=i}
+      <th>运费</th>
+      <th>点数</th>
+      {/foreach}
+    </tr>
+  </thead>
+  <tbody>
+    {foreach from=$province item=p}
+    <tr>
+      <td>{$p.region_name}</td>
+      {foreach from=$p.logistics item=l key=k name=i}
+      <td title="{$l.shipping_name}">
+        <input type="text" s="{$l.shipping_id}" r="{$p.region_id}" name="{$k}" class="wd50" value="{$l.express_fee}" ondblclick="editInput(this)" readonly="readonly"/>
+      </td>
+      <td>
+        <input type="text" name="p{k}" value="{$l.point}" class="wd50" ondblclick="editInput(this)" readonly="readonly"/> 
+      </td>
+      {/foreach}
+    </tr>
+    {/foreach}
+  </tbody>
+</table>
+{else}
+<table class="wu_table_list tr_hover rb_border wu_rb_border" cellpadding="0" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th width="10%">省份</th>
+      {foreach from=$shipping item=v name=i}
+      <th {if $smarty.foreach.i.iteration gt 2}class=""{/if}>{$v.shipping_name}</th>
+      {/foreach}
+    </tr>
+  </thead>
+  <tbody>
+    {foreach from=$province item=p}
+    <tr>
+      <td>{$p.region_name}</td>
+      {foreach from=$p.logistics item=l key=k name=i}
+      <td {if $smarty.foreach.i.iteration gt 2}class=""{/if} title="{$l.shipping_name}">
+        <input type="text" s="{$l.shipping_id}" r="{$p.region_id}" name="{$k}" class="wd50" value="{$l.express_fee}" ondblclick="editInput(this)" readonly="readonly"/>
+      </td>
+      {/foreach}
+    </tr>
+    {/foreach}
+  </tbody>
+</table>
+{/if}

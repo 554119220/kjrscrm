@@ -296,4 +296,8 @@ function inMain(res) {
   init();
 }
 
-
+function editInput(obj){
+  obj.removeAttribute('readonly');
+  obj.setAttribute('update','update');
+  obj.className = 'modify_input';
+}

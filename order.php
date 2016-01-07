@@ -3714,7 +3714,6 @@ elseif($_REQUEST['act'] == 'deal_flush_order'){
 
 //将订单标记成刷单
 elseif('mark_flush_order' == $_REQUEST['act']){
-
     $platform   = intval($_REQUEST['platform']);
     $goods_sn   = mysql_real_escape_string(($_REQUEST['goods_sn']));
     $price      = intval($_REQUEST['price']);

@@ -167,6 +167,73 @@ elseif ($_REQUEST['act'] == 'get_brand_goods')
         die($json->encode($res));    
     }
 }
+//物流费用设置
+elseif($_REQUEST['act'] == 'logistics_set'){
+    $province    = get_regions(1,1);
+    if (!isset($_REQUEST['pay'])) {
+        $express_fee = get_express_fee();
+        $shipping    = get_shipping_list();
+    }else{
+        $express_fee = get_express_fee(' AND point>0');
+        $shipping    = get_shipping_list(' AND pay_after_shipping=2');
+        $smarty->assign('pay',true);
+    }
+
+    foreach ($province as &$p) {
+        foreach ($shipping as $s) {
+            $k = $p['region_id'].$s['shipping_id'];
+            $p['logistics'][$k] = array(
+                'shipping_id'=>$s['shipping_id'],
+                'express_fee'=>0,
+                'point'=>0,
+                'shipping_name'=>$s['shipping_name'],
+            );
+        }
+    }
+    unset($p,$s);
+    if ($express_fee) {
+        foreach ($express_fee as $v) {
+            foreach ($province as &$p) {
+                if ($v['region_id'] == $p['region_id']) {
+                    $p['logistics'][$v['fee_id']]['express_fee'] = $v['express_fee'];
+                    $p['logistics'][$v['fee_id']]['point'] = $v['point'];
+                }
+            }
+        }
+    }
+    $smarty->assign('province',$province);
+    $smarty->assign('shipping',$shipping);
+    if ($_REQUEST['switch']) {
+        $res['main'] = $smarty->fetch('logistics_table.htm'); 
+    }else{
+        $smarty->assign('logistics_table',$smarty->fetch('logistics_table.htm'));
+        $res['main'] = $smarty->fetch('logistics.htm'); 
+    }
+    die($json->encode($res));    
+}
+
+elseif($_REQUEST['act'] = 'set_express_fee'){
+    $data = $_POST;
+    if ($data) {
+        foreach ($data as $v) {
+            $v['express_fee'] = floatval($v['express_fee']);
+            $sql = 'SELECT COUNT(1) FROM '.$GLOBALS['ecs']->table('express_fee')." WHERE fee_id={$v['fee_id']}";
+            if ($GLOBALS['db']->getOne($sql)) {
+                $sql = 'UPDATE '.$GLOBALS['ecs']->table('express_fee')
+                    ." SET express_fee={$v['express_fee']} WHERE fee_id={$v['fee_id']}";
+            }else{
+                $sql = 'INSERT INTO '.$GLOBALS['ecs']->table('express_fee')
+                    ."(fee_id,shipping_id,region_id,express_fee)"
+                    ."VALUES({$v['fee_id']},{$v['shipping_id']},{$v['region_id']},{$v['express_fee']})";
+            }
+            $GLOBALS['db']->query($sql);
+        }
+        $res = crm_msg('编辑成功');
+    }else{
+        $res = crm_msg('没有可修改数据');
+    }
+    die($json->encode($res));
+}
 
 /**
  * 订单列表

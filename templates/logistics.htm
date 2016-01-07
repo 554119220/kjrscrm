@@ -1,0 +1,12 @@
+<br />
+<h3>物流费用设置</h3>
+<br />
+<div class="ofxauto">
+  <div class="gridlist-action">
+    <label><input type="radio" name="type" value="1" class="b_submit" onclick="switchLogistics(1)" checked/> 普通快递</label>
+    <label><input type="radio" name="type" value="2" class="b_submit" onclick="switchLogistics(2)"/> 货到付款</label>
+    &nbsp;双击快递金额可进行编辑
+    <input type="button" name="save" value="保存修改" class="b_submit" onclick="saveExpressFee()"/>
+  </div>
+  <div id="resource">{$logistics_table}</div>
+</div>

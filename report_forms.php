@@ -2815,7 +2815,6 @@ function stats_all ()
     $sql_select = 'SELECT COUNT(*) order_num,SUM(i.final_amount) order_amount,r.depart_desc platform,i.admin_id,i.admin_name FROM '.
         $GLOBALS['ecs']->table('order_info').' i,'.$GLOBALS['ecs']->table('role').
         " r WHERE i.order_status IN (1,5) AND i.order_type NOT IN (1,10,100) AND i.shipping_status<>3 AND i.platform=r.role_id AND i.add_time BETWEEN $start AND $end $sql_platform";
-    echo $sql_select;exit;
     $res = $GLOBALS['db']->getAll($sql_select);
 
     $stats_all = array ();

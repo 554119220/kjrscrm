@@ -232,3 +232,14 @@ function array_sort($array, $on, $order=SORT_ASC)
     return $new_array;
 }
 
+function get_shipping_list($s=' AND pay_after_shipping<>2'){
+    $sql = 'SELECT shipping_id,shipping_name FROM '.$GLOBALS['ecs']->table('shipping')
+        ." WHERE enabled=1 AND quick_code<>'' $s";
+    return $GLOBALS['db']->getAll($sql);
+}
+
+function get_express_fee($s=''){
+    $sql = 'SELECT fee_id,shipping_id,region_id,express_fee FROM '.$GLOBALS['ecs']->table('express_fee')
+        ." WHERE 1 $s";
+    return $GLOBALS['db']->getAll($sql);
+}

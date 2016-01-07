@@ -1,3 +1,5 @@
+.ofxauto{overflow-x:auto}
+.modify_input{border:1px solid #DB0000;color:#DB0000;width:50px;}
 button {border:0; background:0}
 body,html {height:100%;background:#f1f1f1}
 .flt dl {border-bottom:1px solid #C1CFE2; border-top:1px solid white; padding:0;margin:0}

@@ -701,6 +701,24 @@ elseif ($_REQUEST['act'] == 'user_detail') {
     $smarty->assign('role_id',$_SESSION['role_id']);
 
     $order_list   = access_purchase_records($user_id); // 获取顾客购买记录（订单记录）
+    if ($order_list && count($order_list)>2) {
+        $nu = count($order_list);
+        $tmp = $order_list;
+        $first = array_shift($tmp);
+        $last = array_pop($tmp);
+        $time_diff = floor((strtotime($first['add_time'])-strtotime($last['add_time']))/(86400*$nu));
+        $order_analyse = array('time_diff'=>$time_diff,'amount'=>0,'average'=>0);
+        $count = 0;
+        foreach ($order_list as $o) {
+            if (!in_array($o['shippng_status'],array(3,4))) {
+                $order_analyse['amount'] = bcadd($o['final_amount'],$order_analyse['amount'],2);
+                $count++;
+            }
+        }
+        $order_analyse['average'] = bcdiv($order_analyse['amount'],$count,2);
+        unset($o);
+        $smarty->assign('order_analyse',$order_analyse);
+    }
     $service_list = get_user_services($user_id);       // 获取顾客服务记录
     $addr_list    = get_addr_list($user_id);           // 顾客地址列表
     $contact_list = get_contact_list($user_id);        // 顾客联系方式列表

@@ -714,3 +714,42 @@ function averageQuestion(val){
       $(this).val(average);
   });
 }
+
+function saveExpressFee(){
+  var data = {};
+  var inputList = $("table input").filter("[update='update']");
+  var j = 0;
+  inputList.each(function(){
+    data[j] = {
+      'fee_id'     : $(this).attr('name'),
+      'express_fee' : $(this).val(),
+      'region_id'  : $(this).attr('r'),
+      'shipping_id'  : $(this).attr('s'),
+    };
+    j++;
+  });
+
+  $.post(
+      'finance.php?act=set_express_fee',
+      data,
+      function(res){
+        showMsg(res);
+        $.get(
+          'finance.php?act=logistics_set',
+          function(res){
+            inMain(res);
+          },'JSON');
+      },'JSON');
+}
+
+function switchLogistics(type){
+  var url = 'finance.php?act=logistics_set&switch=1';
+  if (type==2) {
+    url += '&pay=1';
+  }
+  $.get(
+      url,
+      function(res){
+       $("#resource").html(res.main); 
+      },'JSON');
+}
