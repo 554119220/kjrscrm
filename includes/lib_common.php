@@ -239,7 +239,7 @@ function get_shipping_list($s=' AND pay_after_shipping<>2'){
 }
 
 function get_express_fee($s=''){
-    $sql = 'SELECT fee_id,shipping_id,region_id,express_fee FROM '.$GLOBALS['ecs']->table('express_fee')
+    $sql = 'SELECT fee_id,shipping_id,region_id,express_fee,point FROM '.$GLOBALS['ecs']->table('express_fee')
         ." WHERE 1 $s";
     return $GLOBALS['db']->getAll($sql);
 }

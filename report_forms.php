@@ -2437,6 +2437,7 @@ elseif($_REQUEST['act']=='spread_report'){
     $res['main'] = $smarty->fetch('spread_report.htm');
     die($json->encode($res));
 }
+
 //顾客评价
 elseif($_REQUEST['act'] == 'evaluate'){
     $c = new TopClient;
@@ -2446,6 +2447,12 @@ elseif($_REQUEST['act'] == 'evaluate'){
     $req->setChildTradeId("11111111111");
     $resp = $c->execute($req, $sessionKey);
 
+}
+elseif($_REQUEST['act'] == 'express_fee_report'){
+    $shipping_list = get_shipping_list('');
+    $smarty->assign('shipping_list',$shipping_list);
+    $res['main'] = $smarty->fetch('express_fee_report.htm');
+    die($json->encode($res));
 }
 /*------------------------------------------------------ */
 //--排行统计需要的函数

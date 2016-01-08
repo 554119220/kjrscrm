@@ -892,6 +892,8 @@ elseif ($_REQUEST['act'] == 'ordersyn_verify') {
         $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('ordersyn_info').
             " SET confirmor={$_SESSION['admin_id']}, order_status='-1' WHERE order_id=$order_id";
         $GLOBALS['db']->query($sql_update);
+        //计算快递费用
+        calculate_express_fee($order_id);
         record_operate ($sql_update, 'ordersyn_info'); // 记录SQL
 
         $sql_select = 'SELECT order_sn FROM '.$GLOBALS['ecs']->table('ordersyn_info')." WHERE order_id=$order_id AND team=6";
@@ -2497,9 +2499,8 @@ elseif ($_REQUEST['act'] == 'shipping_done') {
                 }
             }
 
-            //确认收货转顾客,发货时间在2016-01-04之前
-            $sql_select = 'SELECT shipping_time FROM '.$GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
-            $shipping_time = $GLOBALS['db']->getOne($sql_select);
+            //$sql_select = 'SELECT shipping_time FROM '.$GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
+            //$shipping_time = $GLOBALS['db']->getOne($sql_select);
             //if ($shipping_time < strtotime(date('Y-m-d','2016-01-05'))) {
                 assign_user($order_id);
             //}
@@ -6575,4 +6576,11 @@ function storeOrderMoreDetail($where){
         .' g ON o.order_id=g.order_id '
         ." WHERE o.order_type=10 AND o.order_status IN(5,1) AND o.shipping_status<>3 $where ORDER BY o.add_time DESC";
     return $GLOBALS['db']->getAll($sql);
+}
+
+function calculate_express_fee($order_id){
+    // 查询当前订单的user_id
+    $sql_select = 'SELECT order_sn,user_id,country,province,city,district,address,zipcode FROM '.
+        $GLOBALS['ecs']->table('ordersyn_info')." WHERE order_id=$order_id";
+    $order_info = $GLOBALS['db']->getRow($sql_select);   
 }

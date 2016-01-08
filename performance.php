@@ -50,6 +50,7 @@ elseif($_REQUEST['act'] == 'spread') {
     //$sql_select = 'SELECT * FROM '.$GLOBALS['ecs']->table('advertisement');
     //$ad_list = $GLOBALS['db']->getAll($sql_select); //$smarty->assign('ad_list',$ad_list);
     $smarty->assign('report_time',date('Y-m-d',$_SERVER['REQUEST_TIME']-86400));
+    $smarty->assign('maxDate',date('Y-m-d'));
     $res['main'] = $smarty->fetch('spread.htm');
 
     die($json->encode($res));

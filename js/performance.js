@@ -721,16 +721,17 @@ function saveExpressFee(){
   var j = 0;
   inputList.each(function(){
     data[j] = {
-      'fee_id'     : $(this).attr('name'),
+      'fee_id'      : $(this).attr('name'),
       'express_fee' : $(this).val(),
-      'region_id'  : $(this).attr('r'),
-      'shipping_id'  : $(this).attr('s'),
+      'region_id'   : $(this).attr('r'),
+      'shipping_id' : $(this).attr('s'),
     };
     j++;
   });
-
+  var type = $("input[type='radio']:checked").val();
+  var url = 'finance.php?act=set_express_fee&type='+type;
   $.post(
-      'finance.php?act=set_express_fee',
+      url,
       data,
       function(res){
         showMsg(res);

@@ -213,20 +213,60 @@ elseif($_REQUEST['act'] == 'logistics_set'){
 }
 
 elseif($_REQUEST['act'] = 'set_express_fee'){
+    $type = $_REQUEST['type'];
     $data = $_POST;
     if ($data) {
-        foreach ($data as $v) {
-            $v['express_fee'] = floatval($v['express_fee']);
-            $sql = 'SELECT COUNT(1) FROM '.$GLOBALS['ecs']->table('express_fee')." WHERE fee_id={$v['fee_id']}";
-            if ($GLOBALS['db']->getOne($sql)) {
-                $sql = 'UPDATE '.$GLOBALS['ecs']->table('express_fee')
-                    ." SET express_fee={$v['express_fee']} WHERE fee_id={$v['fee_id']}";
-            }else{
-                $sql = 'INSERT INTO '.$GLOBALS['ecs']->table('express_fee')
-                    ."(fee_id,shipping_id,region_id,express_fee)"
-                    ."VALUES({$v['fee_id']},{$v['shipping_id']},{$v['region_id']},{$v['express_fee']})";
+        if ($type == 2 ) {
+            $point = array();
+            foreach($data as $k=>&$d){
+                if (strpos($d['fee_id'],'p') !== false) {
+                    $key = substr($d['fee_id'],1);
+                    $point[$key] = $d;
+                    unset($data[$k]);
+                }
             }
-            $GLOBALS['db']->query($sql);
+            foreach ($data as $v) {
+                $v['express_fee'] = floatval($v['express_fee']);
+                $sql = 'SELECT COUNT(1) FROM '.$GLOBALS['ecs']->table('express_fee')." WHERE fee_id={$v['fee_id']}";
+                if ($GLOBALS['db']->getOne($sql)) {
+                    $sql = 'UPDATE '.$GLOBALS['ecs']->table('express_fee')
+                        ." SET express_fee={$v['express_fee']} WHERE fee_id={$v['fee_id']}";
+                }else{
+                    $sql = 'INSERT INTO '.$GLOBALS['ecs']->table('express_fee')
+                        ."(fee_id,shipping_id,region_id,express_fee)"
+                        ."VALUES({$v['fee_id']},{$v['shipping_id']},{$v['region_id']},{$v['express_fee']})";
+                }
+                $GLOBALS['db']->query($sql);
+            }
+            if ($point) {
+                unset($v);
+                foreach ($point as $k=>$v) {
+                    $sql = 'SELECT COUNT(1) FROM '.$GLOBALS['ecs']->table('express_fee')." WHERE fee_id=$k";
+                    if ($GLOBALS['db']->getOne($sql)) {
+                        $sql = 'UPDATE '.$GLOBALS['ecs']->table('express_fee')
+                            ." SET point={$v['express_fee']} WHERE fee_id=$k";
+                    }else{
+                        $sql = 'INSERT INTO '.$GLOBALS['ecs']->table('express_fee')
+                            ."(fee_id,shipping_id,region_id,point)"
+                            ."VALUES($k,{$v['shipping_id']},{$v['region_id']},{$v['express_fee']})";
+                    }
+                    $GLOBALS['db']->query($sql);
+                }
+            }
+        }else{
+            foreach ($data as $v) {
+                $v['express_fee'] = floatval($v['express_fee']);
+                $sql = 'SELECT COUNT(1) FROM '.$GLOBALS['ecs']->table('express_fee')." WHERE fee_id={$v['fee_id']}";
+                if ($GLOBALS['db']->getOne($sql)) {
+                    $sql = 'UPDATE '.$GLOBALS['ecs']->table('express_fee')
+                        ." SET express_fee={$v['express_fee']} WHERE fee_id={$v['fee_id']}";
+                }else{
+                    $sql = 'INSERT INTO '.$GLOBALS['ecs']->table('express_fee')
+                        ."(fee_id,shipping_id,region_id,express_fee)"
+                        ."VALUES({$v['fee_id']},{$v['shipping_id']},{$v['region_id']},{$v['express_fee']})";
+                }
+                $GLOBALS['db']->query($sql);
+            }
         }
         $res = crm_msg('编辑成功');
     }else{
@@ -495,7 +535,7 @@ function order_list() {
         if($filter['brand'] && !$filter['goods_id']){
             $table_admin .= ', '.$GLOBALS['ecs']->table('order_goods').' g ';
             $where = " AND o.order_id=g.order_id AND g.brand_id={$filter['brand']} ".$where;
-        //包括套餐中的商品
+            //包括套餐中的商品
         }
 
         //商品名

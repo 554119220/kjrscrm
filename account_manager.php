@@ -1149,20 +1149,15 @@ elseif ($_REQUEST['act'] == 'put_in_black')
     $res['code']    = 0;
     $res['timeout'] = '2000';
 
-    if($user_id)
-    {
-        $sql_select = 'SELECT count(*) AS total,user_id,status FROM '.$GLOBALS['ecs']->table('user_blacklist')
+    if($user_id) {
+        $sql_select = 'SELECT count(1) AS total,user_id,status FROM '.$GLOBALS['ecs']->table('user_blacklist')
             ." WHERE user_id=$user_id ";
         $result = $GLOBALS['db']->getRow($sql_select);
 
-        if($result['total']>0 && $result['status'] == 0 || $result['status'] == 2)
-        {
+        if($result['total']>0 && $result['status'] == 0 || $result['status'] == 2) {
             $res['message'] = '该顾客已经被列入黑名单，无需重复操作';
-        }
-        else
-        {
-            if($result['total'] <= 0)
-            {
+        } else {
+            if($result['total'] <= 0) {
                 $sql_select = " SELECT user_id,user_name,admin_id,role_id,'"
                     .$_SESSION['admin_name']."',UNIX_TIMESTAMP(NOW()),$blacklist_type,'$reason' FROM "
                     .$GLOBALS['ecs']->table('users')
@@ -1170,15 +1165,13 @@ elseif ($_REQUEST['act'] == 'put_in_black')
 
                 $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('user_blacklist').
                     '(user_id,user_name,admin_id,role_id,operator_in,in_time,type_id,reason)'.$sql_select;    
-            }
-            elseif($result['status'] == 1)
-            {
+            } elseif($result['status'] == 1) {
                 $sql_insert = 'UPDATE '.$GLOBALS['ecs']->table('user_blacklist').
                     " SET status=0,reason='$reason',type_id=$blacklist_type,operator_in={$_SESSION['admin_name']} WHERE user_id=$user_id";
             }
 
             if($GLOBALS['db']->query($sql_insert)) {
-                $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users').' SET is_black=1'.
+                $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users').' SET is_black=1,customer_type=5'.
                     " WHERE user_id=$user_id";
                 $GLOBALS['db']->query($sql_update);
 
@@ -1188,29 +1181,21 @@ elseif ($_REQUEST['act'] == 'put_in_black')
                 $res['message'] = '未能加入黑名单';
             }
         }
-    }
-    elseif($account_type && $account_value)      //添加一条黑名单账号记录
-    {
+    } elseif($account_type && $account_value) {
+        //添加一条黑名单账号记录
         $sql_select = 'SELECT COUNT(*) FROM '.$GLOBALS['ecs']->table('account_blacklist')
             ." WHERE account_type=$account_type AND account_value=$account_value";
-        if($GLOBALS['db']->getOne($sql_select))
-        {
+        if($GLOBALS['db']->getOne($sql_select)) {
             $res['message'] = '已经存在，不需要重复添加';
-        }
-        else
-        {
+        } else {
             $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('account_blacklist')
                 .'(account_type,blacklist_type,account_value,add_admin,in_time)VALUES('."$account_type,4,'$account_value',".$_SESSION['admin_id'].",UNIX_TIMESTAMP(NOW()))";
-            if($GLOBALS['db']->query($sql_insert))
-            {
+            if($GLOBALS['db']->query($sql_insert)) {
                 $res['code'] = 1;
                 $res['message'] = '成功加入黑名单';
             } else
                 $res['message'] = '未能加入黑名单';    
         }
-    }
-    else if (isset($_REQUEST['file_account'])) {
-        //用文件导入方式导入黑名单 
     }
 
     die($json->encode($res));
