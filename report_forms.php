@@ -244,13 +244,13 @@ elseif ($_REQUEST['act'] == 'goods_num') {
 elseif($_REQUEST['act'] == 'goods_sale_rank'){
     $sel_item   = is_numeric($_REQUEST['sel_item']) ? intval($_REQUEST['sel_item']) : 2;
     $goods_sn   = mysql_real_escape_string($_REQUEST['goods_sn']);
-    $start_time = strtotime($_REQUEST['start_time']);
-    $end_time   = strtotime($_REQUEST['end_time']);
+    $start_time = strtotime(date('Y-m-d 00:00:00',strtotime($_REQUEST['start_time'])));
+    $end_time   = strtotime(date('Y-m-d 23:59:59',strtotime($_REQUEST['end_time'])));
     $platform   = intval($_REQUEST['platform']);
     $depart_id  = intval($_REQUEST['depart_id']);
 
     //不包含待发货
-    $where = " WHERE oi.order_id=og.order_id AND oi.order_status IN(5,1) AND oi.shipping_status IN(1,2,4) AND oi.add_time BETWEEN $start_time AND $end_time AND oi.order_type IN (2,3,4,6,100,9) ";
+    $where = " WHERE oi.order_status IN(5,1) AND oi.shipping_status IN(1,2,4) AND oi.add_time BETWEEN $start_time AND $end_time AND oi.order_type IN (2,3,4,6,100,9) ";
     if ($platform) {
         $where .= " AND oi.platform=$platform ";
     }
@@ -260,20 +260,23 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
         $where .= " AND oi.platform IN($platform) ";
     }
 
+    $platform_sales = for_goods_sale_rank($where);
+    $where .= ' AND oi.order_id=og.order_id ';
     //总的销售额
     $sql_count = 'SELECT SUM(og.goods_number*og.goods_price) FROM '.$GLOBALS['ecs']->table('order_goods').' og,'
         .$GLOBALS['ecs']->table('order_info')." oi $where AND og.goods_sn='$goods_sn' AND og.is_gift<>1 ";
     $total = $GLOBALS['db']->getOne($sql_count);
+    $key_name = $sel_item==1?'depart_id':'role_id';
     if ($total) {
         // @sel_item 1 部门 2 小组 3 员工
         if ($sel_item == 3) {
             $table = 'admin_user';
-            $field = ',t.user_name name';
+            $field = ',t.user_name name,t.role_id';
             $where .= ' AND t.user_id=oi.admin_id ';
             $group_by = 'oi.admin_id, ';
         }else{
             $table = 'role';
-            $field = ',t.role_name name';
+            $field = ',t.role_name name,t.role_id';
             if ($sel_item == 1) {
                 $field .= ",t.depart_id";
             }
@@ -376,6 +379,16 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
                 if ($depart_list) {
                     array_multisort($sort,SORT_DESC,$depart_list);
                     $rank_status = $depart_list;
+                }
+            }
+        }
+    }
+    if ($rank_status && $platform_sales) {
+        unset($v);
+        foreach ($rank_status as &$v) {
+            foreach ($platform_sales as $s) {
+                if ($v[$key_name] == $s[$key_name] && $s['final_amount']>0) {
+                    $v['platform_sale_rate'] = bcdiv($v['turnover'],$s['final_amount'],4)*100;
                 }
             }
         }
@@ -2448,11 +2461,34 @@ elseif($_REQUEST['act'] == 'evaluate'){
     $resp = $c->execute($req, $sessionKey);
 
 }
+//快递费用报表
 elseif($_REQUEST['act'] == 'express_fee_report'){
     $shipping_list = get_shipping_list('');
+    $role_list     = get_role(' role_id IN('.ONLINE_STORE.','.OFFLINE_SALE.') AND role_type>0 ');
+    $depart_list   = get_department(' AND depart_id IN('.SALE_DEPART.')');
+    $shipping_list = get_shipping_list('');
+    $list = express_fee_report($shipping_list);
+
+    $smarty->assign('list',$list);
+    $smarty->assign('shipping_list',$shipping_list);
+    $smarty->assign('depart_list',$depart_list);
+    $smarty->assign('role_list',$role_list);
     $smarty->assign('shipping_list',$shipping_list);
     $res['main'] = $smarty->fetch('express_fee_report.htm');
     die($json->encode($res));
+}
+
+elseif($_REQUEST['act']=='set_main_sale'){
+    $role_list     = get_role(' role_id IN('.ONLINE_STORE.','.OFFLINE_SALE.') AND role_type>0 ');
+    $depart_list   = get_department(' AND depart_id IN('.SALE_DEPART.')');
+
+    $smarty->assign('depart_list',$depart_list);
+    $smarty->assign('role_list',$role_list);
+    $res['main'] = $smarty->fetch('set_main_sale.htm');
+    die($json->encode($res));
+}
+elseif($_REQUEST['act']=='set_main_sale_done'){
+    print_r($_GET);exit;
 }
 /*------------------------------------------------------ */
 //--排行统计需要的函数
@@ -5386,4 +5422,88 @@ function rebuy_repeat($res,$key){
         }
     }
     return $final;
+}
+
+function express_fee_report($shipping_list=array()){
+    $start_time = isset($_REQUEST['start_time']) ? strtotime($_REQUEST['start_time']) : strtotime(date('Y-m-01 00:00:00'));
+    $end_time = isset($_REQUEST['end_time']) ? strtotime($_REQUEST['end_time']) : strtotime(date('Y-m-t 00:00:00'));
+    foreach ($shipping_list as $s) {
+        $sp[] = $s['shipping_id'];
+    }
+    $sp = implode(',',$sp);
+    //外包
+    $sql = 'SELECT SUM(express_fee) express_fee,shipping_id,platform FROM '.$GLOBALS['ecs']->table('other_express_fee')." WHERE add_time BETWEEN $start_time AND $end_time".
+        ' GROUP BY shipping_id,platform';
+    $other_express_fee = $GLOBALS['db']->query($sql);
+    global $smarty;
+    $smarty->assign('start_time',date('Y-m-d',$start_time));
+    $smarty->assign('end_time',date('Y-m-d',$end_time));
+    $where = " AND o.order_status=5 AND o.shipping_status<>3 AND o.add_time BETWEEN $start_time AND $end_time "
+        ." AND o.shipping_id IN($sp)";
+    $p_sql = ' role_id IN('.OFFLINE_SALE.','.ONLINE_STORE.') AND role_type>0';
+    if ($depart_id = intval($_REQUEST['depart_id'])) {
+        $where .= " AND r.depart_id=$depart_id";
+        $p_sql .= " AND depart_id=$depart_id";
+        $smarty->assign('depart_id',$depart_id);
+    }
+
+    if ($role_id = intval($_REQUEST['role_id'])) {
+        $where .= " AND o.platform=$role_id ";
+        $p_sql .= " AND role_id=$role_id";
+        $smarty->assign('role_id',$role_id);
+    }
+
+    $sql = 'SELECT o.platform,o.express_fee,o.shipping_id FROM '.$GLOBALS['ecs']->table('order_info').' o,'.$GLOBALS['ecs']->table('role')  
+        ." r WHERE o.platform=r.role_id $where";
+    $list = $GLOBALS['db']->getAll($sql);
+
+    $role_list = get_role($p_sql);
+    $total = array(
+        'role_id' =>0,
+        'role_name' =>'总计'
+    );
+    array_push($role_list,$total);
+    if ($shipping_list) {
+        foreach ($shipping_list as $s) {
+            foreach ($role_list as &$r) {
+                $r['express_fee_list'][$s['shipping_id']] = 0;
+            }
+        }
+    }
+    $total = array_pop($role_list);
+    modifyData($list,$role);
+    if ($other_express_fee) {
+    }
+    if ($list) {
+        unset($r);
+        foreach ($list as $l) {
+            foreach ($role_list as &$r) {
+                if ($l['platform'] == $r['role_id']) {
+                    $r['express_fee_list'][$l['shipping_id']] += $l['express_fee'];
+                }
+            }
+        }
+        unset($r,$l); 
+        foreach ($role_list as $r) {
+           foreach ($r['express_fee_list'] as $k=>$l) {
+               $total['express_fee_list'][$k] += $l;
+           } 
+        }
+        array_push($role_list,$total);
+    }
+    return $role_list;
+}
+
+function modifyData($list,&$role_list){
+    
+}
+
+//平台销量，用于产品销量的统计
+function for_goods_sale_rank($where){
+    $sel_item   = is_numeric($_REQUEST['sel_item']) ? intval($_REQUEST['sel_item']) : 2;
+    $group_by = $sel_item == 1 ? ' GROUP BY r.depart_id':' GROUP BY oi.platform';
+    $sql = 'SELECT SUM(oi.final_amount) final_amount,oi.platform role_id,r.depart_id FROM '.$GLOBALS['ecs']->table('order_info')
+        .' oi LEFT JOIN '.$GLOBALS['ecs']->table('role').' r ON oi.platform=r.role_id'
+        ." $where $group_by";
+    return $GLOBALS['db']->getAll($sql);
 }

@@ -1,0 +1,25 @@
+<br />
+<h3>修改订单中的快递费用</h3>
+<div>
+  <table class="table_form white_bg" width="30%">
+    <tr>
+      <th>订单编号</th>
+      <td>
+        <input type="text" id="order_sn" value="{$order_sn}" />
+        <input type="button" class="b_submit" value="搜索" onclick="schOrderForMod()"/>
+      </td>
+    </tr>
+  </table>
+ <form action="javascript:void(0)" onsubmit="modifyExpressFee(this)">
+   <table class="table_form white_bg" width="30%">
+     <tr><th>收货人：</th> <td>{$info.consignee}</td> </tr>   
+     <tr><th>省份：</th> <td>{$info.region_name}</td> </tr>   
+     <tr><th>快递：</th> <td>{$info.shipping_name}</td> </tr>   
+     <tr><th>快递费：</th> <td>
+         <input type="hidden" name="order_sn" value="{$order_sn}"/>
+         <input type="text" name="express_fee" value="{$info.express_fee}"/>
+         <input class="b_submit" type="submit" value="修改">
+     </td></tr>   
+   </table> 
+ </form> 
+</div>

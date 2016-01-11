@@ -1824,7 +1824,6 @@ function get_department($where='',$change=false,$single=false){
         }
         $list = $arr;
     }
-
     return $list;
 }
 

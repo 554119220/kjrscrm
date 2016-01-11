@@ -420,3 +420,53 @@ function spreadReport(obj){
 
 function sale_trend(res){
 }
+
+function expressFeeReport(obj){
+  var startTime = obj.elements['start_time'].value;
+  var endTime   = obj.elements['end_time'].value;
+  var departId  = obj.elements['depart_id'].value;
+  var roleId    = obj.elements['role_id'].value;
+  $.post(
+      'report_forms.php?act=express_fee_report&start_time='+startTime+'&end_time='+endTime+'&depart_id='+departId+'&role_id='+roleId,
+      function(res){
+        inMain(res);
+      },'JSON');
+}
+
+function addToMain(box){
+  var goodsId = $("#goods_id").val();
+  var c = false;
+  $("input[type='checkbox']").not(":checked").each(
+      function(){
+        $(this).parent('label').remove();
+      });
+  $("input[type='checkbox']").each(
+      function(){
+
+        if ($(this).val() == goodsId) {
+          c = true;
+        }
+      });
+  if (!c) {
+    var html = $("#"+box).html();
+    var name = $("#goods_id option:selected").text();
+    var end = name.search(' ');
+    var text = name.substring(0,end);
+    html += '<label><input type="checkbox" value="'+goodsId+'" checked />'+text+'</label>';
+    $("#"+box).html(html);
+  }
+}
+
+function saveMainSaleGoods(){
+  var data = [];
+  $("input[type='checked']:checked").each(
+      function(){
+       data.push($(this).val()); 
+      });
+  if (data.length>0) {
+    $.get(
+        'report_forms.php?act=save_main_sale_done&data='+data.join(','),
+        function(res){showMsg(res)},'JSON'
+        );
+  }
+}

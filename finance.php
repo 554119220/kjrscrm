@@ -211,8 +211,7 @@ elseif($_REQUEST['act'] == 'logistics_set'){
     }
     die($json->encode($res));    
 }
-
-elseif($_REQUEST['act'] = 'set_express_fee'){
+elseif($_REQUEST['act'] == 'set_express_fee'){
     $type = $_REQUEST['type'];
     $data = $_POST;
     if ($data) {
@@ -271,6 +270,38 @@ elseif($_REQUEST['act'] = 'set_express_fee'){
         $res = crm_msg('编辑成功');
     }else{
         $res = crm_msg('没有可修改数据');
+    }
+    die($json->encode($res));
+}
+
+//财务修改快递费用
+elseif($_REQUEST['act'] == 'modify_express_fee'){
+    $behave = isset($_REQUEST['behave'])?$_REQUEST['behave']:'show';
+    switch($behave){
+    case 'show':
+        $res['main'] = $smarty->fetch('modify_express_fee.htm');
+        break;
+    case 'sch':
+        $order_sn = mysql_real_escape_string($_REQUEST['order_sn']);
+        $sql = 'SELECT o.express_fee,o.consignee,r.region_name,s.shipping_name FROM '.
+            $GLOBALS['ecs']->table('order_info').' o,'.$GLOBALS['ecs']->table('region').' r,'.$GLOBALS['ecs']->table('shipping')
+            ." s WHERE o.province=r.region_id AND o.shipping_id=s.shipping_id AND o.order_sn=$order_sn";
+        $info = $GLOBALS['db']->getRow($sql);
+
+        $smarty->assign('order_sn',$order_sn);
+        $smarty->assign('info',$info);
+        $res['main'] = $smarty->fetch('modify_express_fee.htm');
+        break;
+    case 'done':
+        $express_fee = floatval($_REQUEST['express_fee']);
+        $order_sn = mysql_real_escape_string($_REQUEST['order_sn']);
+        $sql = 'UPDATE '.$GLOBALS['ecs']->table('order_info')." SET express_fee=$express_fee WHERE order_sn='$order_sn'";
+        if ($GLOBALS['db']->query($sql)) {
+            $res = crm_msg('修改成功');
+        }else{
+            $res = crm_msg('修改失败');
+        }
+        break;
     }
     die($json->encode($res));
 }

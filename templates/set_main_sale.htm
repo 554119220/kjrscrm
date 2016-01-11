@@ -1,0 +1,72 @@
+<br />
+<h3>设置主推产品</h3>
+<div class="white_bg w600"> 
+    <table width="100%">
+      <tr>
+        <td>
+         <input type="text" name="goods_name" value="" oninput="searchGoods(this)" onblur="searchGoods(this)"/> 
+         <select name="goods_id" id="goods_id">
+           <option value="0">请选择产品名</option>
+         </select>
+         <input type="button" name="" value="添加" class="b_submit" onclick="addToMain('goods_list')"/>
+        </td>
+      </tr>
+      
+    </table>
+</div>
+<div class="white_bg w600"> 
+  <form action="javascript:void(0)" onsubmit="setMainSale(this)">
+    <table width="100%" class="form_table ">
+      <tr>
+        <td width="15%">主推产品：</td>
+        <td id="goods_list" style="text-align:left;"></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <input type="button" class="b_submit fr" value="保存" onclick="saveMainSaleGoods()"/>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+
+<div class="w600 wu-div-box"> 
+  <div class="mb6">
+    <select name="depart_id">
+      <option value="0">选择部门</option>
+      {foreach from=$depart_list item=v}
+      <option value="{$v.depart_id}">{$v.depart_name}</option>
+      {/foreach}
+    </select>
+    <select name="role_id" id="role_id">
+      <option value="0">请选择小组</option>
+      {foreach  from=$role_list item=role}
+      <option value="{$role.role_id}" {if $role.role_id eq $role_id}selected{/if}>{$role.role_name}</option>
+      {/foreach}
+    </select>
+    <input type="button" value="确定" class="b_submit"/>
+  </div>
+  <table width="100%" cellpadding="0" cellspacing="0" border='0' class="wu_table_list rb_border wu_rb_border tr_hover">
+    <tr>
+      <th width="10%">部门</th>
+      <th>主推产品</th>
+      <th>操作</th>
+    </tr>
+    {if $admin_list}
+    {foreach from=$main_list item=v}
+    <tr>
+      <td>{$v.role_name}</td>
+      <td>{$v.goods_list}</td>
+      <td>
+        <button class="btn_new" onclick="setMainSaleUpdate({$v.mian_id})">审核</button>
+      </td>
+    </tr>
+    {/foreach}
+    {else}
+    <tr>
+      <td colspan="3">没有记录</td>
+    </tr>
+    {/if}
+  </table>
+</div>

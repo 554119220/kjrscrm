@@ -1,7 +1,7 @@
-<table border="0" cellpadding="0" cellspacing="0" class="wu_table_list wu_rb_border border tr_hover mt10 w400">
+<table border="0" cellpadding="0" cellspacing="0" class="wu_table_list wu_rb_border border tr_hover mt10" style="width:470px">
   <thead>
     <tr>
-      <th colspan="6">
+      <th colspan="7">
         {foreach from=$sel_item_list key=k item=v}
         <label><input type="radio" value="{$k}" name="sel_item"
           onclick="getGoodsSaleRank(this)"
@@ -11,13 +11,14 @@
         <input type="hidden" id="goods_sn" value=""/>
       </th>
     </tr>
-    <tr><th colspan="6" id="goods_name"></th></tr>
+    <tr><th colspan="7" id="goods_name"></th></tr>
     <tr>
       <th width="10%">排名</th>
       <th width="24%">姓名</th>
-      <th width="15%">卖出</th>
-      <th width="15%">订单数</th>
-      <th width="20%">销售额比例</th>
+      <th width="10%">卖出</th>
+      <th width="10%">订单数</th>
+      <th width="20%" title="占全公司本商品销量的比例">销售额比例</th>
+      <th width="10%" title="占本平台总销量的比例">占比</th>
       <th width="15%">均价</th>
     </tr>
   </thead>
@@ -29,6 +30,7 @@
       <td>{$v.goods_num}</td>
       <td>{$v.order_num}</td>
       <td title="占部门或小组产品总销售额的比例">{$v.sale_rate}%</td>
+      <td>{$v.platform_sale_rate}%</td>
       <td>{$v.ave}</td>
     </tr>
     {/foreach}

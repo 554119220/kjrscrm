@@ -1361,15 +1361,15 @@ elseif ($_REQUEST['act'] == 'add_new_order') {
 
     //使用了积分
     if($order_info['integral']>0){
-       $sql_integral = "SELECT rank_points FROM ".$GLOBALS['ecs']->table('users')." WHERE user_id={$order_info['user_id']}"; 
-       $rank_points = $GLOBALS['db']->getOne($sql_integral);
-       if ($rank_points <$order_info['integral']) {
-           $res['message'] = '使用积分超过上限';
-           $res['timeout'] = 2000;
-           die($json->encode($res));
-       }else{
-           $available_integral = true;
-       }
+        $sql_integral = "SELECT rank_points FROM ".$GLOBALS['ecs']->table('users')." WHERE user_id={$order_info['user_id']}"; 
+        $rank_points = $GLOBALS['db']->getOne($sql_integral);
+        if ($rank_points <$order_info['integral']) {
+            $res['message'] = '使用积分超过上限';
+            $res['timeout'] = 2000;
+            die($json->encode($res));
+        }else{
+            $available_integral = true;
+        }
     }
 
     $goods_list = $order_info['goods_list'];
@@ -1545,6 +1545,7 @@ EOF;
 
         $sql = ' UPDATE '.$GLOBALS['ecs']->table('users')." SET order_time={$order_info['add_time']} WHERE user_id={$order_info['user_id']}";
         $GLOBALS['db']->query($sql);
+        calculate_express_fee($order_id);
 
         $res['code'] = 1;
         $res['message'] = '订单添加成功，将进入发货流程！'.$handle_message;
@@ -2499,10 +2500,11 @@ elseif ($_REQUEST['act'] == 'shipping_done') {
                 }
             }
 
+            //确认收货转顾客,发货时间在2016-01-04之前
             //$sql_select = 'SELECT shipping_time FROM '.$GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
             //$shipping_time = $GLOBALS['db']->getOne($sql_select);
             //if ($shipping_time < strtotime(date('Y-m-d','2016-01-05'))) {
-                assign_user($order_id);
+            assign_user($order_id);
             //}
 
             update_taking_time();  // 更新商品可服用时间
@@ -3601,6 +3603,7 @@ elseif($_REQUEST['act'] == 'deal_flush_order'){
                             ."shipping_code='{$shipping_info['shipping_code']}',shipping_name='{$shipping_info['shipping_name']}',pay_status=1"
                             ." WHERE order_id=$k";
                         if ($GLOBALS['db']->query($sql)) {
+                            other_express_fee($k);
                             $error_sn[] = jingdong_shiping_syn($k);
                             //$error_sn[] = shipping_synchro($k);
                         }
@@ -3715,6 +3718,7 @@ elseif($_REQUEST['act'] == 'deal_flush_order'){
 
 //将订单标记成刷单
 elseif('mark_flush_order' == $_REQUEST['act']){
+
     $platform   = intval($_REQUEST['platform']);
     $goods_sn   = mysql_real_escape_string(($_REQUEST['goods_sn']));
     $price      = intval($_REQUEST['price']);
@@ -4027,7 +4031,7 @@ function order_list()
             $order_status .= ' AND o.platform IN('.KEFU.')';
         }
     } elseif (admin_priv('member', '', false)){
-    } elseif (!admin_priv('order_list_all', '', false)) {
+    } elseif (!admin_priv('order_list_all', '', false)&&$role_list_str) {
         $order_status .= " AND o.platform IN ($role_list_str) ";
     }
 
@@ -6169,8 +6173,6 @@ function assign_user($order_id) {
             $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users')." SET admin_id=605 WHERE user_id={$order_amount['user_id']}".
                 ' AND role_id NOT IN ('.OFFLINE_SALE.',8,23) LIMIT 1';
         }
-
-        file_put_contents('../batch_user.log',date('Y-m-d H:i:s').$_SESSION['admin_name'].'确认收货转1'.PHP_EOL.$sql_update.PHP_EOL,FILE_APPEND);
     }
 
     if($sql_update){
@@ -6183,8 +6185,6 @@ function assign_user($order_id) {
             'u.group_id=a.group_id,u.assign_time=UNIX_TIMESTAMP() WHERE u.role_id NOT IN ('.OFFLINE_SALE.
             ",8) AND u.user_id={$order_amount['user_id']} AND a.user_id=u.admin_id";
         $GLOBALS['db']->query($sql_update);
-
-        file_put_contents('../batch_user.log',date('Y-m-d H:i:s').$_SESSION['admin_name'].'确认收货转2'.PHP_EOL.$sql_update.PHP_EOL,FILE_APPEND);
         $user_list[$admin_id]++;
         $mem->replace('users_counter', $user_list, false, $expire);
     }
@@ -6517,6 +6517,7 @@ function flush_order_vertify($order_sn){
 
         $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('order_goods')."($keys)VALUES('$values')";
         $GLOBALS['db']->query($sql_insert);
+        calculate_express_fee($id);
         return true;
     }else return false;
 }
@@ -6578,9 +6579,29 @@ function storeOrderMoreDetail($where){
     return $GLOBALS['db']->getAll($sql);
 }
 
+//外包
+function other_express_fee($order_id){
+    $sql = 'INSERT INTO '.$GLOBALS['ecs']->table('other_express_fee')
+        ."(order_id,platform,add_time,shipping_id,express_fee)"
+        ."VALUES($order_id,{$_SESSION['role_id']},{$_SERVER['REQUEST_TIME']},{$_REQUEST['shipping_id']},2)";
+    $GLOBALS['db']->query($sql);
+}
+//普通的快递
 function calculate_express_fee($order_id){
-    // 查询当前订单的user_id
-    $sql_select = 'SELECT order_sn,user_id,country,province,city,district,address,zipcode FROM '.
-        $GLOBALS['ecs']->table('ordersyn_info')." WHERE order_id=$order_id";
+    $sql_select = 'SELECT province,shipping_id,final_amount FROM '.
+        $GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
     $order_info = $GLOBALS['db']->getRow($sql_select);   
+    if ($order_info) {
+        $sql = 'SELECT express_fee,point FROM '.$GLOBALS['ecs']->table('express_fee').
+            " WHERE region_id={$order_info['province']} AND shipping_id={$order_info['shipping_id']} LIMIT 1";
+        $info = $GLOBALS['db']->getRow($sql);
+        if ($info) {
+            $express_fee = $info['express_fee'];
+            if ($info['point']>0) {
+                $express_fee += bcmul($info['point'],$order_info['final_amount']);
+            }
+            $sql = 'UPDATE '.$GLOBALS['ecs']->table('order_info')." SET express_fee=$express_fee WHERE order_id=$order_id";
+            $GLOBALS['db']->query($sql);
+        }
+    }
 }

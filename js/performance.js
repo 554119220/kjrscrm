@@ -754,3 +754,27 @@ function switchLogistics(type){
        $("#resource").html(res.main); 
       },'JSON');
 }
+
+//查询订单快递费用
+function schOrderForMod(){
+  var orderSn = $.trim($("#order_sn").val());
+  if (orderSn) {
+    $.get(
+        'finance.php?act=modify_express_fee&behave=sch&order_sn='+orderSn,
+        function(res){
+          inMain(res);
+        },'JSON');
+  }else return false;
+}
+
+function modifyExpressFee(obj){
+  var orderSn = obj.elements['order_sn'].value;
+  var expressFee = obj.elements['express_fee'].value;
+  if (orderSn) {
+    $.get(
+        'finance.php?act=modify_express_fee&behave=done&order_sn='+orderSn+'&express_fee='+expressFee,
+        function(res){
+          showMsg(res);
+        },'JSON');
+  }else return false;
+}

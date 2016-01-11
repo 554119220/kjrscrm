@@ -25,7 +25,6 @@ a:active {color:#EB8A3D; text-decoration:underline}
 .w50{width:50px}
 .w300{width:300px}
 .w400{width:400px}
-.mr8{margin-right:8px;}
 .tr{text-align:right;}
 .tc{text-align:center}
 .tl{text-align:left}
@@ -33,10 +32,13 @@ a:active {color:#EB8A3D; text-decoration:underline}
 .pl12{padding-left:12px;}
 .pt5{padding-top:5px;}
 .ml6{margin-left:6px;}
+.mr8{margin-right:8px;}
+.mb6{margin-bottom:6px}
 /* 显示与隐藏 */
 .show {display:block}
 .hide {display:none}
 .index_trend{width:489px;border:1px solid #000;}
+.wu-div-box{border:1px solid #ccc;background:#fff;padding:12px;margin-top:6px;}
 
 /* 头部样式 */
 .sys {height:10px; line-height:10px; padding:10px 20px 7px 20px}
