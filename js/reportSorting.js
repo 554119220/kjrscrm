@@ -459,7 +459,7 @@ function addToMain(box){
 
 function saveMainSaleGoods(){
   var data = [];
-  $("input[type='checked']:checked").each(
+  $("input[type='checkbox']:checked").each(
       function(){
        data.push($(this).val()); 
       });
@@ -469,4 +469,18 @@ function saveMainSaleGoods(){
         function(res){showMsg(res)},'JSON'
         );
   }
+}
+function delMainSale(roleId,goodsId){
+  if (roleId && goodsId) {
+    var r = confirm('确定要删除该产品');
+    if (r) {
+      $.get('report_forms.php?act=del_main_sale&role_id='+roleId+'&goods_id='+goodsId,
+          function(res){
+            showMsg(res);
+            if (res.code) {
+              $("#"+res.id).remove();
+            }
+          },'JSON');
+    }else return false;
+  }else return false;
 }

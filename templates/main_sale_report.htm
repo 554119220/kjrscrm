@@ -1,0 +1,22 @@
+<br />
+<h3>主推产品报表</h3>
+<div class="list_panel">
+  <input type="text" name="" value=""  oninput="searchGoods(this)" onblur="searchGoods(this)"/>
+  <select name="goods_id" id="goods_id">
+    <option value="0">请选择商品</option>
+  </select>
+  <select name="depart_id">
+    <option value="0">选择部门</option>
+    {foreach from=$depart_list item=v}
+    <option value="{$v.depart_id}">{$v.depart_name}</option>
+    {/foreach}
+  </select>
+  <select name="role_id" id="role_id">
+    <option value="0">请选择小组</option>
+    {foreach  from=$role_list item=role}
+    <option value="{$role.role_id}" {if $role.role_id eq $role_id}selected{/if}>{$role.role_name}</option>
+    {/foreach}
+  </select>
+  <input type="button" value="确定" class="b_submit"/>
+</div>
+<div id="resource">{$main_sale_report_div}</div>

@@ -2482,14 +2482,78 @@ elseif($_REQUEST['act']=='set_main_sale'){
     $role_list     = get_role(' role_id IN('.ONLINE_STORE.','.OFFLINE_SALE.') AND role_type>0 ');
     $depart_list   = get_department(' AND depart_id IN('.SALE_DEPART.')');
 
+    $smarty->assign('main_sale_list',main_sale_list());
     $smarty->assign('depart_list',$depart_list);
     $smarty->assign('role_list',$role_list);
     $res['main'] = $smarty->fetch('set_main_sale.htm');
     die($json->encode($res));
 }
-elseif($_REQUEST['act']=='set_main_sale_done'){
-    print_r($_GET);exit;
+
+//保存主推产品
+elseif($_REQUEST['act']=='save_main_sale_done'){
+    $goods_id = mysql_real_escape_string($_GET['data']);
+    if ($goods_id) {
+        $sql = 'SELECT goods_id FROM '.$GLOBALS['ecs']->table('goods')." WHERE goods_sn IN($goods_id)";
+        $goods_id = $GLOBALS['db']->getCol($sql);
+        foreach ($goods_id as $v) {
+            $sql = 'REPLACE INTO '.$GLOBALS['ecs']->table('main_sale')
+                .'(role_id,goods_id,add_admin,add_time,main_key)VALUES('
+                ."{$_SESSION['role_id']},$v,{$_SESSION['admin_id']},{$_SERVER['REQUEST_TIME']},{$_SESSION['role_id']}$v)";
+            $GLOBALS['db']->query($sql);
+        }
+        $res = crm_msg('保存成功');
+    }else{
+        $res = crm_msg('保存失败');
+    }
+    die($json->encode($res));
 }
+//主推产品报表
+elseif($_REQUEST['act']=='main_sale_report'){
+    $role_list     = get_role(' role_id IN('.ONLINE_STORE.') AND role_type>0 ');
+    $depart_list   = get_department(' AND depart_id IN('.SALE_DEPART.')');
+    $role_id   = intval($_REQUEST['role_id']);
+    $depart_id = intval($_REQUEST['depart_id']);
+    $where     = ' WHERE 1';
+    if ($depart_id) {
+        $where .= " AND r.depart_id=$depart_id";
+    }
+    if ($role_id) {
+        $where .= " AND r.role_id=$role_id";
+    }
+    $sql = 'SELECT m.goods_id FROM '.$GLOBALS['ecs']->table('main_sale').' m LEFT JOIN '.$GLOBALS['ecs']->table('role')
+        .' r ON r.role_id=m.role_id'.$where;
+    $goods_id = $GLOBALS['db']->getCol($sql);
+    if ($goods_id) {
+        $_REQUEST['goods_id'] = implode(',',$goods_id);
+    }
+    //$single_sale = sales_rank();
+    $start_time = isset($_REQUEST['start_time'])?strtotime($_REQUEST['start_time']):$_SERVER['REQUEST'];
+    $end_time = isset($_REQUEST['end_time'])?strtotime($_REQUEST['end_time']):$_SERVER['REQUEST_TIME'];
+    for ($i=date('d',$end_time); $i>=1; $i--) {
+        $list[]['date'] = date("Y-m-$i",$end_time);
+    }
+    $smarty->assign('list',$list);
+    $smarty->assign('main_sale_report_div',$smarty->fetch('main_sale_report_div.htm'));
+
+    $smarty->assign('role_list',$role_list);
+    $smarty->assign('depart_list',$depart_list);
+    $res['main'] = $smarty->fetch('main_sale_report.htm');
+    die($json->encode($res));
+}
+elseif($_REQUEST['act']=='del_main_sale'){
+    $role_id  = intval($_REQUEST['role_id']);
+    $goods_id = intval($_REQUEST['goods_id']);
+    $sql = 'DELETE FROM'.$GLOBALS['ecs']->table('main_sale')." WHERE main_key='$role_id$goods_id'";
+    $code = $GLOBALS['db']->query($sql);
+    if ($code) {
+    $res = crm_msg('删除成功',$code);
+    $res['id'] = "$role_id$goods_id";
+    }else{
+        $res = crm_msg('删除失败');
+    }
+    die($json->encode($res));
+}
+
 /*------------------------------------------------------ */
 //--排行统计需要的函数
 /*------------------------------------------------------ */
@@ -2515,6 +2579,7 @@ function sales_rank ($is_pagination = true) {
         $filter['end_time']   = date('Y-m-t');
     }
 
+
     // 收集查询条件
     foreach ($filter as $key=>$val) {
         if (!empty($val)) {
@@ -2523,6 +2588,10 @@ function sales_rank ($is_pagination = true) {
     }
 
     $where = ' WHERE og.order_id=oi.order_id AND oi.order_status IN (1,5) AND oi.shipping_status IN (4,1,2)';
+
+    if ($_REQUEST['goods_id']) {
+        $where .= " AND og.goods_id IN({$_REQUEST['goods_id']}) ";
+    }
 
     if ($filter['start_time'] && $filter['end_time']) {
         $where .= ' AND oi.add_time BETWEEN '.strtotime($filter['start_time'].' 00:00:00').
@@ -5506,4 +5575,32 @@ function for_goods_sale_rank($where){
         .' oi LEFT JOIN '.$GLOBALS['ecs']->table('role').' r ON oi.platform=r.role_id'
         ." $where $group_by";
     return $GLOBALS['db']->getAll($sql);
+}
+
+function main_sale_list(){
+    $deaprt_id = isset($_REQUEST['depart_id'])?intval($_REQUEST['depart_id']):0;
+    $role_id   = isset($_REQUEST['role_id'])?intval($_REQUEST['role_id']):0;
+    $where = ' WHERE 1 ';
+    if ($depart_id) {
+        $where .= " AND r.depart_id=$depart_id";
+    }
+    if ($role_id) {
+        $where .= " AND m.role_id=$role_id";
+    }
+    $sql = 'SELECT m.sale_id,m.goods_id,g.goods_name,r.role_name,m.role_id FROM '.$GLOBALS['ecs']->table('main_sale')
+        .' m LEFT JOIN '.$GLOBALS['ecs']->table('goods').' g ON g.goods_id=m.goods_id LEFT JOIN '
+        .$GLOBALS['ecs']->table('role')." r ON m.role_id=r.role_id $where";
+    $res = $GLOBALS['db']->getAll($sql); 
+    $list = array();
+    $info = array();
+    if ($res) {
+        foreach ($res as $v) {
+            $info[$v['role_id']] = array('role_name'=>$v['role_name']);
+            $list[$v['role_id']]['goods_list'][] = array('goods_id'=>$v['goods_id'],'goods_name'=>$v['goods_name']);
+        }
+    }
+    foreach ($list as $k=>$l) {
+        $info[$k]['goods_list'] = $l['goods_list'];
+    }
+    return $info;
 }

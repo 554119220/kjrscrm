@@ -103,3 +103,6 @@ input[type=url] { width:230px;}
 .nav-current{font-weight:bold;}
 
 #general .top_tip{text-align:left;padding-left:12px;}
+.delete {cursor:pointer;color:red;font-weight:bold;}
+span.tag_box{ border: 1px solid #ccc; padding: 2px;margin-right:3px;}
+span.tag_box:hover{background-color:#198A2C;color:#fff;}
