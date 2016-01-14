@@ -1,13 +1,24 @@
-<table class="wu_table_list rb_border wu_rb_borer tr_hover" cellpadding="0" border="0" cellspacing="0" width="100%">
+<table class="wu_table_list rb_border wu_rb_border tr_hover" cellpadding="0" border="0" cellspacing="0" width="{if $count gt 8}200%{else}100%{/if}">
   <tr>
-    <th width="10%">日期</th>
+    <th width="70px">日期</th>
     {foreach from=$goods_list item=v}
-    <th>{$v.goods_name}</th>
+    <th colspan="2">{$v.goods_name}</th>
+    {/foreach}
+  </tr>
+  <tr>
+    <td></td>
+    {foreach from=$goods_list item=v}
+    <td>数量</td>
+    <td>销量</td>
     {/foreach}
   </tr>
   {foreach from=$list item=l}
   <tr>
     <td>{$l.date}</td>
+    {foreach from=$l.goods_list item=g}
+    <td>{$g.goods_num}</td>
+    <td>{$g.turnover}</td>
+    {/foreach}
   </tr>
   {/foreach}
 </table>

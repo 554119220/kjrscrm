@@ -1,21 +1,25 @@
 <br />
 <h3>设置主推产品</h3>
-<div class="white_bg w600"> 
+<div class="white_bg w800"> 
     <table width="100%">
       <tr>
         <td>
-         <input type="text" name="goods_name" value="" oninput="searchGoods(this)" onblur="searchGoods(this)"/> 
-         <select name="goods_id" id="goods_id">
-           <option value="0">请选择产品名</option>
-         </select>
+          <select name="platform_list">
+            {foreach from=$platform_list item=v}
+            <option value="{$v.role_id}">{$v.role_name}</option>
+            {/foreach}
+          </select> 
+          <input type="text" name="goods_name" value="" oninput="searchGoods(this)" onblur="searchGoods(this)"/> 
+          <select name="goods_id" id="goods_id">
+            <option value="0">请选择产品名</option>
+          </select>
          <input type="button" name="" value="添加" class="b_submit" onclick="addToMain('goods_list')"/>
          <input type="button" class="b_submit" value="保存主推产品" onclick="saveMainSaleGoods()"/>
         </td>
       </tr>
-      
     </table>
 </div>
-<div class="white_bg w600"> 
+<div class="white_bg w800"> 
   <form action="javascript:void(0)" onsubmit="setMainSale(this)">
     <table width="100%" class="form_table ">
       <tr>
@@ -26,7 +30,7 @@
   </form>
 </div>
 
-<div class="w600 wu-div-box"> 
+<div class="w800 wu-div-box"> 
   <div class="mb6">
     <select name="depart_id">
       <option value="0">选择部门</option>

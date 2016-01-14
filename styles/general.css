@@ -38,7 +38,7 @@ a:active {color:#EB8A3D; text-decoration:underline}
 .show {display:block}
 .hide {display:none}
 .index_trend{width:489px;border:1px solid #000;}
-.wu-div-box{border:1px solid #ccc;background:#fff;padding:12px;margin-top:6px;}
+.wu-div-box{border:1px solid #ccc;background:#eee;padding:12px;margin-top:6px;}
 
 /* 头部样式 */
 .sys {height:10px; line-height:10px; padding:10px 20px 7px 20px}

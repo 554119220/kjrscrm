@@ -459,13 +459,14 @@ function addToMain(box){
 
 function saveMainSaleGoods(){
   var data = [];
+  var platform = $("[name='platform_list']").val();
   $("input[type='checkbox']:checked").each(
       function(){
        data.push($(this).val()); 
       });
   if (data.length>0) {
     $.get(
-        'report_forms.php?act=save_main_sale_done&data='+data.join(','),
+        'report_forms.php?act=save_main_sale_done&platform='+platform+'&data='+data.join(','),
         function(res){showMsg(res)},'JSON'
         );
   }
@@ -484,3 +485,16 @@ function delMainSale(roleId,goodsId){
     }else return false;
   }else return false;
 }
+
+function schMainSaleReport(){
+  var departId = $("#depart_id").val();
+  var roleId = $("#role_id").val();
+  var startTime = $("#start_time").val();
+  var endTime = $("#end_time").val();
+  $.get(
+      'report_forms.php?act=main_sale_report&sch=1&depart_id='+departId+'&role_id='+roleId+'&start_time='+startTime+'&end_time='+endTime,
+      function(res){
+        $("#resource").html(res.main);
+      },'JSON');
+}
+

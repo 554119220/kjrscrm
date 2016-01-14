@@ -2480,11 +2480,12 @@ elseif($_REQUEST['act'] == 'express_fee_report'){
 
 elseif($_REQUEST['act']=='set_main_sale'){
     $role_list     = get_role(' role_id IN('.ONLINE_STORE.','.OFFLINE_SALE.') AND role_type>0 ');
+    $platform_list = get_role(' role_id IN('.ONLINE_STORE.') AND role_type>0');
     $depart_list   = get_department(' AND depart_id IN('.SALE_DEPART.')');
-
     $smarty->assign('main_sale_list',main_sale_list());
     $smarty->assign('depart_list',$depart_list);
     $smarty->assign('role_list',$role_list);
+    $smarty->assign('platform_list',$platform_list);
     $res['main'] = $smarty->fetch('set_main_sale.htm');
     die($json->encode($res));
 }
@@ -2492,13 +2493,15 @@ elseif($_REQUEST['act']=='set_main_sale'){
 //保存主推产品
 elseif($_REQUEST['act']=='save_main_sale_done'){
     $goods_id = mysql_real_escape_string($_GET['data']);
+    $platform = intval($_GET['platform']);
     if ($goods_id) {
         $sql = 'SELECT goods_id FROM '.$GLOBALS['ecs']->table('goods')." WHERE goods_sn IN($goods_id)";
         $goods_id = $GLOBALS['db']->getCol($sql);
+        $role_id = $platform ? $platform : $_SESSION['role_id'];
         foreach ($goods_id as $v) {
             $sql = 'REPLACE INTO '.$GLOBALS['ecs']->table('main_sale')
                 .'(role_id,goods_id,add_admin,add_time,main_key)VALUES('
-                ."{$_SESSION['role_id']},$v,{$_SESSION['admin_id']},{$_SERVER['REQUEST_TIME']},{$_SESSION['role_id']}$v)";
+                ."$role_id,$v,{$_SESSION['admin_id']},{$_SERVER['REQUEST_TIME']},$role_id$v)";
             $GLOBALS['db']->query($sql);
         }
         $res = crm_msg('保存成功');
@@ -2509,8 +2512,6 @@ elseif($_REQUEST['act']=='save_main_sale_done'){
 }
 //主推产品报表
 elseif($_REQUEST['act']=='main_sale_report'){
-    $role_list     = get_role(' role_id IN('.ONLINE_STORE.') AND role_type>0 ');
-    $depart_list   = get_department(' AND depart_id IN('.SALE_DEPART.')');
     $role_id   = intval($_REQUEST['role_id']);
     $depart_id = intval($_REQUEST['depart_id']);
     $where     = ' WHERE 1';
@@ -2520,24 +2521,58 @@ elseif($_REQUEST['act']=='main_sale_report'){
     if ($role_id) {
         $where .= " AND r.role_id=$role_id";
     }
-    $sql = 'SELECT m.goods_id FROM '.$GLOBALS['ecs']->table('main_sale').' m LEFT JOIN '.$GLOBALS['ecs']->table('role')
-        .' r ON r.role_id=m.role_id'.$where;
-    $goods_id = $GLOBALS['db']->getCol($sql);
-    if ($goods_id) {
+    $sql = 'SELECT m.goods_id,SUBSTRING(g.goods_name,4) goods_name FROM '.$GLOBALS['ecs']->table('main_sale').' m LEFT JOIN '
+        .$GLOBALS['ecs']->table('role')
+        .' r ON r.role_id=m.role_id LEFT JOIN '.$GLOBALS['ecs']->table('goods')
+        ." g ON m.goods_id=g.goods_id $where GROUP BY m.goods_id";
+    $main_sale_goods = $GLOBALS['db']->getAll($sql);
+    if ($main_sale_goods) {
+        $smarty->assign('goods_list',$main_sale_goods);
+        foreach ($main_sale_goods as $g) {
+            $goods_id[] = $g['goods_id'];
+        }
         $_REQUEST['goods_id'] = implode(',',$goods_id);
     }
-    //$single_sale = sales_rank();
-    $start_time = isset($_REQUEST['start_time'])?strtotime($_REQUEST['start_time']):$_SERVER['REQUEST'];
-    $end_time = isset($_REQUEST['end_time'])?strtotime($_REQUEST['end_time']):$_SERVER['REQUEST_TIME'];
+
+    $start_time = isset($_REQUEST['start_time'])&&!empty($_REQUEST['start_time'])?strtotime($_REQUEST['start_time']):$_SERVER['REQUEST'];
+    $end_time = isset($_REQUEST['end_time'])&&!empty($_REQUEST['end_time'])?strtotime($_REQUEST['end_time']):$_SERVER['REQUEST_TIME'];
+    unset($g);
     for ($i=date('d',$end_time); $i>=1; $i--) {
-        $list[]['date'] = date("Y-m-$i",$end_time);
+        $date = date("Y-m-$i",$end_time);
+        $list[$i]['date'] = $date;
+        $_REQUEST['start_time'] = $date;
+        $_REQUEST['end_time'] = $date;
+        $_REQUEST['package'] = 0;
+        $sales_rank = sales_rank();
+        $_REQUEST['package'] = 1;
+        $package_sales_rank  = sales_rank();
+        $package_sales = break_up_package($package_sales_rank['sales_order_data']);
+        $sales_order_data = merge_to_single($sales_rank['sales_order_data'], $package_sales);
+        //if ($_SESSION['admin_id'] == 142) {
+        //   print_r($package_sales_rank);exit;
+        //}
+        foreach ($goods_id as $g) {
+            $list[$i]['goods_list'][$g] = array('goods_num'=>0,'turnover'=>0);
+        }
+        if ($sales_order_data) {
+            foreach ($sales_order_data as $d) {
+                $list[$i]['goods_list'][$d['goods_id']]['goods_num']=$d['total_num'];
+                $list[$i]['goods_list'][$d['goods_id']]['turnover']=$d['turnover'];
+            }
+        }
     }
     $smarty->assign('list',$list);
+    $smarty->assign('count',count($goods_id));
     $smarty->assign('main_sale_report_div',$smarty->fetch('main_sale_report_div.htm'));
-
-    $smarty->assign('role_list',$role_list);
-    $smarty->assign('depart_list',$depart_list);
-    $res['main'] = $smarty->fetch('main_sale_report.htm');
+    if (isset($_GET['sch'])) {
+        $res['main'] = $smarty->fetch('main_sale_report_div.htm');
+    }else{
+        $role_list     = get_role(' role_id IN('.ONLINE_STORE.') AND role_type>0 ');
+        $depart_list   = get_department(' AND depart_id IN('.SALE_DEPART.')');
+        $smarty->assign('role_list',$role_list);
+        $smarty->assign('depart_list',$depart_list);
+        $res['main'] = $smarty->fetch('main_sale_report.htm');
+    }
     die($json->encode($res));
 }
 elseif($_REQUEST['act']=='del_main_sale'){
@@ -2589,7 +2624,7 @@ function sales_rank ($is_pagination = true) {
 
     $where = ' WHERE og.order_id=oi.order_id AND oi.order_status IN (1,5) AND oi.shipping_status IN (4,1,2)';
 
-    if ($_REQUEST['goods_id']) {
+    if ($_REQUEST['goods_id'] && !$_REQUEST['package']) {
         $where .= " AND og.goods_id IN({$_REQUEST['goods_id']}) ";
     }
 
@@ -2625,7 +2660,7 @@ function sales_rank ($is_pagination = true) {
         $where .= " AND oi.platform IN(".implode(',',$list).') ';
     }
 
-    if (isset($_REQUEST['package'])) {
+    if (isset($_REQUEST['package']) && $_REQUEST['package'] == 1) {
         $order_type = ' AND og.goods_sn LIKE "%\_%" ';
     } else {
         $order_type = ' AND CONCAT("", og.goods_sn *1)=og.goods_sn ';
@@ -5604,3 +5639,14 @@ function main_sale_list(){
     }
     return $info;
 }
+
+//$count = 0;
+//function countLevel($A_uid){
+//    global $count;
+//    $sql = " SELECT uid FROM table WHERE parent_id=$A_uid";
+//    $res = 查询($sql);
+//    if ($res) {
+//        countLevel($res['uid']);
+//        $count++;
+//    }else return $count;
+//}

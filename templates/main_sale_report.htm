@@ -1,11 +1,11 @@
 <br />
 <h3>主推产品报表</h3>
 <div class="list_panel">
-  <input type="text" name="" value=""  oninput="searchGoods(this)" onblur="searchGoods(this)"/>
-  <select name="goods_id" id="goods_id">
-    <option value="0">请选择商品</option>
-  </select>
-  <select name="depart_id">
+  <!--<input type="text" name="" value=""  oninput="searchGoods(this)" onblur="searchGoods(this)"/>-->
+  <!--<select name="goods_id" id="goods_id">-->
+  <!--  <option value="0">请选择商品</option>-->
+  <!--</select>-->
+  <select name="depart_id" id="depart_id">
     <option value="0">选择部门</option>
     {foreach from=$depart_list item=v}
     <option value="{$v.depart_id}">{$v.depart_name}</option>
@@ -17,6 +17,8 @@
     <option value="{$role.role_id}" {if $role.role_id eq $role_id}selected{/if}>{$role.role_name}</option>
     {/foreach}
   </select>
-  <input type="button" value="确定" class="b_submit"/>
+  <input class="Wdate" id="start_time" type="text" value="" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'})">
+  <input class="Wdate" id="end_time" type="text" value="" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'})">
+  <input type="button" value="确定" class="b_submit" onclick="schMainSaleReport()"/>
 </div>
-<div id="resource">{$main_sale_report_div}</div>
+<div id="resource" class="ofxauto">{$main_sale_report_div}</div>
