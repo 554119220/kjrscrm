@@ -201,3 +201,40 @@ function getStoreOrderDetail(orderId,obj){
         },'JSON');
   }
 }
+
+function setUserLevel(level,id){
+  if (level && id) {
+    var url = 'users.php?act=set_user_level&id='+id+'&level='+level;
+    if ($(".user_detail")) {
+      url += '&table=user';
+    }else{
+      url += '&table=order';
+    }
+    $.get(
+        url,
+        function(res){
+          return false;
+        },'JSON');
+  }else return false;
+}
+
+//设置评价
+function setTraderates(obj){
+  $("[name='traderates']").each(function(){
+    $(this).parent("td").html($(this option:selected));
+
+  });
+  obj.html(
+      '<select name="traderates" onchage="saveTraderates(this,{$order.order_id})"> <option value="0">顾客评价</option> <option value="1" {if $order.traderates eq 1}selected{/if}>好评</option> <option value="2" {if $order.traderates eq 2}selected{/if}>中评</option> <option value="3" {if $order.traderates eq 3}selected{/if}>差评</option> </select>'
+      ); 
+}
+
+function saveTraderates(obj,orderId){
+  if (obj.val()) {
+    $.get(
+        'order.php?act=set_traderates&order_id='+orderId+'&traderates='+obj.val(),
+        function(res){
+          showMsg(res);
+        },'JSON');
+  }
+}

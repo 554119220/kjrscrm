@@ -523,10 +523,10 @@ elseif ($_REQUEST['act'] == 'order_detail') {
 
     // 读取订单详细信息
     $order_info     = get_order_detail($id, $order_table_name);
-    if(!in_array($_SESSION['admin_id'],array(497,4,277,330,554))){
-        $order_info['mobile'] = hideContact($order_info['mobile']);
-        $order_info['tel'] = hideContact($order_info['tel']);
-    }
+    //if(!in_array($_SESSION['admin_id'],array(497,4,277,330,554))){
+    //    $order_info['mobile'] = hideContact($order_info['mobile']);
+    //    $order_info['tel'] = hideContact($order_info['tel']);
+    //}
     $goods_list     = goods_list($id, $goods_table_name);
     $blacklist_info = in_blacklist($id,$order_table_name);
 
@@ -623,6 +623,7 @@ elseif ($_REQUEST['act'] == 'order_detail') {
             $res['info']['info'] = $smarty->fetch('current_order_detail.htm');
             $res['info']['menu'] = $smarty->fetch('order_returns_menu.htm'); // 退货操作
         } else {
+            $smarty->assign('level_list',get_user_level());
             $res['info']['info'] = $smarty->fetch('order_detail.htm');
             $res['info']['menu'] = $smarty->fetch('order_menu.htm');
         }
@@ -783,11 +784,14 @@ elseif ($_REQUEST['act'] == 'ordersyn_verify') {
         $GLOBALS['db']->query($sql_update);
         // 将顾客从临时顾客表转存至正式顾客表中
         $sql_insert = 'INSERT INTO '.$GLOBALS['ecs']->table('users').'(user_name,add_time,aliww,qq,home_phone,mobile_phone,'.
-            'team,role_id,platform,admin_id,admin_name,customer_type) SELECT user_name,add_time,aliww,qq,home_phone,'.
-            'mobile_phone,team,role_id,platform,admin_id,admin_name,customer_type FROM '.$GLOBALS['ecs']->table('userssyn').
+            'team,role_id,platform,admin_id,admin_name,customer_type,level) SELECT user_name,add_time,aliww,qq,home_phone,'.
+            'mobile_phone,team,role_id,platform,admin_id,admin_name,customer_type,level FROM '.$GLOBALS['ecs']->table('userssyn').
             " WHERE user_id={$order_info['user_id']}";
         $GLOBALS['db']->query($sql_insert);
         $user_id = $GLOBALS['db']->insert_id();
+        //保存顾客等级
+        //$sql_upd = 'UPDATE '.$GLOBALS['ecs']->table('users')." SET level=$level WHERE user_id=$user_id";
+        //$GLOBALS['db']->query($sql_upd);
         record_operate($sql_insert, 'users');
 
         // 保存顾客的收货地址
@@ -2500,11 +2504,11 @@ elseif ($_REQUEST['act'] == 'shipping_done') {
                 }
             }
 
+            assign_user($order_id);
             //确认收货转顾客,发货时间在2016-01-04之前
             //$sql_select = 'SELECT shipping_time FROM '.$GLOBALS['ecs']->table('order_info')." WHERE order_id=$order_id";
             //$shipping_time = $GLOBALS['db']->getOne($sql_select);
             //if ($shipping_time < strtotime(date('Y-m-d','2016-01-05'))) {
-            assign_user($order_id);
             //}
 
             update_taking_time();  // 更新商品可服用时间
@@ -3784,6 +3788,20 @@ elseif($_REQUEST['act'] == 'get_store_order_detail'){
     die($json->encode($res));
 }
 
+elseif($_REQUEST['act'] == 'set_traderates'){
+    $order_id = intval($_REQUEST['order_id']);
+    $traderates = intval($_REQUEST['traderates']);
+    $sql = 'UPDATE '.$GLOBALS['ecs']->table('order_info')
+        ." SET traderates=$traderates WHERE order_id=$order_id";
+    $code = $GLOBALS['db']->query($sql);
+    if ($code) {
+        $res = crm_msg('标记成功');
+    }else{
+        $res = crm_msg('标记失败');
+    }
+    die($json->encode($res));
+}
+
 //协助完成订单操作 , 在添加订单的时候判断并执行
 function assist_order($admin_id,$order_id,$final_amount){
     $assist_admin_id = intval($_REQUEST['assist_admin_id']);
@@ -4279,12 +4297,10 @@ function order_list()
     }
 
     $row = $GLOBALS['db']->getAll($sql_select);
-
     $sql_select = 'SELECT type_id,type_name FROM '.$GLOBALS['ecs']->table('order_type').' WHERE available=1';
     $order_type = $GLOBALS['db']->getAll($sql_select);
     $type_list = array ();
-    foreach ($order_type as $v)
-    {
+    foreach ($order_type as $v) {
         $type_list[$v['type_id']] = $v['type_name'];
     }
 
@@ -6151,11 +6167,11 @@ function assign_user($order_id) {
     $expire   = $tomorrow - time();
 
     if (empty($user_list)) {
-        $sql_select = 'SELECT user_id FROM '.$GLOBALS['ecs']->table('admin_user').
-            ' WHERE role_id IN ('.MEMBER_SALE.') AND status=1 AND stats=1 AND password<>1 AND assign=1';
-        $user_list = $GLOBALS['db']->getCol($sql_select);
-        $user_list = array_fill_keys($user_list, 0);
-        $mem->set('users_counter', $user_list, false, $expire);
+       $sql_select = 'SELECT user_id FROM '.$GLOBALS['ecs']->table('admin_user').
+           ' WHERE role_id IN ('.MEMBER_SALE.') AND status=1 AND stats=1 AND password<>1 AND assign=1';
+       $user_list = $GLOBALS['db']->getCol($sql_select);
+       $user_list = array_fill_keys($user_list, 0);
+       $mem->set('users_counter', $user_list, false, $expire);
     }
 
     natsort($user_list);
@@ -6166,8 +6182,9 @@ function assign_user($order_id) {
     $customer_type = $GLOBALS['db']->getOne($sql);
     if (!in_array($customer_type,array(21,6)) && 0 < $order_amount['final_amount']) {
         if ($order_amount['final_amount'] < 800) {
-            $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users')." SET admin_id=520 WHERE user_id={$order_amount['user_id']} ".
-                ' AND role_id NOT IN ('.OFFLINE_SALE.',8,23) LIMIT 1';
+            $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users')
+                ." SET admin_id=$admin_id WHERE user_id={$order_amount['user_id']} "
+                .' AND role_id NOT IN ('.OFFLINE_SALE.',8,23) LIMIT 1';
         } else {
             //新顾客订单金额在800以上的顾客转到钟文英的账号下
             $sql_update = 'UPDATE '.$GLOBALS['ecs']->table('users')." SET admin_id=605 WHERE user_id={$order_amount['user_id']}".
@@ -6415,7 +6432,7 @@ function jingdong_shiping_syn($order_id){
         " WHERE shipping_id='{$order_info['shipping_id']}'";
     $logistics = $GLOBALS['db']->getRow($sql);   
     // 同步发货（京东）
-    if ($order_info['shipping_time'] && in_array($order_info['team'],array(10,54))) {
+    if ($order_info['shipping_time'] && in_array($order_info['team'],array(10,54,55))) {
         include_once dirname(__FILE__).'/jingdong/JdClient.php';
         include_once dirname(__FILE__).'/jingdong/JdException.php';
         include_once dirname(__FILE__).'/jingdong/request/order/OrderSopOutstorageRequest.php';
@@ -6454,10 +6471,26 @@ function jingdong_shiping_syn($order_id){
                 'secretKey'  => '909b77937f4d4cf6a21f48d315043118',
                 'platform'   => 'aksojd',
             );
-
+            break;
+        case 55 :
+            $auth =  array (
+                'appkey'     => '7594F3518C263BC74BA5E33473FB46B7',
+                'secretKey'  => '1419a7b4c3544ba6b99e1b94f30a6426',
+                'platform'   => 'jlfjd',
+            );
+            //include_once dirname(__FILE__).'/jlfjd/sk.php';
+            //$auth = include dirname(__FILE__).'/jlfjd/config.php';
+            $sk = array (
+                'access_token' => 'b04360da-1a05-4566-92ba-742e494c77c2',
+                'code' => 0,
+                'expires_in' => 31620864,
+                'refresh_token' => '55e87511-ca05-4e90-91a4-c58fbd79b537',
+                'time' => '1449804997123',
+                'token_type' => 'bearer',
+                'uid' => '9228227262',
+            );
             break;
         }
-
 
         $req = new OrderSopOutstorageRequest;
         $req->setOrderId($order_info['order_sn']);
@@ -6466,7 +6499,6 @@ function jingdong_shiping_syn($order_id){
         $sql_select = 'SELECT jd_code FROM '.$GLOBALS['ecs']->table('shipping').
             " WHERE shipping_id={$order_info['shipping_id']}";
         $req->setLogisticsId($GLOBALS['db']->getOne($sql_select));
-
         $jd = new JdClient;
 
         $jd->appKey      = $auth['appkey'];     // 京东AppKey
@@ -6480,9 +6512,13 @@ function jingdong_shiping_syn($order_id){
 
         if ($resp['error_response']['code']) {
             //return $resp['error_response']['zh_desc'].'【京东商城提示您】';
-            return $tracking_sn; 
+            return $tracking_sn.$resp['error_response']['zh_desc']; 
         }else return false;
-    }else return $tracking_sn;
+    }
+    //elseif($order_info['shipping_time'] && !in_array($order_info['team'],array(10,54))){
+    //    $res = batch_flushing_order_out($order_info,$tracking_sn,$logistics);
+    //}
+    else return $tracking_sn;
 }
 
 //批量确认刷单订单
@@ -6602,6 +6638,61 @@ function calculate_express_fee($order_id){
             }
             $sql = 'UPDATE '.$GLOBALS['ecs']->table('order_info')." SET express_fee=$express_fee WHERE order_id=$order_id";
             $GLOBALS['db']->query($sql);
+        }
+    }
+}
+
+function batch_flushing_order_out($order_info,$tracking_sn,$logistics){
+    if (in_array($order_info['team'], array(6,21,22,26,53))) {
+        $platform_path = array (6 => 'taobao', 21 => 'taobao01', 22 => 'taobao02', 26 => 'taobao03',53=>'taobao04');
+        require(dirname(__FILE__)."/taobao/order_synchro.php");
+        require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/sk.php");
+        $auth = require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/config.php");
+
+        // 配置淘宝签权参数
+        $c = new TopClient;
+        $c->appkey    = $auth['appkey'];
+        $c->secretKey = $auth['secretKey'];
+
+        // 查询订单当前状态是否符合发货条件
+        $req = new TradeFullinfoGetRequest;
+        $req->setFields("status");
+        $req->setTid($order_info['order_sn']);
+        $shipping_able = $c->execute($req, $sk['access_token']);
+        $shipping_able = $json->decode($json->encode($shipping_able), true);
+
+        // 订单状态符合发货条件
+        if ($shipping_able['trade']['status'] == 'WAIT_SELLER_SEND_GOODS') {
+            // 构建标记发货的数据格式
+            $req = new LogisticsOfflineSendRequest;
+            if ($logistics['company_code'] == 'zjs') {
+                $req->setOutSid($tracking_sn);
+                $req->setTid($order_info['order_sn']);
+                $req->setCompanyCode(strtoupper($logistics['company_code']));
+            } elseif ('lbex' == $logistics['company_code']) {
+                return true;
+                $req->setOutSid($tracking_sn);
+                $req->setTid($order_info['order_sn']);
+                $req->setCompanyCode('龙邦速递');
+            } else {
+                $req->setOutSid($tracking_sn);
+                $req->setTid($order_info['order_sn']);
+                $req->setCompanyCode(strtoupper($logistics['company_code']));
+            }
+            // 发送发货请求
+            $shipping_resp = $c->execute($req, $sk['access_token']);
+            return false; 
+        }
+        // 订单符合修改运单号条件
+        elseif ($shipping_able['trade']['status'] == 'WAIT_BUYER_CONFIRM_GOODS') {
+            $req = new LogisticsConsignResendRequest;
+            $req->setOutSid($tracking_sn);
+            $req->setTid(number_format($order_info['order_sn'], 0, '', ''));
+            $req->setCompanyCode(strtoupper($logistics['company_code']));
+            $shipping_resp = $c->execute($req, $sk['access_token']);
+            return false;
+        }else{
+            return $tracking_sn;
         }
     }
 }

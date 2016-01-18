@@ -243,3 +243,8 @@ function get_express_fee($s=''){
         ." WHERE 1 $s";
     return $GLOBALS['db']->getAll($sql);
 }
+
+function get_user_level(){
+    $sql = 'SELECT level_id,level_name FROM '.$GLOBALS['ecs']->table('user_level')." ORDER BY level_id ASC";
+    return $GLOBALS['db']->getAll($sql);
+}

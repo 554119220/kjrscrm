@@ -940,6 +940,7 @@ elseif ($_REQUEST['act'] == 'user_detail') {
     $smarty->assign('healthy_lifestyle',$healthy_lifestyle);
     $smarty->assign('service_time', date('Y-m-d H:i'));
     $smarty->assign('deal_method',get_deal_method());
+    $smarty->assign('level_list',get_user_level());
 
     $res['info'] = $smarty->fetch('users_detail.htm');
     die($json->encode($res));
@@ -4993,6 +4994,26 @@ elseif('set_access'==$_REQUEST['act']){
     die($json->encode($res));
 }
 
+//顾客等级
+elseif('set_user_level'==$_REQUEST['act']){
+    $id = intval($_REQUEST['id']);
+    $level = intval($_REQUEST['level']);
+    $table = mysql_real_escape_string($_REQUEST['table']);
+    if ($id && $table == 'order') {
+        $sql = 'SELECT user_id FROM '.$GLOBALS['ecs']->table('ordersyn_info')." WHERE order_id=$id";
+        $user_id=$GLOBALS['db']->getOne($sql);
+        $table = 'userssyn';
+    }else{
+        $table = 'users';
+        $user_id = $id;
+    }
+    if ($user_id) {
+        $sql = 'UPDATE '.$GLOBALS['ecs']->table($table)." SET level=$level WHERE user_id=$user_id";
+        $code = $GLOBALS['db']->query($sql);
+    }
+    die($json->encode($code));
+}
+
 /* 函数区 */
 
 //陶顾客列表函数
@@ -5799,7 +5820,7 @@ function get_user_info ($id)
     $sql_select = 'SELECT u.age,u.family_id,u.sex,IF(u.calendar=1,CONCAT(u.birthday,"【阴历】"),CONCAT(u.birthday,"【阳历】")) birthday,'.$field.
         'u.user_name,u.role_id,u.characters,u.service_time,u.member_cid,u.number_purchased,u.habby,u.email,u.disease,m.card_number,'.
         'u.disease_2,u.from_where,u.user_id,u.add_time,u.id_card,u.eff_id,u.qq,t.type_name customer_type,u.remarks,prt.user_id referrals_id,'.
-        'prt.user_name referrals FROM'.$GLOBALS['ecs']->table('users').' u LEFT JOIN '.$GLOBALS['ecs']->table('users').
+        'prt.user_name referrals,u.level FROM'.$GLOBALS['ecs']->table('users').' u LEFT JOIN '.$GLOBALS['ecs']->table('users').
         ' prt ON u.parent_id=prt.user_id LEFT JOIN '.$GLOBALS['ecs']->table('memship_number').' m ON m.user_id=u.user_id, '.
         $GLOBALS['ecs']->table('customer_type')." t WHERE u.customer_type=t.type_id AND u.user_id=$id";
     $user_info = $GLOBALS['db']->getRow($sql_select);
@@ -5879,7 +5900,7 @@ function access_purchase_records ($id)
         $where = " AND o.shipping_status<>3 ";
     }
     // Get user to buy records 获取顾客购买记录
-    $sql_select = 'SELECT o.order_id,o.platform_order_sn,o.order_sn p_order_sn,o.consignee,o.order_status,o.shipping_status,o.add_time,o.order_type,'.
+    $sql_select = 'SELECT o.order_id,o.platform_order_sn,o.order_sn p_order_sn,o.consignee,o.order_status,o.shipping_status,o.add_time,o.order_type,o.traderates,'.
         "o.shipping_name,o.pay_name,IF(o.order_type=10,'0.00',o.final_amount) final_amount,o.tracking_sn express_number,o.admin_name operator,o.receive_time,o.shipping_code, ".
         ' r.role_describe platform FROM '.$GLOBALS['ecs']->table('order_info')
         .' o,'.$GLOBALS['ecs']->table('admin_user').' a, '.
@@ -5892,9 +5913,10 @@ function access_purchase_records ($id)
     // Format time
     krsort($order_list);
     $order_total = count($order_list);
+    $traderates = array('好评','中评','差评');
     foreach ($order_list as &$val)
     {
-
+        $var['traderates'] = $traderates[$var['traderates']];
         $val['order_sn'] = !empty($val['platform_order_sn']) ? $val['platform_order_sn'] : $val['p_order_sn'];
         $val['index'] = $order_total--;
         $val['add_time']     = date('Y-m-d', $val['add_time']);   // Buy time
@@ -6725,7 +6747,6 @@ function search_by_goods() {
     $sql_select = 'SELECT u.user_id,u.user_name,u.sex,u.member_cid,u.add_time,u.service_time,u.admin_name,u.assign_time,u.remarks FROM '.
         $GLOBALS['ecs']->table('users').' u,'.$GLOBALS['ecs']->table('order_info').' i,'.$GLOBALS['ecs']->table('order_goods').' g '.
         $where.' GROUP BY u.user_id LIMIT '.($filter['page'] -1)*$filter['page_size'].', '.$filter['page_size'];
-    echo $sql_select;exit;
     $result = $GLOBALS['db']->getAll($sql_select);
 
     foreach ($result as &$val){

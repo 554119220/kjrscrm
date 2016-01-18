@@ -46,6 +46,13 @@
                     <dd>手机：<span id="mobile">{$order_info.mobile}
                             <button value="order.php?act=edit&info=mobile&id={$order_info.order_id}&type=input" title="修改手机号码" onclick="sendEditInfo(this)"><img src="images/edit.gif" alt="修改" title="修改"></button>
                     </span></dd>
+                    <dd>顾客等级：<select onchange="setUserLevel(this.value,{$order_info.order_id})">
+                      <option value="0">选择等级</option>
+                      {foreach from=$level_list item=v}
+                      <option value="{$v.level_id}">{$v.level_name}</option>
+                      {/foreach}
+                    </select>
+                    </dd>
                     <dd>邮编：<span id="zipcode">{$order_info.zipcode}
                             <button value="order.php?act=edit&info=zipcode&id={$order_info.order_id}&type=input" title="修改配送地址" onclick="sendEditInfo(this)"><img src="images/edit.gif" alt="修改" title="修改"></button>
                     </span></dd>

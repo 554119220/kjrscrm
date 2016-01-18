@@ -1781,7 +1781,6 @@ function submitReceiveDate ()
 function submitReceiveDateResponse (res)
 {
   showMsg(res);
-
   var objPage = document.getElementById('page_link');
   var Url = objPage.href;
   var objPageList = objPage.parentNode.parentNode.getElementsByTagName('span');
@@ -1794,7 +1793,6 @@ function submitReceiveDateResponse (res)
 
   Url = Url.replace(/page=\d+/, 'page='+page);
   Ajax.call(Url, '', sendToServerResponse, 'GET', 'JSON');
-
   return false;
 }
 
