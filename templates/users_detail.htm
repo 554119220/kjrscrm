@@ -512,8 +512,8 @@
                 </details>
               </td>
               <td>{$order.finaly_order_status}</td>
-              <td ondblclick="setTraderates($(this))"> {$order.traderates} </td>
-              <td>{$order.operator}</td>
+              <td ondblclick="setTraderates($(this),{$order.order_id})" title="双击修改"> {$order.traderates} </td>
+              <td>{if $order.operator}{$order.operator}{else}评价{/if}</td>
             </tr>
             {/foreach}
             {else}

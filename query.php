@@ -107,6 +107,19 @@ elseif ('obtain_fromwhere' == $_REQUEST['act']) {
     die(json_encode($result));
 }
 
+if ($_REQUEST['act'] == 'level') {
+    $sql_select = 'SELECT level_id id,level_name name FROM '.
+        $GLOBALS['ecs']->table('user_level').' ORDER BY level_id ASC';
+    $level_list = $GLOBALS['db']->getAll($sql_select);
+
+    $smarty->assign('field', 'level');
+    $smarty->assign('type', 'select');
+    $smarty->assign('list', $level_list);
+
+    $html = $smarty->fetch('search_builder.htm');
+    die($html);
+}
+
 /**
  * 客服列表
  */

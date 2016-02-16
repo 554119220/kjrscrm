@@ -3336,11 +3336,53 @@ elseif($_REQUEST['act'] == 'clear_log'){
 
     die($json->encode($res));
 }
+//通话时长排行，用于监控异常的通话
+elseif($_REQUEST['act'] == 'call_report'){
+    $url =  'http://192.168.1.240/mon/crmGet.php';
+    $date = date('Y_n_d'); 
+    $parameter = array('act'=>'call_time_report','date'=>$date);
+    $list        = curlObj($url,$parameter);
+    if ($list) {
+        $list = json_decode($list,true);
+        foreach ($list as &$v) {
+            //echo $v['clid'];exit;
+            $v['billsec'] = floor($v['billsec']/60);
+            $call_list[] = strlen($v['clid']) == 12 ? intval($v['clid']) : $v['clid'];
+            //$answer_list[] = strlen($v['dst']) == 12 ? intval($v['dst']) : $v['dst'];
+            if (strlen($v['dst']) == 3) {
+                $ext[] = $v['dst'];
+            }
+            if (strlen($v['clid']) == 3) {
+                $ext[] = $v['clid'];
+            }
+            if (preg_match("/01[0-9]{10}/",$v['dst'])) {
+                $answer_list[] = ltrim($v['dst'],0);
+            }else{
+                $answer_list[] = $v['dst'];
+            }
+        }
+        $ext = implode(',',$ext);
+        $sql = 'SELECT user_name,ext FROM '.$GLOBALS['ecs']->table('admin_user').
+            " WHERE ext IN($ext)";
+        $user_list = $GLOBALS['db']->getAll($sql);
+        unset($v);
+        foreach ($list as &$l) {
+            foreach ($user_list as $u) {
+                if ($l['dst'] == $u['ext'] || $l['clid'] == $u['ext']) {
+                    $l['admin_name'] = $u['user_name'];
+                }
+            }
+        }
+    }
+    $smarty->assign('list',$list);
+    $smarty->assign('date',date('Y-m-d'));
+    $res['main'] = $smarty->fetch('call_report.htm');
+    die($json->encode($res));
+}
 
 /* * 函数 */
 // 所有账号
-function accounts_get($sql_condition)
-{
+function accounts_get($sql_condition) {
     /* 分页大小 */
     $filter['page'] = empty($_REQUEST['page']) || (intval($_REQUEST['page'])<=0) ? 1 : intval($_REQUEST['page']);
 

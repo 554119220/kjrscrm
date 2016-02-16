@@ -1671,6 +1671,19 @@ function curlPhone($phone, $exten) {
     curl_close($ch);
     return $result;
 }
+//curl公用操作
+function curlObj($url,$parameter) {
+    $ch = curl_init();
+    //$url =  'http://192.168.1.240/call.php';
+    //$poster = array('phone' => $phone, 'exten' => $exten);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $parameter);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
+}
 /**
  * 验证号码及是否为市话
  */

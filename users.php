@@ -3328,35 +3328,28 @@ elseif ($_REQUEST['act'] == 'user_blacklist')
     $user_name        = mysql_real_escape_string(trim($_REQUEST['user_name']));
     $phone            = mysql_real_escape_string(trim($_REQUEST['phone']));
     $operator_in      = intval($_REQUEST['operator_in']);
-
     $where = " WHERE b.status=$blacklist_user_status ";
-
     $condition = '';
-    if($user_name != '')
-    {
+    if($user_name != '') {
         $where .= " AND b.user_name LIKE '%$user_name%'";
         $condition .= "&user_name=$user_name";
     }
 
-    if($phone != '')
-    {
+    if($phone != '') {
         $where .= " AND u.mobile_phone LIKE '%$phone%' ";
         $codition .= "&phone='$phone'";
     }
 
-    if($operator_in != 0)
-    {
+    if($operator_in != 0) {
         $where .= " AND b.operator_in=$operator_in ";
         $condtion .= "&operator_in=$operator_in";
     }
 
     /* 分页大小 */
     $filter['page'] = empty($_REQUEST['page']) || (intval($_REQUEST['page'])<=0) ? 1 : intval($_REQUEST['page']);
-    if (isset($_REQUEST['page_size']) && intval($_REQUEST['page_size']) > 0)
-    {
+    if (isset($_REQUEST['page_size']) && intval($_REQUEST['page_size']) > 0) {
         $filter['page_size'] = intval($_REQUEST['page_size']);
-    }
-    else{
+    } else{
         $filter['page_size'] = 20;
     }
 
@@ -3367,75 +3360,59 @@ elseif ($_REQUEST['act'] == 'user_blacklist')
 
     // 设置分页
     $page_set = array (1,2,3,4,5,6,7);
-    if ($filter['page'] > 4)
-    {
+    if ($filter['page'] > 4) {
         foreach ($page_set as &$val){
             $val += $filter['page'] -4;
         }
     }
+    $filter = array (
+        'filter'        => $filter,
+        'page_count'    => $filter['page_count'],
+        'record_count'  => $filter['record_count'],
+        'page_size'     => $filter['page_size'],
+        'page'          => $filter['page'],
+        'page_set'      => $page_set,
+        'condition'     => $condition,
+        'start'         => ($filter['page'] - 1)*$filter['page_size'] +1,
+        'end'           => $filter['page']*$filter['page_size'],
+        'act'           => 'user_blacklist',
+    );
+    $sql_select = 'SELECT b.user_id,b.user_name,b.operator_in,b.reason,b.in_time,b.status AS blackstatus,bt.type_name,a.user_name AS admin_name,r.role_name FROM '
+        .$GLOBALS['ecs']->table('user_blacklist').
+        ' AS b LEFT JOIN '.$GLOBALS['ecs']->table('admin_user').' AS a ON b.admin_id=a.user_id'
+        .' LEFT JOIN '.$GLOBALS['ecs']->table('role').' AS r ON b.role_id=r.role_id'
+        .' LEFT JOIN '.$GLOBALS['ecs']->table('blacklist_type').' AS bt ON b.type_id=bt.type_id '
+        .$where .' LIMIT '.($filter['page']-1)*$filter['page_size'].",{$filter['page_size']}";
 
-    if (end($page_set) > $filter['page_count'])
-    {
-        $page_set = array ();
-        for ($i = 7; $i >= 0; $i--)
-        {
-            if ($filter['page_count'] - $i > 0){
-                $page_set[] = $filter['page_count'] - $i;
-            }
-        }
+    $user_blacklist = $GLOBALS['db']->getAll($sql_select);
 
-        $filter = array (
-            'filter'        => $filter,
-            'page_count'    => $filter['page_count'],
-            'record_count'  => $filter['record_count'],
-            'page_size'     => $filter['page_size'],
-            'page'          => $filter['page'],
-            'page_set'      => $page_set,
-            'condition'     => $condition,
-            'start'         => ($filter['page'] - 1)*$filter['page_size'] +1,
-            'end'           => $filter['page']*$filter['page_size'],
-            'act'           => 'user_blacklist',
-        );
-
-        $sql_select = 'SELECT b.user_id,b.user_name,b.operator_in,b.reason,b.in_time,b.status AS blackstatus,bt.type_name,a.user_name AS admin_name,r.role_name FROM '
-            .$GLOBALS['ecs']->table('user_blacklist').
-            ' AS b LEFT JOIN '.$GLOBALS['ecs']->table('admin_user').' AS a ON b.admin_id=a.user_id'
-            .' LEFT JOIN '.$GLOBALS['ecs']->table('role').' AS r ON b.role_id=r.role_id'
-            .' LEFT JOIN '.$GLOBALS['ecs']->table('blacklist_type').' AS bt ON b.type_id=bt.type_id '
-            .$where .' LIMIT '.($filter['page']-1)*$filter['page_size'].",{$filter['page_size']}";
-
-        $user_blacklist = $GLOBALS['db']->getAll($sql_select);
-
-        foreach($user_blacklist AS &$val) {
-            $val['in_time'] = date('Y-m-d',$val['in_time']);
-        }
-
-        $role = get_role();
-
-        $sql_select   = 'SELECT type_id,type_name FROM '.$GLOBALS['ecs']->table('account_type');
-        $account_type = $GLOBALS['db']->getAll($sql_select);
-
-        $blacklist_type_list    = get_blacklist_type();
-
-        $smarty->assign('role',$role);
-        $smarty->assign('filter',$filter);
-        $smarty->assign('user_blacklist',$user_blacklist);
-        $smarty->assign('account_type',$account_type);
-        $smarty->assign('blackstatus',$_REQUEST['status']);
-        $smarty->assign('blacklist_type_list',$blacklist_type_list);
-
-
-        if($_REQUEST['from_tab'] == 'from_tab'){
-            $smarty->assign('condition',"&status={$_REQUEST['status']}");
-            $res['response_action'] = 'search_service';
-            $res['blackstatus'] = $_REQUEST['status'];
-            $res['main'] = $smarty->fetch('sch_blacklist.htm');
-        }else{
-            $res['main'] = $smarty->fetch('user_blacklist.htm');
-        }
-
-        die($json->encode($res));
+    foreach($user_blacklist AS &$val) {
+        $val['in_time'] = date('Y-m-d',$val['in_time']);
     }
+
+    $role = get_role();
+
+    $sql_select   = 'SELECT type_id,type_name FROM '.$GLOBALS['ecs']->table('account_type');
+    $account_type = $GLOBALS['db']->getAll($sql_select);
+
+    $blacklist_type_list = get_blacklist_type();
+
+    $smarty->assign('role',$role);
+    $smarty->assign('filter',$filter);
+    $smarty->assign('user_blacklist',$user_blacklist);
+    $smarty->assign('account_type',$account_type);
+    $smarty->assign('blackstatus',$_REQUEST['status']);
+    $smarty->assign('blacklist_type_list',$blacklist_type_list);
+
+    if($_REQUEST['from_tab'] == 'from_tab'){
+        $smarty->assign('condition',"&status={$_REQUEST['status']}");
+        $res['response_action'] = 'search_service';
+        $res['blackstatus'] = $_REQUEST['status'];
+        $res['main'] = $smarty->fetch('sch_blacklist.htm');
+    }else{
+        $res['main'] = $smarty->fetch('user_blacklist.htm');
+    }
+    die($json->encode($res));
 }
 
 //判断是否在黑名单
@@ -5077,6 +5054,7 @@ function user_list() {
         $filter['address']      = empty($_REQUEST['address'])      ? 0  : trim($_REQUEST['address']);
         $filter['sel_opt']      = !isset($_REQUEST['sel_opt'])      ? 0  : intval($_REQUEST['sel_opt']);
         $filter['contact_opt']  = empty($_REQUEST['contact_opt'])  ? 0  : intval($_REQUEST['contact_opt']);
+        $filter['level']  = empty($_REQUEST['level'])  ? 0  : intval($_REQUEST['level']);
         $filter['number_purchased'] = empty($_REQUEST['number_purchased'])?0:intval($_REQUEST['number_purchased']);
 
         $filter['start_time'] = strtotime(stamp2date($_REQUEST['start_time'], 'Y-m-d H:i:s'));
@@ -5156,6 +5134,9 @@ function user_list() {
         // 顾客姓名
         if ($filter['user_name']) {
             $ex_where .= " AND u.user_name LIKE '%{$filter['user_name']}%' ";
+        }
+        if ($filter['level']) {
+            $ex_where .= " AND level='{$filter['level']}' ";
         }
 
         $sql = 'SELECT COUNT(*) FROM '.$GLOBALS['ecs']->table('users').' u ';
@@ -5819,9 +5800,9 @@ function get_user_info ($id)
 
     $sql_select = 'SELECT u.age,u.family_id,u.sex,IF(u.calendar=1,CONCAT(u.birthday,"【阴历】"),CONCAT(u.birthday,"【阳历】")) birthday,'.$field.
         'u.user_name,u.role_id,u.characters,u.service_time,u.member_cid,u.number_purchased,u.habby,u.email,u.disease,m.card_number,'.
-        'u.disease_2,u.from_where,u.user_id,u.add_time,u.id_card,u.eff_id,u.qq,t.type_name customer_type,u.remarks,prt.user_id referrals_id,'.
-        'prt.user_name referrals,u.level FROM'.$GLOBALS['ecs']->table('users').' u LEFT JOIN '.$GLOBALS['ecs']->table('users').
-        ' prt ON u.parent_id=prt.user_id LEFT JOIN '.$GLOBALS['ecs']->table('memship_number').' m ON m.user_id=u.user_id, '.
+        'u.disease_2,u.from_where,u.user_id,u.add_time,u.id_card,u.eff_id,u.qq,t.type_name customer_type,u.remarks'.
+        ',u.level FROM'.$GLOBALS['ecs']->table('users').
+        ' u LEFT JOIN '.$GLOBALS['ecs']->table('memship_number').' m ON m.user_id=u.user_id, '.
         $GLOBALS['ecs']->table('customer_type')." t WHERE u.customer_type=t.type_id AND u.user_id=$id";
     $user_info = $GLOBALS['db']->getRow($sql_select);
 
@@ -5829,22 +5810,22 @@ function get_user_info ($id)
         $user_info['from_where_edit'] = true;
     }
 
-    if (!admin_priv('all','',false)) {
-        if($_SESSION['role_id'] != 33 && !in_array($_SESSION['admin_id'],array(4,493,554,330,277))){
-            $user_info['mobile_phone'] = hideContact($user_info['mobile_phone']);
-            $user_info['home_phone'] = hideContact($user_info['home_phone']);
-        }
-    }
+    //if (!admin_priv('all','',false)) {
+    //    if($_SESSION['role_id'] != 33 && !in_array($_SESSION['admin_id'],array(4,493,554,330,277))){
+    //        $user_info['mobile_phone'] = hideContact($user_info['mobile_phone']);
+    //        $user_info['home_phone'] = hideContact($user_info['home_phone']);
+    //    }
+    //}
 
-    $sql_select = "SELECT r.rank_name,u.rank_points,u.user_rank FROM ".$GLOBALS['ecs']->table('user_rank').' r,'.
-        $GLOBALS['ecs']->table('users')." u WHERE u.user_rank=r.rank_id AND u.user_id=$id";
-    $user_rank = array();
-    $user_rank[] = $GLOBALS['db']->getRow($sql_select);
-    $user_rank = reset($user_rank);
-    if(!$user_rank) {
-        $user_rank = array('rank_name'=>'未分配','rank_points'=>0);
-    }
-    $user_info = array_merge($user_info,$user_rank);
+    //$sql_select = "SELECT r.rank_name,u.rank_points,u.user_rank FROM ".$GLOBALS['ecs']->table('user_rank').' r,'.
+    //    $GLOBALS['ecs']->table('users')." u WHERE u.user_rank=r.rank_id AND u.user_id=$id";
+    //$user_rank = array();
+    //$user_rank[] = $GLOBALS['db']->getRow($sql_select);
+    //$user_rank = reset($user_rank);
+    //if(!$user_rank) {
+    //    $user_rank = array('rank_name'=>'未分配','rank_points'=>0);
+    //}
+    //$user_info = array_merge($user_info,$user_rank);
 
     // 获取顾客地址
     $sql_select = 'SELECT p.region_name province,c.region_name city,d.region_name district,'.
@@ -5901,7 +5882,7 @@ function access_purchase_records ($id)
     }
     // Get user to buy records 获取顾客购买记录
     $sql_select = 'SELECT o.order_id,o.platform_order_sn,o.order_sn p_order_sn,o.consignee,o.order_status,o.shipping_status,o.add_time,o.order_type,o.traderates,'.
-        "o.shipping_name,o.pay_name,IF(o.order_type=10,'0.00',o.final_amount) final_amount,o.tracking_sn express_number,o.admin_name operator,o.receive_time,o.shipping_code, ".
+        "o.shipping_name,o.pay_name,final_amount,o.tracking_sn express_number,o.admin_name operator,o.receive_time,o.shipping_code, ".
         ' r.role_describe platform FROM '.$GLOBALS['ecs']->table('order_info')
         .' o,'.$GLOBALS['ecs']->table('admin_user').' a, '.
         $GLOBALS['ecs']->table('role').' r WHERE  o.add_admin_id=a.user_id AND '.
@@ -5913,10 +5894,10 @@ function access_purchase_records ($id)
     // Format time
     krsort($order_list);
     $order_total = count($order_list);
-    $traderates = array('好评','中评','差评');
+    $traderates = array(1=>'好评','中评','差评');
     foreach ($order_list as &$val)
     {
-        $var['traderates'] = $traderates[$var['traderates']];
+        $val['traderates'] = $traderates[$val['traderates']];
         $val['order_sn'] = !empty($val['platform_order_sn']) ? $val['platform_order_sn'] : $val['p_order_sn'];
         $val['index'] = $order_total--;
         $val['add_time']     = date('Y-m-d', $val['add_time']);   // Buy time
@@ -5932,22 +5913,17 @@ function access_purchase_records ($id)
         $val['goods_list'] = $GLOBALS['db']->getAll($sql_select);
         $val['goods_kind'] = count($val['goods_list']);
 
-        foreach ($val['goods_list'] as &$v)
-        {
-            if ($v['is_package'])
-            {
+        foreach ($val['goods_list'] as &$v) {
+            if ($v['is_package']) {
                 $sql_select = 'SELECT goods_name,num goods_number,g.goods_sn FROM '.
                     $GLOBALS['ecs']->table('packing_goods').' g,'.$GLOBALS['ecs']->table('packing').
                     " p WHERE p.packing_id=g.packing_id AND p.packing_desc='{$v['goods_sn']}'";
                 $v['goods_list'] = $GLOBALS['db']->getAll($sql_select);
             }
         }
-
         $temp_status = $val['order_status'].$val['shipping_status'];
-
         //echo $val['order_status'].'---'.$val['shipping_status'].'---'.$temp_status.'!';
-        switch($temp_status)
-        {
+        switch($temp_status) {
         case "52" : $val['finaly_order_status'] = '<font>已签收</font>'; $val['tr'] = 'bgcolor=""'; break;
         case "51" : $val['finaly_order_status'] = '<font>已发货</font>'; $val['tr'] = ''; break;
         case "54" : $val['finaly_order_status'] = '<font color="#FF000">已退货</font>';  $val['tr'] = 'style="background:#FFF7FB !important"';break;
@@ -5955,6 +5931,7 @@ function access_purchase_records ($id)
         case "10" : $val['finaly_order_status'] = '<font>待发货</font>'; $val['tr'] = 'style="background:#D1E9E9 !important"'; break;
         }
         if ($val['order_type'] == 10) {
+            $o['final_amount'] = '0.00';
             $val['finaly_order_status'] .= '<font> | 取货单</font>';
         }
 

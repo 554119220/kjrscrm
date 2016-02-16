@@ -431,7 +431,8 @@ elseif ($_REQUEST['act'] == 'nature_stats') {
     $config = report_statistics_limit(1); // 报表统计范围
     if ($config['statistics_date_limit'] > 0 && $config['offset_month'] > 0) {
         $final_month = date('Y')*12 + date('m') -$config['offset_month'];
-        $min_date = 'minDate:\''.floor($final_month/12).'-'.($final_month%12).'-01 00:00:00\'';
+        //$min_date = 'minDate:\''.floor($final_month/12).'-'.($final_month%12).'-01 00:00:00\'';
+        $min_date = 'minDate:\''.'12-01-01 00:00:00\'';
         $max_date = 'maxDate:\''.date('Y-m-t 23:59:59').'\'';
 
         $smarty->assign('min_date', $min_date);
@@ -1439,7 +1440,7 @@ elseif ($_REQUEST['act'] == 'stats_saler_month') {
 
     $admin_list = implode(',', $admin_list);
 
-    $sql_select = 'SELECT SUM(i.final_amount) final_amount,COUNT(*) order_num,i.admin_id,i.admin_name,r.role_describe FROM '.
+    $sql_select = 'SELECT SUM(i.final_amount) final_amount,COUNT(*) order_num,i.admin_id,i.admin_name,r.role_describe,r.depart_id FROM '.
         $GLOBALS['ecs']->table('order_info').' i,'.$GLOBALS['ecs']->table('role').' r WHERE i.order_status IN (1,5) AND '.
         'i.shipping_status<>3 AND i.order_type IN (4,5,6,9) AND i.platform=r.role_id AND i.add_time BETWEEN '.
         " $month_start AND $month_end AND i.admin_id IN ($admin_list) GROUP BY admin_id ORDER BY final_amount DESC";
@@ -2420,7 +2421,7 @@ elseif($_REQUEST['act']=='spread_report'){
             $v['total_order_num']      = $v['m_order_num']+$v['m_order_num'];
             $v['total_transformation'] = bcdiv($v['total_order_num'],$v['total_spread_uv'],4)*100;
             $v['pc_transformation']    = bcdiv($v['pc_order_num'],$v['pc_spread_uv'],4)*100;
-            $v['m_transformation']     = bcdiv($v['m_order_num'],$v['m_spread_uv'],2)*100;
+            $v['m_transformation']     = $v['m_spread_uv'] ? bcdiv($v['m_order_num'],$v['m_spread_uv'],2)*100 : 0;
             //if ($v['add_time'] == '-') {
             //    $v['add_time'] = '总合';
             //    continue;
@@ -2453,13 +2454,43 @@ elseif($_REQUEST['act']=='spread_report'){
 
 //顾客评价
 elseif($_REQUEST['act'] == 'evaluate'){
-    $c = new TopClient;
-    $c->appkey = $appkey;
-    $c->secretKey = $secret;
-    $req = new TmallTraderateFeedsGetRequest;
-    $req->setChildTradeId("11111111111");
-    $resp = $c->execute($req, $sessionKey);
+    if ($_REQUEST['start_time'] && $_REQUEST['end_time']) {
+        $smarty->assign('start_time',$_REQUEST['start_time']);
+        $smarty->assign('end_time',$_REQUEST['end_time']);
+        $start_time = strtotime($_REQUEST['start_time']);
+        $end_time   = strtotime($_REQUEST['end_time']);
+    }else{
+        $start_time = strtotime(date('Y-m-01 00:00:00'));
+        $end_time   = strtotime(date('Y-m-t 23:59:59'));
+    }
+    $where = " WHERE o.add_time BETWEEN $start_time AND $end_time";
+    $sql = ' SELECT COUNT(1) total,o.traderates,o.admin_id,r.role_id,r.depart_id,u.user_name FROM '.$GLOBALS['ecs']->table('order_info')
+        .' o LEFT JOIN '.$GLOBALS['ecs']->table('admin_user'). ' u ON o.admin_id=u.user_id LEFT JOIN '
+        .$GLOBALS['ecs']->table('role').' r ON r.role_id=u.role_id '
+        ." $where AND u.role_id IN(".KEFU.','.KEFU2.') AND traderates>0 GROUP BY traderates,admin_id ORDER BY total DESC';
+    $list = $GLOBALS['db']->getAll($sql);
+    $total = array('user_name'=>'总计','traderates'=>array(1=>0,0,0));
+    if ($list) {
+        foreach ($list as $v) {
+            $traderates_list[$v['admin_id']] = array(1=>0,0,0); 
+        }
+        foreach ($list as $v) {
+            $admin_list[$v['admin_id']] = $v;
+            $traderates_list[$v['admin_id']][$v['traderates']] = $v['total']; 
+            $total['traderates'][$v['traderates']] += $v['total'];
+        }
+        foreach ($admin_list as $k=>&$a) {
+            $a['traderates'] = $traderates_list[$k]; 
+            ksort($a['traderates']);
+        }
+        array_push($admin_list,$total);
+    }
 
+    $smarty->assign('depart_list',array(array('depart_id'=>7,'depart_name'=>'客服二部'),array('depart_id'=>8,'depart_name'=>'客服一部')));
+    $smarty->assign('role_list',get_role_list('','role_id,role_name'," AND depart_id IN(7,8)"));
+    $smarty->assign('list',$admin_list);
+    $res['main'] = $smarty->fetch('traderates.htm');
+    die($json->encode($res));
 }
 //快递费用报表
 elseif($_REQUEST['act'] == 'express_fee_report'){
@@ -2588,7 +2619,6 @@ elseif($_REQUEST['act']=='del_main_sale'){
     }
     die($json->encode($res));
 }
-
 /*------------------------------------------------------ */
 //--排行统计需要的函数
 /*------------------------------------------------------ */
@@ -2673,8 +2703,8 @@ function sales_rank ($is_pagination = true) {
         $GLOBALS['ecs']->table('order_info')." oi $where %s GROUP BY og.goods_sn ".
         ' ORDER BY ' . $filter['sort_by'] . ' ' . $filter['sort_order'];
     // 日常销量
-    $sales_order_data = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND og.is_gift<>1 AND oi.order_type IN (2,3,4,6,100,9)"));
 
+    $sales_order_data = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND og.is_gift<>1 AND oi.order_type IN (2,3,4,6,100,9)"));
     if ($gift_where) {
         $gift_arr = $GLOBALS['db']->getAll(sprintf($sql, $order_type." AND oi.order_type IN (2,3,4,6,100,10) $gift_where"));
         if ($gift_arr) {
@@ -2962,6 +2992,7 @@ function stats_all ()
     $sql_select = 'SELECT COUNT(*) order_num,SUM(i.final_amount) order_amount,r.depart_desc platform,i.admin_id,i.admin_name FROM '.
         $GLOBALS['ecs']->table('order_info').' i,'.$GLOBALS['ecs']->table('role').
         " r WHERE i.order_status IN (1,5) AND i.order_type NOT IN (1,10,100) AND i.shipping_status<>3 AND i.platform=r.role_id AND i.add_time BETWEEN $start AND $end $sql_platform";
+    echo $sql_select;exit;
     $res = $GLOBALS['db']->getAll($sql_select);
 
     $stats_all = array ();

@@ -219,22 +219,51 @@ function setUserLevel(level,id){
 }
 
 //设置评价
-function setTraderates(obj){
+function setTraderates(obj,orderId){
   $("[name='traderates']").each(function(){
-    $(this).parent("td").html($(this option:selected));
-
+    $(this).parent("td").html($(this).children('option').filter(':selected').text());
   });
   obj.html(
-      '<select name="traderates" onchage="saveTraderates(this,{$order.order_id})"> <option value="0">顾客评价</option> <option value="1" {if $order.traderates eq 1}selected{/if}>好评</option> <option value="2" {if $order.traderates eq 2}selected{/if}>中评</option> <option value="3" {if $order.traderates eq 3}selected{/if}>差评</option> </select>'
+      '<select name="traderates" onchange="saveTraderates(this,'+orderId+')"> <option value="0">顾客评价</option> <option value="1" {if $order.traderates eq 1}selected{/if}>好评</option> <option value="2" {if $order.traderates eq 2}selected{/if}>中评</option> <option value="3" {if $order.traderates eq 3}selected{/if}>差评</option> </select>'
       ); 
 }
 
 function saveTraderates(obj,orderId){
-  if (obj.val()) {
+  if (obj.value) {
     $.get(
-        'order.php?act=set_traderates&order_id='+orderId+'&traderates='+obj.val(),
+        'order.php?act=set_traderates&order_id='+orderId+'&traderates='+obj.value,
         function(res){
           showMsg(res);
         },'JSON');
   }
+}
+
+function fillOrderShipping(){
+  var orderNum = $("[name='order_num']").val();
+  var trackingStart = $("[name='tracking_start']").val();
+  if (trackingStart && orderNum) {
+    $.get(
+        'order.php?act=fill_order_sn'+'&tracking_start='+trackingStart+'&order_num='+orderNum+$("#page_url").val(),
+        function(res){
+          if (res.success) {
+            //console.log(res.success);
+            for (var i in res.success) {
+              $("#"+res.success[i].order_id).html(res.success[i].tracking_sn);
+            }
+          }
+          showMsg(res);
+        },'JSON');
+  }else return false;
+}
+
+function manualOrderSync(obj){
+  if (obj.value!='') {
+    var startTime = $("#startTime").val();
+    var endTime = $("#endTime").val();
+    $.get(
+        'order.php?act=manual_order_synchro&behave=1&action='+obj.value+'&start_time='+startTime+'&end_time='+endTime,
+        function(res){
+          obj.parentNode.parentNode.cells[2].innerHTML=res.message;
+        },'JSON');
+  }else return false;
 }

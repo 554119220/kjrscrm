@@ -2638,6 +2638,11 @@ elseif ('save' == $_REQUEST['act']) {
     die($json->encode($msg));
 }
 
+//发货清单设置
+elseif($_REQUEST['act'] == 'shipping_set'){
+    
+}
+
 /**
  * 获取订货单列表
  */

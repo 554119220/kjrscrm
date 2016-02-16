@@ -18,7 +18,7 @@
   </thead>
   <tbody>
     {foreach from=$sales_list item=val name=i}
-    <tr group="{$val.group_id}" role="{$val.role_id}" admin="{$val.admin_id}" role_code="{$val.role_describe}">
+    <tr depart="{$val.depart_id}" role="{$val.role_id}" admin="{$val.admin_id}" role_code="{$val.role_describe}">
       <th title="排名">{$smarty.foreach.i.iteration}</th>
       <th>{$val.admin_name}</th>
       <th title="订单数量">{$val.order_num}</th>

@@ -12,7 +12,6 @@
       </ul>
     </div>
   </div>
-
   <div class="gridlist-action c_b">
     <div>
       <script language="javascript" type="text/javascript" src="My97DatePicker/WdatePicker.js"></script>
@@ -34,7 +33,13 @@
         <input type="text" id="keywords" value="{$kw}">
       </span>
       <button value="order.php?act={$act}&shipping_id={$shipping_id}" onclick="searchOrder(this)" id="filterURL" class="b_submit">搜索</button>
-      <button value="order.php?act=rand_order&a=print" onclick="giveMeOrder(this)" class="b_submit">获取订单</button>
+      {if $shipping_act}
+      <input type="text" name="tracking_start" placeholder='起始快递号' value=""/>
+      <input type="number" name="order_num" placeholder='填充订单数' title="填充订单数" class="w50" value="{$page_size}"/>
+      <input type="button" name="name" onclick="fillOrderShipping()" value="填充" class="b_submit"/>
+      {/if}
+      <!--<input type="text" name="shipping_end" placeholder='  终止快递号' value=""/>-->
+      <!--<button value="order.php?act=rand_order&a=print" onclick="giveMeOrder(this)" class="b_submit">获取订单</button>-->
       <select id="goods_kind" onchange="sendGoodsFilter()" style="width:100px">
         <option value="0">商品名称</option>
         {foreach from=$beshipped_goods_list item=val}
@@ -44,9 +49,9 @@
       {if $shipping_act}
       <a href="order.php?act=batch_print" class="b_submit" title="批量打单" style="display:inline-block;height:15px" target="_blank">批量打单</a>
       {/if}
-      {if $all}
-      <label><input type="checkbox" name="abnormal" id="abnormal" value="1" {if $abnormal}checked{/if}/> 潜规则</label>
-      {/if}
+      <!--{if $all}-->
+      <!--<label><input type="checkbox" name="abnormal" id="abnormal" value="1" {if $abnormal}checked{/if}/> 潜规则</label>-->
+      <!--{/if}-->
     </div>
   </div>
 
@@ -107,17 +112,17 @@
         </tr>
         {foreach from=$order_list item=val}
         <tr id="tr_2_{$val.order_id}" height="25px">
-          <td width="120px" class="{if $val.pay_id eq 3}bg_pay{/if} b_r">
+          <td class="{if $val.pay_id eq 3}bg_pay{/if} b_r">
             {if $shipping_act}<span class="{if $val.review}fav_start-y{else}fav_start-x{/if}" id="review_{$val.order_id}"{if $access} onclick="review({$val.order_id})"{/if}></span>{/if}
             <font>【{$val.role_describe}】</font><a class="mt1" href="order.php?act=order_detail&id={$val.order_id}&{$act}=1" title="订单详情" ><img src="images/add.gif" alt="查看" title="查看" align="absmiddle"></a>
           </td>
-          <td width="135px" {if $shipping_act} ondblclick="replaceToInput(this, {$val.order_id})"{/if}>{if $val.tracking_sn}{if $act eq 'history_order' || $act eq 'finished_order'}<a href="logistics_info.php?id={$val.order_id}" target="_blank">{$val.tracking_sn}</a>{else}{$val.tracking_sn}{/if}{else}{$val.shipping_name}{/if}</td>
-          <td width="130px" align="center"{if ! $val.card_number && $add_memcard} ondblclick="replaceHTML(this, {$val.order_id}, 'card_number')"{/if}>{$val.card_number}</td>
-          <td width="170px" align="center" title="{$val.remarks}" ondblclick="showMsg({req_msg:true,timeout:5000,message:'{$val.remarks}'})">{$val.remarks|truncate:10}</td>
-          <td width="77px" >{$val.formated_total_fee}</td>
-          <td width="75px" title="{$val.admin_name}">{$val.admin_name|truncate:4}</td>
-          <td width="75px" title="{$val.add_admin}">{$val.add_admin|truncate:4}</td>
-          <td width="120px">{$val.short_order_time}</td>
+          <td id="{$val.order_id}" {if $shipping_act} ondblclick="replaceToInput(this, {$val.order_id})"{/if}>{if $val.tracking_sn}{if $act eq 'history_order' || $act eq 'finished_order'}<a href="logistics_info.php?id={$val.order_id}" target="_blank">{$val.tracking_sn}</a>{else}{$val.tracking_sn}{/if}{else}{$val.shipping_name}{/if}</td>
+          <td align="center"{if ! $val.card_number && $add_memcard} ondblclick="replaceHTML(this, {$val.order_id}, 'card_number')"{/if}>{$val.card_number}</td>
+          <td align="center" title="{$val.remarks}" ondblclick="showMsg({req_msg:true,timeout:5000,message:'{$val.remarks}'})">{$val.remarks|truncate:10}</td>
+          <td>{$val.formated_total_fee}</td>
+          <td title="{$val.admin_name}">{$val.admin_name|truncate:4}</td>
+          <td title="{$val.add_admin}">{$val.add_admin|truncate:4}</td>
+          <td>{$val.short_order_time}</td>
         </tr>
         {/foreach}
       </table>
@@ -142,5 +147,6 @@
   </div>
   <div class="tip_right">跳转到第
     <input type="text" name="page" size="4" onkeyup="sendPageValue(this)">&nbsp;页
+    <input type="hidden" id="page_url" value="{$page_link}">
   </div>
 </div>

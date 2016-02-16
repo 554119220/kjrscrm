@@ -498,3 +498,8 @@ function schMainSaleReport(){
       },'JSON');
 }
 
+function traderatesList(obj){
+ var start_time = obj.elements['start_time'].value;
+  var end_time = obj.elements['end_time'].value;
+  Ajax.call('report_forms.php?act=evaluate','start_time='+start_time+'&end_time='+end_time,inMain,'POST','JSON'); 
+}

@@ -1782,12 +1782,12 @@ elseif ($_REQUEST['act'] == 'expressprint') {
     }
 
     $now_time = time();
+    $smarty->assign('now_time',date('Y-m-d',$now_time));
     //中通快递
     //if ($order['shipping_code'] == 'zto' && in_array($order['team'], array(6,21,22,26))) {
     if ($order['shipping_code'] == 'ztott') {
         $zto      = shipping_zto($order);;
         $get_resp = $zto['get_resp'];
-        $smarty->assign('now_time',date('Y-m-d',$now_time));
         $smarty->assign('get_resp',$get_resp);
         $smarty->display('zto.htm');
         exit;
@@ -2202,7 +2202,7 @@ admin_priv('order_view');
         $smarty->assign('card_number',  $card_number);
 
         //$sql = 'SELECT r.role_describe,a.user_name,u.phone FROM '.$ecs->table('role').
-        $sql = 'SELECT r.role_describe,a.user_name,a.phone FROM '.$ecs->table('role').
+        $sql = 'SELECT r.role_describe,a.user_name,a.phone,r.depart_id FROM '.$ecs->table('role').
             ' r, '.$ecs->table('order_info').' i,'.$ecs->table('admin_user').
             " a WHERE a.user_id=i.admin_id AND r.role_id=i.platform AND i.order_id={$order['order_id']}";
         $dietitian = $db->getRow($sql);
@@ -3621,7 +3621,7 @@ elseif($_REQUEST['act'] == 'deal_flush_order'){
             if ($error_sn) {
                 $error_sn = array_filter($error_sn);
             }
-            record_operate($record_sql, 'ordersyn_info');// 记录确认操作
+            //record_operate($record_sql, 'ordersyn_info');// 记录确认操作
             if ($unsyn) {
                 //$msg = $_LANG['unsyn_order']'还没有同步到系统的订单:'.implode(',',$unsyn);
                 $msg = $_LANG['unsyn_order'].'：'.implode(',',$unsyn);
@@ -3798,6 +3798,38 @@ elseif($_REQUEST['act'] == 'set_traderates'){
         $res = crm_msg('标记成功');
     }else{
         $res = crm_msg('标记失败');
+    }
+    die($json->encode($res));
+}
+
+elseif($_REQUEST['act'] == 'fill_order_sn'){
+    $res = batch_fill_order_shipping();
+    if(isset($res['code'])){
+        $res['timeout'] = '';
+    }
+    die($json->encode($res));
+}
+
+elseif($_REQUEST['act'] == 'manual_order_synchro'){
+    if (isset($_REQUEST['behave'])) {
+        $action = mysql_real_escape_string($_REQUEST['action']);
+        if ($action) {
+            $ch = curl_init();
+            $url =  'http://192.168.1.217/crm2/sync/sync_'.$action.'.php';
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, array());
+            $result = curl_exec($ch);
+            curl_close($ch);
+            $res['message'] = '同步成功';
+        }else $res['message'] = '失败';
+    }else{
+        $sql = 'SELECT role_name,sync_action FROM '.$GLOBALS['ecs']->table('role')
+            .' WHERE role_id IN ('.ONLINE_STORE.') AND role_type>0';
+        $res = $GLOBALS['db']->getAll($sql);
+        $smarty->assign('role_list',$GLOBALS['db']->getAll($sql));
+        $res['main'] = $smarty->fetch('sync.htm');
     }
     die($json->encode($res));
 }
@@ -5336,9 +5368,9 @@ function shipping_synchro($order_id)
     // 同步发货（淘宝）
     if ($order_info['shipping_time'] && in_array($order_info['team'], array(6,21,22,26,53))) {
         $platform_path = array (6 => 'taobao', 21 => 'taobao01', 22 => 'taobao02', 26 => 'taobao03',53=>'taobao04');
-        require(dirname(__FILE__)."/taobao/order_synchro.php");
-        require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/sk.php");
-        $auth = require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/config.php");
+        require_once(dirname(__FILE__)."/taobao/order_synchro.php");
+        require_once(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/sk.php");
+        $auth = require_once(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/config.php");
 
         // 配置淘宝签权参数
         $c = new TopClient;
@@ -5491,13 +5523,13 @@ function shipping_synchro($order_id)
 
     // 同步发货（京东）
     if ($order_info['shipping_time'] && in_array($order_info['team'],array(10,54,55))) {
-        include dirname(__FILE__).'/jingdong/JdClient.php';
-        include dirname(__FILE__).'/jingdong/JdException.php';
-        include dirname(__FILE__).'/jingdong/request/order/OrderSopOutstorageRequest.php';
+        include_once dirname(__FILE__).'/jingdong/JdClient.php';
+        include_once dirname(__FILE__).'/jingdong/JdException.php';
+        include_once dirname(__FILE__).'/jingdong/request/order/OrderSopOutstorageRequest.php';
 
         $platform_path = array (10 => 'jingdong', 54 => 'aksojd', 55 => 'jlfjd');
-        require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/sk.php");
-        $auth = require(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/config.php");
+        require_once(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/sk.php");
+        $auth = require_once(dirname(__FILE__)."/{$platform_path[$order_info['team']]}/config.php");
         //include dirname(__FILE__).'/jingdong/sk.php';
         //$auth = include dirname(__FILE__).'/jingdong/config.php';
 
@@ -5529,12 +5561,12 @@ function shipping_synchro($order_id)
 
     // 同步发货（1号店）
     if ($order_info['shipping_time'] && $order_info['team'] == 14) {
-        include dirname(__FILE__).'/yhd/YhdClient.php';
-        include dirname(__FILE__).'/yhd/sk.php';
-        include dirname(__FILE__).'/yhd/request/order/OrderLogisticsPushRequest.php';
-        include dirname(__FILE__).'/yhd/request/logistics/LogisticsOrderShipmentsUpdateRequest.php';
+        include_once dirname(__FILE__).'/yhd/YhdClient.php';
+        include_once dirname(__FILE__).'/yhd/sk.php';
+        include_once dirname(__FILE__).'/yhd/request/order/OrderLogisticsPushRequest.php';
+        include_once dirname(__FILE__).'/yhd/request/logistics/LogisticsOrderShipmentsUpdateRequest.php';
 
-        $auth = include dirname(__FILE__).'/yhd/config.php';
+        $auth = include_once dirname(__FILE__).'/yhd/config.php';
 
         $req = new LogisticsOrderShipmentsUpdateRequest;
 
@@ -5649,7 +5681,7 @@ function shipping_synchro($order_id)
 
     // 国美同步发货
     if ($order_info['shipping_time'] && $order_info['team'] == 12) {
-        $auth = include 'gome/config.php';
+        $auth = include_once 'gome/config.php';
 
         $url = 'http://api.coo8.com/ApiControl';
         $sys_param = array (
@@ -5697,8 +5729,8 @@ function shipping_synchro($order_id)
 
     // 苏宁同步发货
     if ($order_info['shipping_time'] && $order_info['team'] == 17) {
-        require('suning/SuningSdk.php');
-        $auth = require('suning/config.php');
+        require_once('suning/SuningSdk.php');
+        $auth = require_once('suning/config.php');
 
         // 配送公司编号
         $sql_select = 'SELECT suning_code,company_name FROM '.$GLOBALS['ecs']->table('shipping').' s, '.
@@ -6695,4 +6727,79 @@ function batch_flushing_order_out($order_info,$tracking_sn,$logistics){
             return $tracking_sn;
         }
     }
+}
+
+function batch_fill_order_shipping(){
+    $_REQUEST['act'] = 'current_order';
+    $res['error'] = '';
+    $has_used = array();
+    $un_match = array();
+    $success = array();
+    $error = array();
+    
+    if(!empty($_GET['tracking_start']) && !empty($_GET['order_num'])) {
+        $order_list = order_list();
+        if ($order_list) {
+            $order_list = $order_list['orders'];
+            $tracking_start = mysql_real_escape_string(trim($_GET['tracking_start']));
+            $shipping_id = $_REQUEST['shipping_id'];
+            $total = $_GET['order_num']<count($order_list) ? $_GET['order_num'] : count($order_list);
+            for ($i = 0; $i < $total; $i++) {
+                $tracking[$i] = $tracking_start+$i;
+            }
+            $list = array();
+            unset($k);
+            foreach ($order_list as $o) {
+                if (!trim($o['tracking_sn'])) {
+                    $list[]['order_id'] = $o['order_id'];
+                }
+            }
+            $order_list = $list;
+            unset($o);
+            foreach ($order_list as $k=>$o) {
+                if ($k>$total) {
+                    break;
+                }else{
+                    $sql = 'SELECT order_id FROM '.$GLOBALS['ecs']->table('order_info').
+                        " WHERE order_id<>{$o['order_id']} AND shipping_status NOT IN (3,4) AND tracking_sn='{$tracking[$k]}'";
+                    if ($GLOBALS['db']->getOne($sql)) {
+                        $has_used[] = $tracking[$k];
+                        continue;
+                    }else{
+                        // 验证运单号与快递公司是否一致
+                        $sql_select = 'SELECT code_regexp FROM '.$GLOBALS['ecs']->table('shipping').' s, '.
+                            $GLOBALS['ecs']->table('order_info')
+                            ." i WHERE i.shipping_id=s.shipping_id AND i.order_id={$o['order_id']}";
+                        $regexp = $GLOBALS['db']->getOne($sql_select);
+                        if($shipping_id==39){
+                            $tracking[$k] = "{$tracking[$k]}";
+                        }
+                        if ($regexp && !preg_match($regexp, $tracking[$k])) {
+                            $un_match[] = $tracking[$k];
+                        }else{
+                            $sql = "UPDATE ".$GLOBALS['ecs']->table('order_info')." SET tracking_sn='{$tracking[$k]}',"
+                                ." shipping_time={$_SERVER['REQUEST_TIME']} WHERE order_id={$o['order_id']} AND tracking_sn<>'{$tracking[$k]}'";
+
+                            if($GLOBALS['db']->query($sql)) {
+                                $syn_info = shipping_synchro($o['order_id']);
+                                if (!empty($syn_info['message'])) {
+                                    $error[] = $syn_info['message'];
+                                }else{
+                                    $success[] = array('order_id'=>$o['order_id'],'tracking_sn'=>$tracking[$k]);
+                                }
+                            }else{
+                                $error[] = $tracking_sn;
+                            }                       
+                        }
+                    }
+                }
+            }
+            $res = array('has_used'=>$has_used,'un_match'=>$un_match,'error'=>$error,'success'=>$success);
+        }else{
+            $res = crm_msg('没有相应订单');
+        }
+    } else {
+        $res['message'] = '请输入正确的运单号！';
+    }
+    return $res;
 }

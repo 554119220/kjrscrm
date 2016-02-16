@@ -998,6 +998,8 @@ function changeKeywordsArae (obj)
       break;
     case 'eff_id':
       Ajax.call('query.php?act=effect', '', changeKeywordsAraeResponse, 'GET', 'TEXT');
+    case 'level':
+      Ajax.call('query.php?act=level', '', changeKeywordsAraeResponse, 'GET', 'TEXT');
     default : 
       document.getElementById('keywordsArea').innerHTML = '<input type="text" id="keywords">';
   }
@@ -1066,6 +1068,9 @@ function searchOrder (obj)
       break;
     case 'eff_id':
       data += '&eff_id='+document.getElementById('eff_id').value;
+      break;
+    case 'level':
+      data += '&level='+document.getElementById('level').value;
       break;
     default :
       var keywords = document.getElementById('keywords').value;  // 要查询的关键词
@@ -1413,6 +1418,7 @@ function addNewOrder()
      return false;
      }
      */
+
   if (team == 0) {
     res['message'] = '请选择产生该订单的购买平台！';
     showMsg(res);
@@ -1781,6 +1787,7 @@ function submitReceiveDate ()
 function submitReceiveDateResponse (res)
 {
   showMsg(res);
+
   var objPage = document.getElementById('page_link');
   var Url = objPage.href;
   var objPageList = objPage.parentNode.parentNode.getElementsByTagName('span');
@@ -1793,6 +1800,7 @@ function submitReceiveDateResponse (res)
 
   Url = Url.replace(/page=\d+/, 'page='+page);
   Ajax.call(Url, '', sendToServerResponse, 'GET', 'JSON');
+
   return false;
 }
 

@@ -1235,7 +1235,7 @@ elseif ($_REQUEST['act']  == 'get_msg_notice'){
         $where .= ' AND notice_type=5';
     }
 
-    if ($_SESSION['role_id']>31 && !admin_priv('all','',false)) {
+    if (in_array($_SESSION['role_id'],$CUSTOMER_NIXUS) && !admin_priv('all','',false)) {
         $where .= ' AND notice_type IN (4,5)';
     }
     $start_time = strtotime(date('Y-m-d 00:00:00'));

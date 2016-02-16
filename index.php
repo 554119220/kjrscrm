@@ -24,6 +24,29 @@ date_default_timezone_set('Asia/Shanghai');
 /*------------------------------------------------------ */
 //-- 框架
 /*------------------------------------------------------ */
+//导航标签无限分类
+//$total = array(); //下级的人数
+//$res = get_child(1);
+//echo '<pre>';
+//print_r($res);
+//// action_id 为顶父级
+//function get_child($action_id){
+//    global $total;
+//    echo $gl;exit;
+//    $sql = 'SELECT action_id,label FROM '.$GLOBALS['ecs']->table('admin_action')." WHERE parent_id=$action_id";
+//    $child = $GLOBALS['db']->getAll($sql); //这是获取一列的方法, 得到一维数组
+//    //echo '<pre>';
+//    //print_r($child);exit;
+//    if ($child) {
+//        //$total += count($child);
+//        $total[] = $child;
+//        foreach ($child as $v) {
+//            get_child($v['action_id']);
+//        }
+//    }
+//    return $total;
+//}
+//exit;
 if ($_REQUEST['act'] == '')
 {
     $smarty->assign('admin_id', $_SESSION['admin_id']);
