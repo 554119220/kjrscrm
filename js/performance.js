@@ -778,3 +778,16 @@ function modifyExpressFee(obj){
         },'JSON');
   }else return false;
 }
+
+//搜索通话时长记录，用于监控
+function schCallReport(){
+  var date = $("[name='date']").val();
+  var type = $("[name='type']:checked").val();
+  if (date) {
+    $.get(
+        'performance.php?act=call_report&date='+date+'&type='+type,
+        function(res){
+          inMain(res);
+        },'JSON');
+  }else return false;
+}

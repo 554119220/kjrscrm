@@ -2,9 +2,9 @@
 <h3>当天通话时长排行</h3>
 <div class="list_panel">
   <input type="text" name="date" onfocus="WdatePicker({dateFmt:'yyyy-MM-dd'})" value="{$date}">
-  <input type="button" name="" value="搜索" class="b_submit"/>
   <label><input type="radio" name="type" value="0" checked/> 时长</label>
   <label><input type="radio" name="type" value="1"/> 次数</label>
+  <input type="button" name="" value="搜索" class="b_submit" onclick="schCallReport()"/>
 </div>
 <div id="resource" class="mt10">
   <table cellspacing="0" cellpadding="0" border="0" class="wu_table_list wu_rb_border tr_hover" width="40%">
@@ -19,7 +19,12 @@
     	<td>{$v.calldate}</td>
     	<td>{$v.billsec}</td>
     	<td>{if $v.admin_name}{$v.admin_name}{else}-{/if}</td>
-    	<td></td>
+      <td>
+        {if $v.userfield}
+        <a href="http://192.168.1.240/mon/downloadCall.php?d={$v.dir}&file={$v.uniqueid}" target="_blank">下载录音</a>
+        {else} - 
+        {/if}
+      </td>
     </tr>
     {/foreach}
   </table>

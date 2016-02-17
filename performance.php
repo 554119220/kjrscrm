@@ -3339,16 +3339,16 @@ elseif($_REQUEST['act'] == 'clear_log'){
 //通话时长排行，用于监控异常的通话
 elseif($_REQUEST['act'] == 'call_report'){
     $url =  'http://192.168.1.240/mon/crmGet.php';
-    $date = date('Y_n_d'); 
+    $date = isset($_GET['date']) ? date('Y_n_d',strtotime($_GET['date'])) : date('Y_n_d'); 
     $parameter = array('act'=>'call_time_report','date'=>$date);
     $list        = curlObj($url,$parameter);
     if ($list) {
         $list = json_decode($list,true);
         foreach ($list as &$v) {
-            //echo $v['clid'];exit;
+            $v['dir'] = strtotime($v['calldate']);
+            $v['userfield'] = ltrim($v['userfield'],'audio:');
             $v['billsec'] = floor($v['billsec']/60);
             $call_list[] = strlen($v['clid']) == 12 ? intval($v['clid']) : $v['clid'];
-            //$answer_list[] = strlen($v['dst']) == 12 ? intval($v['dst']) : $v['dst'];
             if (strlen($v['dst']) == 3) {
                 $ext[] = $v['dst'];
             }
@@ -3361,21 +3361,23 @@ elseif($_REQUEST['act'] == 'call_report'){
                 $answer_list[] = $v['dst'];
             }
         }
-        $ext = implode(',',$ext);
-        $sql = 'SELECT user_name,ext FROM '.$GLOBALS['ecs']->table('admin_user').
-            " WHERE ext IN($ext)";
-        $user_list = $GLOBALS['db']->getAll($sql);
-        unset($v);
-        foreach ($list as &$l) {
-            foreach ($user_list as $u) {
-                if ($l['dst'] == $u['ext'] || $l['clid'] == $u['ext']) {
-                    $l['admin_name'] = $u['user_name'];
+        if ($ext) {
+            $ext = implode(',',$ext);
+            $sql = 'SELECT user_name,ext FROM '.$GLOBALS['ecs']->table('admin_user').
+                " WHERE ext IN($ext)";
+            $user_list = $GLOBALS['db']->getAll($sql);
+            unset($v);
+            foreach ($list as &$l) {
+                foreach ($user_list as $u) {
+                    if ($l['dst'] == $u['ext'] || $l['clid'] == $u['ext']) {
+                        $l['admin_name'] = $u['user_name'];
+                    }
                 }
             }
         }
     }
     $smarty->assign('list',$list);
-    $smarty->assign('date',date('Y-m-d'));
+    $smarty->assign('date',str_replace('_','-',$date));
     $res['main'] = $smarty->fetch('call_report.htm');
     die($json->encode($res));
 }
