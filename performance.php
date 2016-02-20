@@ -3338,16 +3338,18 @@ elseif($_REQUEST['act'] == 'clear_log'){
 }
 //通话时长排行，用于监控异常的通话
 elseif($_REQUEST['act'] == 'call_report'){
-    $url =  'http://192.168.1.240/mon/crmGet.php';
-    $date = isset($_GET['date']) ? date('Y_n_d',strtotime($_GET['date'])) : date('Y_n_d'); 
-    $parameter = array('act'=>'call_time_report','date'=>$date);
+    $url  = 'http://192.168.1.240/mon/crmGet.php';
+    $date = isset($_GET['date']) ? date('Y-m-d',strtotime($_GET['date'])) : date('Y-m-d');
+    $type = isset($_GET['type']) ? intval($_GET['type']) : 0;
+    $date_type = isset($_GET['date_type']) ? intval($_GET['date_type']) : 0;
+    $parameter = array('act'=>'call_time_report','date'=>$date,'type'=>$type,'date_type'=>$date_type);
     $list        = curlObj($url,$parameter);
     if ($list) {
         $list = json_decode($list,true);
         foreach ($list as &$v) {
-            $v['dir'] = strtotime($v['calldate']);
+            $v['dir']       = strtotime($v['calldate']);
             $v['userfield'] = ltrim($v['userfield'],'audio:');
-            $v['billsec'] = floor($v['billsec']/60);
+            $v['billsec']   = floor($v['billsec']/60);
             $call_list[] = strlen($v['clid']) == 12 ? intval($v['clid']) : $v['clid'];
             if (strlen($v['dst']) == 3) {
                 $ext[] = $v['dst'];
@@ -3376,6 +3378,8 @@ elseif($_REQUEST['act'] == 'call_report'){
             }
         }
     }
+    $smarty->assign('type',$type);
+    $smarty->assign('date_type',$date_type);
     $smarty->assign('list',$list);
     $smarty->assign('date',str_replace('_','-',$date));
     $res['main'] = $smarty->fetch('call_report.htm');

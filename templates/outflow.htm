@@ -1,20 +1,20 @@
 <!-- 页首标题 -->
 <div class="finder-title mt10">顾客流失列表</div>
-
 <!-- 搜索区 -->
-<fieldset id="pageSearch">
+<div id="pageSearch" class="list_panel">
     <legend>搜索</legend>
     <form action="{$dst_script}.php?act={$act}{$condition}" method="post" name="pageSearch" onsubmit="return commonSearch()">
         <script language="javascript" type="text/javascript" src="My97DatePicker/WdatePicker.js"></script>
-        下单日期：<input class="Wdate" name="start_time" type="text" value="" onclick="WdatePicker()">
+        下单日期：<input class="Wdate" name="start_time" type="text" value="" onclick="WdatePicker({dateFmt:'yyyy-MM-dd'})">
         至<input class="Wdate" type="text" value="{$end_time}" disabled>
         {if $platform}
+,       <select name="depart_id" onchange="changePlatform(this)"><option value="0">选择部门</option>{html_options options=$depart_list}</select>
         <select name="platform" onchange="changePlatform(this)"><option value="0">选择平台</option>{html_options options=$platform}</select>
         {/if}
         <select name="admin_id" id="admin_id"><option value="0">选择客服</option>{html_options options=$admin_list}</select>
         <input type="submit" class="b_submit" value="搜索">
     </form>
-</fieldset>
+</div>
 
 <div class="packet-items">
     <ul id="sub_tag" class="clearfix">

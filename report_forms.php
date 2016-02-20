@@ -290,7 +290,9 @@ elseif($_REQUEST['act'] == 'goods_sale_rank'){
             $GLOBALS['ecs']->table('order_info').' oi, '.$GLOBALS['ecs']->table($table)
             ." t $where %s GROUP BY %s og.goods_sn ORDER BY goods_num DESC";
         $rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field," AND og.goods_sn='$goods_sn' AND og.is_gift<>1 ",$group_by));
-        $gift_rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field," AND og.goods_sn='$goods_sn' AND og.is_gift=1 ",$group_by));
+        $rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field," AND og.goods_sn='$goods_sn' AND og.goods_price>0 ",$group_by));
+        //$gift_rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field," AND og.goods_sn='$goods_sn' AND og.is_gift=1 ",$group_by));
+        $gift_rank_status = $GLOBALS['db']->getAll(sprintf($sql, $field," AND og.goods_sn='$goods_sn' AND og.goods_price=0 ",$group_by));
         $package_sales_rank  = $GLOBALS['db']->getAll(sprintf($sql, $field.',og.goods_sn '," AND og.goods_sn REGEXP '\d*_\d*' AND og.is_gift<>1 ",$group_by));
 
         if ($package_sales_rank) {

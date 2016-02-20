@@ -2256,7 +2256,6 @@ window.onload = function () {
  */
 function commonSearch () {
   var theForm = document.forms['pageSearch'];
-
   var keyData = [];
   for (var i=0; i < theForm.length; i++) {
     if (theForm[i].name && theForm[i].value != 0) {

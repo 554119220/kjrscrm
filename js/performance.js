@@ -783,9 +783,10 @@ function modifyExpressFee(obj){
 function schCallReport(){
   var date = $("[name='date']").val();
   var type = $("[name='type']:checked").val();
+  var dateType = $("[name='date_type']:checked").val();
   if (date) {
     $.get(
-        'performance.php?act=call_report&date='+date+'&type='+type,
+        'performance.php?act=call_report&date='+date+'&type='+type+'&date_type='+dateType,
         function(res){
           inMain(res);
         },'JSON');

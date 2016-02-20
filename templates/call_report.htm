@@ -2,8 +2,11 @@
 <h3>当天通话时长排行</h3>
 <div class="list_panel">
   <input type="text" name="date" onfocus="WdatePicker({dateFmt:'yyyy-MM-dd'})" value="{$date}">
-  <label><input type="radio" name="type" value="0" checked/> 时长</label>
-  <label><input type="radio" name="type" value="1"/> 次数</label>
+  <label><input type="radio" name="date_type" value="0" {if $date_type eq 0}checked{/if}/> 按日</label>
+  <label><input type="radio" name="date_type" value="1" {if $date_type eq 1}checked{/if}/> 按月</label>
+  | <label><input type="radio" name="type" value="0" {if $date_type eq 0}checked{/if}/> 时长</label>
+  <label><input type="radio" name="type" value="1"{if $date_type eq 1}checked{/if}/> 次数</label>
+  <label><input type="radio" name="type" value="2"{if $date_type eq 2}checked{/if}/> 未知号码</label>
   <input type="button" name="" value="搜索" class="b_submit" onclick="schCallReport()"/>
 </div>
 <div id="resource" class="mt10">
@@ -12,13 +15,13 @@
       <th width="15%">通话时间</th>
       <th width="10%">时长/分钟</th>
       <th width="10%">客服</th>
-  		<th width="10%">下载</th>
-  	</tr>
+      <th width="10%">下载</th>
+    </tr>
     {foreach from=$list item=v}
     <tr>
-    	<td>{$v.calldate}</td>
-    	<td>{$v.billsec}</td>
-    	<td>{if $v.admin_name}{$v.admin_name}{else}-{/if}</td>
+      <td>{$v.calldate}</td>
+      <td>{$v.billsec}</td>
+      <td>{if $v.admin_name}{$v.admin_name}{else}-{/if}</td>
       <td>
         {if $v.userfield}
         <a href="http://192.168.1.240/mon/downloadCall.php?d={$v.dir}&file={$v.uniqueid}" target="_blank">下载录音</a>

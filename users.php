@@ -3504,14 +3504,13 @@ elseif ($_REQUEST['act'] == 'outflow_list') {
     }
 
     if (admin_priv('outflow_list_all', '', false)) {
-        $platform = get_role_list(1);
+        $smarty->assign('depart_list',array(7=>'客服二部',8=>'客服一部'));
+        $platform = get_role(" role_id IN(".KEFU.','.KEFU2.')');
         $platform_list = array ();
         foreach ($platform as $val) {
             $platform_list[$val['role_id']] = $val['role_name'];
         }
-
         $smarty->assign('platform',    $platform_list);
-
         $admin_list = get_admin_tmp_list();
     } elseif (admin_priv('outflow_list_part', '', false)) {
         $admin_list = get_admin_tmp_list($_SESSION['role_id']);
@@ -3560,7 +3559,6 @@ elseif ($_REQUEST['act'] == 'outflow_list') {
         $smarty->assign('data', $res['main']);
         $smarty->assign('page', $res['page']);
         $res['main'] = $smarty->fetch('outflow.htm');
-
         unset($res['page']);
     }
 
@@ -6432,6 +6430,7 @@ function outflow_list ($query_field) {
     $filter['end_time']   = empty($_REQUEST['end_time'])   ? '' : date('Y-m-t 23:59:59');//trim($_REQUEST['end_time']);
     $filter['time_limit'] = empty($_REQUEST['time_limit']) ? '' : trim($_REQUEST['time_limit']);
 
+    $filter['depart_id'] = empty($_REQUEST['depart_id']) ? 0 : intval($_REQUEST['depart_id']);
     $filter['platform'] = empty($_REQUEST['platform']) ? 0 : intval($_REQUEST['platform']);
     $filter['admin_id'] = empty($_REQUEST['admin_id']) ? 0 : intval($_REQUEST['admin_id']);
 
@@ -6457,8 +6456,7 @@ function outflow_list ($query_field) {
 
     //$ex_where = " customer_type IN (2, 3, 4, 5, 11) AND u.$query_field NOT BETWEEN ".strtotime($filter['start_time']).
     //' AND '.strtotime($filter['end_time']).' AND u.add_time<'.strtotime($filter['start_time']);
-    $ex_where = ' customer_type IN (2, 3, 4, 5, 11) AND '.
-        strtotime($filter['end_time']).' AND u.add_time<'.strtotime($filter['start_time']);
+    $ex_where = ' u.add_time <'.strtotime($filter['start_time']).' AND customer_type IN (2, 3, 4, 5, 11) ';
     if (!empty($filter['time_limit'])) {
         $ex_where .= " AND u.$query_field<".strtotime($filter['time_limit']);
     }
@@ -6466,6 +6464,13 @@ function outflow_list ($query_field) {
     if (!empty($filter['platform'])) {
         // 按平台检索顾客
         $ex_where .= " AND u.role_id={$filter['platform']} ";
+    }
+
+    if (!empty($filter['depart_id'])) {
+        // 按平台检索顾客
+        $str_role = $GLOBALS['db']->getCol('SELECT role_id FROM '.$GLOBALS['ecs']->table('role')." WHERE depart_id={$filter['depart_id']}");
+        $str_role = implode(',',$str_role);
+        $ex_where .= " AND u.role_id IN($str_role)";
     }
 
     if (!empty($filter['admin_id'])) {
