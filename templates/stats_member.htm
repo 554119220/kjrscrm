@@ -8,16 +8,20 @@
         <button value="report_forms.php?act=stats_member" onclick="statsMember(this)" class="b_submit">查询</button>
     </div>
 </div>
-<table border="0" class="wu_table_list rb_border wu_rb_border " cellpadding="0" cellspacing="0" width="600">
+<table border="0" class="wu_table_list rb_border wu_rb_border " cellpadding="0" cellspacing="0" width="80%">
     <thead>
      <tr id="sortByThis">
           <th>销售平台</th>
           <th>二部单数</th>
           <th>二部销量</th>
+          <th>新顾客单数</th>
+          <th>新顾客销量</th>
           <th>平台总单数</th>
           <th>平台总销量</th>
           <th>单数占比</th>
           <th>销量占比</th>
+          <th>平台费用</th>
+          <th></th>
      </tr>
      </thead>
      <tbody id="stats_member">
@@ -27,10 +31,16 @@
                <td>{$val.role_name}</td>
                <td>{$val.order_num}</td>
                <td>{$val.final_amount}</td>
+               <td>{$val.new_order_num}</td>
+               <td>{$val.new_amount}</td>
                <td>{$val.total}</td>
                <td>{$val.total_amount}</td>
                <td>{$val.order_ratio}</td>
                <td>{$val.amount_ratio}</td>
+               <td>
+                <input type="text" value="0" class="wd50"/> 
+               </td>
+               <td></td>
           </tr>
           {/foreach}
           <!--<tr>-->

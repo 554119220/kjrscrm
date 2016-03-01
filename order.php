@@ -4328,6 +4328,7 @@ function order_list()
         $filter     = $result['filter'];
     }
 
+    echo $sql_select;exit;
     $row = $GLOBALS['db']->getAll($sql_select);
     $sql_select = 'SELECT type_id,type_name FROM '.$GLOBALS['ecs']->table('order_type').' WHERE available=1';
     $order_type = $GLOBALS['db']->getAll($sql_select);

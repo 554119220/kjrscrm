@@ -2994,7 +2994,6 @@ function stats_all ()
     $sql_select = 'SELECT COUNT(*) order_num,SUM(i.final_amount) order_amount,r.depart_desc platform,i.admin_id,i.admin_name FROM '.
         $GLOBALS['ecs']->table('order_info').' i,'.$GLOBALS['ecs']->table('role').
         " r WHERE i.order_status IN (1,5) AND i.order_type NOT IN (1,10,100) AND i.shipping_status<>3 AND i.platform=r.role_id AND i.add_time BETWEEN $start AND $end $sql_platform";
-    echo $sql_select;exit;
     $res = $GLOBALS['db']->getAll($sql_select);
 
     $stats_all = array ();
@@ -3844,23 +3843,24 @@ function stats_member()
 
     $where = ' WHERE 1';
     if ($filter['start_time'] && $filter['end_time']) {
-        $filter['start_time'] = strtotime(stamp2date($filter['start_time'], 'Y-m-d H:i:s'));
-        $filter['end_time']   = strtotime(stamp2date($filter['end_time'], 'Y-m-d H:i:s'));
+        $filter['start_time'] = strtotime(date('Y-m-d 00:00:00',strtotime($filter['start_time'])));
+        $filter['end_time']   = strtotime(date('Y-m-d 23:59:59',strtotime($filter['end_time'])));
         $where .= " AND o.add_time BETWEEN {$filter['start_time']} AND {$filter['end_time']} ";
     } else {
         $filter['start_time'] = strtotime(date('Y-m-01 00:00:00'));
-        $filter['end_time']   = time();
+        $filter['end_time']   = strtotime(date('Y-m-d 23:59:59'));
         $where .= " AND o.add_time BETWEEN {$filter['start_time']} AND {$filter['end_time']} ";
     }
 
     // 统计来自各个平台的二部销量
     $sql_select = 'SELECT SUM(o.final_amount) final_amount,COUNT(*) order_num,r.role_name,o.team FROM '.
         $GLOBALS['ecs']->table('order_info').' o,'.$GLOBALS['ecs']->table('role')." r $where AND order_status".
-        ' IN (1,5) AND r.role_id=o.team AND o.platform IN ('.KEFU2.') AND o.team<>o.platform AND shipping_status<>3 GROUP BY o.team';
+        ' IN (1,5) AND r.role_id=o.team AND o.order_type<>1 AND o.platform IN ('.KEFU2.') AND o.team<>o.platform AND shipping_status<>3 GROUP BY o.team';
+    echo $sql_select;exit;
     $res = $GLOBALS['db']->getAll($sql_select);
 
     $sql_select = "SELECT SUM(final_amount) total_amount, COUNT(*) total, %s FROM ".$GLOBALS['ecs']->table('order_info').
-        " o $where AND order_status IN (1,5)  %s AND shipping_status<>3 GROUP BY %s";
+        " o $where AND order_status IN (1,5) AND o.order_type<>1  %s AND shipping_status<>3 GROUP BY %s";
     // 统计各个线上平台的所有销量
     $each_role = $GLOBALS['db']->getAll(sprintf($sql_select,'team',' AND team IN('.ONLINE_STORE.')','team'));
     //$offline_each_role = $GLOBALS['db']->getAll(sprintf($sql_select,'platform team',' AND platform IN('.KEFU2.')','platform'));
@@ -3885,11 +3885,15 @@ function stats_member()
         if ($each[$val['team']]) {
             $val = array_merge($val, $each[$val['team']]);
             if ($each[$val['team']]['total']) {
+                $val['new_order_num'] = $each[$val['team']]['total'] - $val['order_num'];
+                $val['new_amount'] = $each[$val['team']]['total_amount'] - $val['final_amount'];
                 $val['order_ratio']  = sprintf('%.2f%%', bcdiv($val['order_num'], $each[$val['team']]['total'], 4)*100);
                 $val['amount_ratio'] = sprintf('%.2f%%', bcdiv($val['final_amount'], $each[$val['team']]['total_amount'], 4)*100);
             }
             $total['order_num'] += $val['order_num'];
             $total['final_amount'] += $val['final_amount'];
+            $total['new_order_num'] += $val['new_order_num'];
+            $total['new_amount'] += $val['new_amount'];
             $total['total'] += $val['total'];
             $total['total_amount'] += $val['total_amount'];
         }
@@ -5672,14 +5676,3 @@ function main_sale_list(){
     }
     return $info;
 }
-
-//$count = 0;
-//function countLevel($A_uid){
-//    global $count;
-//    $sql = " SELECT uid FROM table WHERE parent_id=$A_uid";
-//    $res = 查询($sql);
-//    if ($res) {
-//        countLevel($res['uid']);
-//        $count++;
-//    }else return $count;
-//}
