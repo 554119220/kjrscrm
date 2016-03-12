@@ -2670,7 +2670,8 @@ function sales_rank ($is_pagination = true) {
             $where .= " AND oi.platform={$filter['platform']} ";
         }
     } elseif (admin_priv('rank_list_part', '', false)) {
-        if (empty($_SESSION['role_id']) && empty($filter['platform'])) {
+        //if (empty($_SESSION['role_id']) && empty($filter['platform'])) {
+        if (empty($filter['platform'])) {
             $where .= ' AND oi.platform IN ('.ONLINE_STORE.')';
         } elseif (!empty($filter['platform'])) {
             $where .= " AND oi.platform={$filter['platform']} ";
@@ -5612,9 +5613,9 @@ function express_fee_report($shipping_list=array()){
         }
     }
     $total = array_pop($role_list);
-    modifyData($list,$role);
-    if ($other_express_fee) {
-    }
+    //modifyData($list,$role);
+    //if ($other_express_fee) {
+    //}
     if ($list) {
         unset($r);
         foreach ($list as $l) {
@@ -5635,9 +5636,9 @@ function express_fee_report($shipping_list=array()){
     return $role_list;
 }
 
-function modifyData($list,&$role_list){
+//function,modifyData($list,&$role_list){
     
-}
+//}
 
 //平台销量，用于产品销量的统计
 function for_goods_sale_rank($where){
